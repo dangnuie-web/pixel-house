@@ -3,8 +3,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 // 설정 묶음 (2026-10-08, electron/profile_main.js bootData): 화면 스크립트보다 먼저 동기로 받아 둠 -> js/profile.js
 //   { id: 'player' | 'default', bundle: 묶음 대사·설정, onboard: 첫 실행인지, user: { name, avatar, house, furniture } } (기록 폴더 경로는 안 넘김)
+//   주소에 pb=1이 있을 때만 묻는다: 이 묶음 코드 전의 메인(이미 떠 있던 앱)에는 받는 곳이 없어 sendSync가 화면을 멈추게 함 (2026-10-08 확인)
 let boot = {};
-try { boot = ipcRenderer.sendSync('ph:profileSync') || {}; } catch (e) { boot = {}; }
+try { if (/[?&]pb=1(&|$)/.test(location.search)) boot = ipcRenderer.sendSync('ph:profileSync') || {}; } catch (e) { boot = {}; }
 contextBridge.exposeInMainWorld('PHProfileBoot', boot);
 // 첫 실행 온보딩·집 꾸미기 (electron/profile_main.js). 폴더는 고르기 창에서 고른 것·기본 폴더만 받음
 contextBridge.exposeInMainWorld('PHOnboardDesktop', {

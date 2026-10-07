@@ -172,7 +172,7 @@ function cleanResume(r) { // 화면이 보낸 이어 보기 값: 정해진 꼴�
     fx: n(r.fx), fy: n(r.fy), face: DIRS.includes(r.face) ? r.face : undefined, tab: TABS.includes(r.tab) ? r.tab : undefined };
 }
 function openPage(win, set, resume) {
-  const query = {}; if (set) query.set = set; if (resume) query.resume = JSON.stringify(resume);
+  const query = { pb: '1' }; if (set) query.set = set; if (resume) query.resume = JSON.stringify(resume); // pb = 설정 묶음을 넘겨 줄 수 있는 메인 (electron/preload.js)
   if (SHOTS) query.guest = /^[01]$/.test(process.env.PH_GUEST || '') ? process.env.PH_GUEST : '0'; // 시험: 입장 화면 이웃 고정 (기본 안 나옴)
   if (process.env.PH_LOG === '1') console.log('PH openPage', set, JSON.stringify(resume), new Error().stack.split('\n').slice(2, 5).join(' | '));
   currentSet = set; opens++; buildMenu();
