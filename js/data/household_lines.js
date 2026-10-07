@@ -10,10 +10,11 @@
     inv: {
       open: {
         food: ['냉장고 문 열었어요. 찬바람에 수염이 떨려요냥~', '시원한 냄새가 나요. 저는 문 옆에서 볼게요냥~'],
-        living: ['하단장 열었어요. 생활용품이 줄 서 있어요냥~', '아래 칸이에요. 차곡차곡 들어 있어요냥~'],
-        kitchen: ['주방장 열었어요. 설거지 친구들이 여기 살아요냥~', '주방 살림 칸이에요. 저는 문틈으로 구경할게요냥~'],
-        cosmetic: ['거울 아래 서랍이에요. 반짝이는 게 많아요냥~', '화장품 서랍 열었어요. 앞발은 안 넣을게요냥~'],
-        misc: ['TV장 열었어요. 자잘한 물건들이 다 여기 있어요냥~', '바스락 소리 나는 칸이에요. 제가 좋아하는 칸이에요냥~'],
+        // 부기 2026-10-08 공용판 4절: 가구 이름 없이 (살림 기능을 어느 가구에 붙여도 맞게). 제작자 원문은 profiles/player
+        kitchen: ['주방 살림 칸 열었어요. 설거지 친구들이 여기 살아요냥~', '주방 살림이에요. 저는 옆에서 구경할게요냥~'],
+        living: ['생활용품 칸 열었어요. 차곡차곡 들어 있어요냥~', '생활용품이 줄 서 있어요. 하나씩 세어 볼까요냥~?'],
+        cosmetic: ['화장품 칸 열었어요. 반짝이는 게 많아요냥~', '화장품이에요. 앞발은 안 넣을게요냥~'],
+        misc: ['잡화 칸 열었어요. 자잘한 물건들이 다 여기 있어요냥~', '바스락 소리 나는 칸이에요. 제가 좋아하는 칸이에요냥~'],
       },
       plus: ['하나 늘었어요. 적어 뒀어요냥~', '하나 더 채워 넣었어요냥~'],
       minus: ['하나 줄였어요. 숫자 고쳐 뒀어요냥~', '하나 꺼내 쓰셨네요. 적어 뒀어요냥~'],
@@ -69,6 +70,8 @@
     editHint: '칸을 고르면 여기서 수량을 바꿀 수 있어요', addCell: '추가', addCellLabel: '물건 추가',
     cardTitle: '살림', choreTitle: '청소 습관', shopTitle: '사야 할 것',
   };
+  const PF = (root.PHProfile || (typeof module !== 'undefined' && typeof require === 'function' ? require('../profile.js') : null));
+  if (PF) PF.patch('PH_HOUSEHOLD_LINES', L); // 2026-10-08 설정 묶음 (제작자 집 원문 inv.open)
   root.PH_HOUSEHOLD_LINES = L;
   root.PH_HOUSEHOLD_PLAIN = PLAIN;
   if (typeof module !== 'undefined' && module.exports) module.exports = { L, PLAIN };

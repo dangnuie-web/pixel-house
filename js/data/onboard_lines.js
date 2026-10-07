@@ -47,7 +47,7 @@
     folderTitle: '기록 폴더', folderBtn: '폴더 고르기', folderNote: '고른 폴더에 생활 기록 파일이 하나 생겨요. 인터넷으로 보내지 않아요',
     habitTitle: '습관 고르기', habitNote: '생활 습관 탭에서 언제든 더하고 뺄 수 있어요',
     // (비트 임시, 부기 확인) 원고에 없는 칸 글: 직접 더하기 칸, 아바타 이름(무늬 임시 이름 보리·도토리·모래)
-    habitAddHolder: '직접 적기 (예: 일기)', habitAdd: '+ 더하기',
+    habitAddHolder: '다른 습관 적기 (예: 일찍 자기)', habitAdd: '+ 추가', // 부기 2026-10-08 공용판 1-1
     avatarNames: { avatar1: '보리', avatar2: '도토리', avatar3: '모래' },
   };
   // 온보딩 직후 첫 입장: lines.js intro 3번 자리 (원고 3-2 intro.afterOnboard)

@@ -12,6 +12,7 @@
     roundtable: '둥근 탁자', coffeetable_m: '타원 탁자', tea_tray: '찻상', rug_round_big: '큰 타원 러그', rug_round: '둥근 카펫',
     coffeetable: '낮은 책상', drawer: '서랍장', toilet: '변기', washbasin: '세면대', floorlamp: '스탠드', floorlamp_round: '둥근 스탠드',
     plant_snake: '산세베리아', plant_monstera: '몬스테라', plant_cactus: '선인장', plant_fern: '고사리',
+    kitchen_wood: '원목 주방장', fridge_retro: '분홍 냉장고', bookshelf_open: '낮은 책장', // 2026-10-08 무늬 공용판후속 v01 1-1 (배치표 v02 name과 같음)
   };
   // 배치표 기능 이름 -> js/features.js 기능 id (무늬 제안 이름 * 표시). TV = 이미 있는 영화·연극 기록(record)
   const FEATURE_ID = { 'screen*': 'record', screen: 'record', 'calendar*': 'calendar', calendar: 'calendar' };
@@ -46,7 +47,7 @@
       o.size = [w, h];
       const fid = featureOf(sl, cand);
       if (fid) out.links[o.type] = fid;
-      out.slots.push({ id: sl.id, label: sl.label || sl.id, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.sprite, feature: featureOf(sl, c) })) });
+      out.slots.push({ id: sl.id, label: sl.label || sl.id, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
     });
     return out;
   }
