@@ -120,6 +120,19 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     const wall = await js('({ slots: (PH_LAYOUT.wallSlots || []).map((s) => s.id), drawn: !PH_LAYOUT.objects.some((o) => o.type === "memo_bucket") })');
     ok('벽 메모지 자리 3곳(무늬 wall_slots), 배치표 메모지 물건은 메모지 모듈이 그림', wall.slots.join() === 'room_north,genkan_wall,lamp_wall' && wall.drawn, wall);
 
+    // ---- 밤 화면 캡처 (무늬 밤 색 확인용, public_night_*) ----
+    await js(`PHGame.setDayNight('night'); 0`); await sleep(500);
+    ok('밤으로 바꿈 (html.night)', await js(`document.documentElement.classList.contains('night')`), null);
+    await shot('public_night_01_room');
+    await js('PHInteract.activateType("tv_cabinet"); 0'); await sleep(700);
+    await shot('public_night_02_tv_record');
+    if (await js('!!(window.PHRecordModal && PHRecordModal.isOpen())')) await js('PHRecordModal.close(); 0');
+    await sleep(200);
+    await js('PHBucketMemo.open(); 0'); await sleep(500);
+    await shot('public_night_03_bucket_memo');
+    if (await js('PHBucketMemo.isOpen()')) await js('PHBucketMemo.close(); 0');
+    await js(`PHGame.setDayNight('day'); 0`); await sleep(400);
+
     // ---- 4. 집 꾸미기 (가): 침대 자리 -> 소파베드 ----
     await js('PHFurnishUI.setMode(true); 0'); await sleep(200);
     await js('PHFurnishUI.openMenu(PHInteract.spots().find((s) => s.key === "bed")); 0'); await sleep(200);

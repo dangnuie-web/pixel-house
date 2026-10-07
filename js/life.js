@@ -97,7 +97,7 @@
         else if (k.kind === LC.KIND.goal && (LC.weeklyOf(r.cycle) || (r.kind === LC.KIND.goal && HC.isToggle(r.cycle)))) extra = weekRow(d, r, ctx); // 주 n회·월 n회·매일 1회
         else if (k.kind === LC.KIND.log && LC.unitOf(r.target)) extra = amountRow(d, r, ctx);
         if (up) extra += `<p class="up-note">${esc(fill(UI.promotedNote, { until: md(Md.dateOf(up.until)) }))}</p>`;
-        return `<li data-line="${r.line}" data-habit="${esc(r.name)}"${up ? ' class="up"' : ''}><b>${esc(r.name)}</b><span class="tgt">${esc(r.target)}</span><span class="cyc">${esc(r.cycle)}</span>${extra}</li>`;
+        return `<li data-line="${r.line}" data-habit="${esc(r.name)}"${up ? ' class="up"' : ''}><b>${esc(r.name)}</b><span class="tgt">${esc(r.target)}</span>${r.cycle && r.cycle.trim() !== '-' ? `<span class="cyc">${esc(r.cycle)}</span>` : ''}${extra}</li>`;
       }).join('') + '</ul></section>';
   }
   const canCheck = (fn) => !!(root.PHDesktop && root.PHDesktop[fn]);
@@ -179,7 +179,7 @@
       h += `<div class="g-label" data-line="${r.line}"><b>${esc(r.name)}</b><small>${md(r.startDay)} ~ ${r.open ? '진행 중' : md(r.endDay)}${r.memo ? ' · ' + esc(r.memo) : ''}</small></div><div class="g-track g-row" data-line="${r.line}">${bar}</div>`;
     });
     h += `<div class="g-today" style="left:calc(var(--gl) + (100% - var(--gl)) * ${(todayIdx + 0.5) / range.days})" title="오늘"></div></div>`;
-    if (bad.length) h += '<p class="fmt">날짜를 못 읽은 줄: ' + bad.map((r) => esc(r.name)).join(', ') + ' · ' + esc(UI.studyFormat) + '</p>';
+    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
     return h + '</section>';
   }
 

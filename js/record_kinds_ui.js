@@ -22,7 +22,7 @@
     const P = RW.parse(d.lines || []);
     let h = `<section class="card rk-card" data-card="기록 항목"><h3>${esc(PL().title || '기록 항목')}</h3><p class="kind-desc">${esc(PL().note || '')}</p><ul class="rk-list">`;
     P.kinds.forEach((k) => {
-      h += `<li class="rk-it"><span class="rk-name">${esc(k.name)}</span>` + (k.custom ? `<button type="button" class="rk-del he-del" data-kind="${esc(k.name)}">${esc(PL().del || '지우기')}</button>` : `<small class="rk-fixed">${esc(PL().fixed || '기본')}</small>`) + '</li>';
+      h += `<li class="rk-it"><i class="rk-ic" aria-hidden="true">${esc(Array.from(k.name)[0] || '')}</i><span class="rk-name">${esc(k.name)}</span>` + (k.custom ? `<button type="button" class="rk-del he-del" data-kind="${esc(k.name)}">${esc(PL().del || '지우기')}</button>` : `<small class="rk-fixed">${esc(PL().fixed || '기본')}</small>`) + '</li>';
     });
     h += '</ul>';
     if (K.undoItem) h += `<div class="rk-undo he-undo" role="status"><span>${esc((PL().removedNote || '{kind} 칸 지웠어요').replace('{kind}', K.undoItem.kind))}</span><button type="button" class="he-undo-b">${esc(PL().undo || '되돌리기')}</button></div>`;

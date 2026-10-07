@@ -149,6 +149,7 @@
       checkWeek: '이번 주 확인', checkGood: '잘 챙겼어', checkMissed: '놓쳤어', checkClose: '닫기', // 잘 챙겼어·놓쳤어 = 원고 safety.btn.ok / missed
       amountOpen: '+ 적기', amountSave: '적기', amountAdd: '더하기', amountSet: '바꾸기', amountCancel: '그만두기',
       promotedNote: '2주 같이 챙기기 · {until}까지',
+      studyBadDate: '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요', // 무늬 캡처확인 v01 10번 임시 문구 (부기 확인 전)
       studyFormat: '적는 법: 생활기록 파일 ## 공부 표에 | 공부 이름 | 2026-10-05 | 2026-10-30 | 메모 | 한 줄씩',
     },
 

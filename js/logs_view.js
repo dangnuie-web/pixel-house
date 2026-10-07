@@ -44,7 +44,7 @@
       let li = ul.querySelector(`:scope > li[data-habit="${K.habit.name}"]`);
       if (!li) { // 표에 아직 없음: 화면에만 같은 모양으로
         li = document.createElement('li'); li.dataset.habit = K.habit.name; li.className = 'lg-virtual';
-        li.innerHTML = `<b>${esc(K.habit.name)}</b><span class="tgt">${esc(K.habit.target)}</span><span class="cyc">-</span>`; ul.appendChild(li); added++;
+        li.innerHTML = `<b>${esc(K.habit.name)}</b><span class="tgt">${esc(K.habit.target)}</span>`; ul.appendChild(li); added++;
       }
       li.classList.add('lg-hab'); li.dataset.log = kind;
       const box = document.createElement('div'); box.className = 'lg-hab-row';
@@ -58,7 +58,7 @@
     const RF = root.PHFeatures && root.PHFeatures.get('reading');
     if (RF && root.PHFurnish && root.PHFurnish.state('reading') === 'virtual' && !ul.querySelector(`:scope > li[data-habit="${RF.habit}"]`)) {
       const li = document.createElement('li'); li.dataset.habit = RF.habit; li.className = 'lg-virtual';
-      li.innerHTML = `<b>${esc(RF.habit)}</b><span class="tgt">${esc(RF.target)}</span><span class="cyc">-</span>`; ul.appendChild(li); added++;
+      li.innerHTML = `<b>${esc(RF.habit)}</b><span class="tgt">${esc(RF.target)}</span>`; ul.appendChild(li); added++;
     }
     if (added) { const n = card.querySelector('h3 small'); if (n) n.textContent = String(Number(n.textContent || 0) + added); }
   }

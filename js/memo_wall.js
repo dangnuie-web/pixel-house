@@ -60,9 +60,12 @@
     const z = size(), cur = slotId(), box = el.querySelector('.mw-boxes');
     if (!pic) { try { pic = A().frameCanvas(SPRITE, 0).toDataURL(); } catch (e) { pic = ''; } }
     box.innerHTML = slots().map((s, i) => {
-      const p = toCss(s.px - PAD, s.py - PAD), w = (z.w + PAD * 2) * p.k, h = (z.h + PAD * 2) * p.k, here = s.id === cur;
+      // 위 여백만 1u (벽 윗선과 상자 윗선이 겹치지 않게, 무늬 캡처확인 v01 7번)
+      const TOP = 1, p = toCss(s.px - PAD, s.py - TOP), w = (z.w + PAD * 2) * p.k, h = (z.h + PAD + TOP) * p.k, here = s.id === cur;
       return `<button type="button" class="fn-hover mw-slot${here ? ' sel' : ''}${i === W.cur ? ' focus' : ''}" data-id="${esc(s.id)}" aria-pressed="${here}" aria-label="${esc(s.label || s.id)}${here ? ' (지금 자리)' : ''}" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px">` +
-        (here || !pic ? '' : `<img src="${pic}" alt="" aria-hidden="true" style="left:${PAD * p.k}px;top:${PAD * p.k}px;width:${z.w * p.k}px;height:${z.h * p.k}px">`) + '</button>';
+        // 지금 자리: 노란 바탕은 메모지 그림 둘레에만 (그림 위를 덮지 않음, 집 그림의 메모지 100% 그대로). 빈 자리: 45% 미리 보기
+        (here ? `<i class="mw-hole" aria-hidden="true" style="left:${PAD * p.k - 2}px;top:${TOP * p.k - 2}px;width:${z.w * p.k}px;height:${z.h * p.k}px"></i>`
+          : !pic ? '' : `<img src="${pic}" alt="" aria-hidden="true" style="left:${PAD * p.k - 2}px;top:${TOP * p.k - 2}px;width:${z.w * p.k}px;height:${z.h * p.k}px">`) + '</button>';
     }).join('');
     box.querySelectorAll('.mw-slot').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); pick(b.dataset.id); }));
     const f = box.querySelector(`.mw-slot[data-id="${focusId || slots()[W.cur].id}"]`); if (f && focusId !== false) f.focus({ preventScroll: true });

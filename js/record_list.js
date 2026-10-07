@@ -30,9 +30,11 @@
       return `<button type="button" role="tab" class="rc-pill ${on ? 'on' : ''}" data-kind="${esc(k)}" aria-selected="${on}" tabindex="${on ? 0 : -1}" data-focus="rc-pill:${esc(k)}">${esc(k)}<small>${n}</small></button>`;
     }).join('') + '</span>';
   }
-  function html(d) {
-    const P = RW.parse(d.lines || []), list = RW.listOf(P, R.kind);
+  // opts.inline = 집 TV 창 안: 폼을 막 없이 목록 자리에 바꿔 보여 줌 (무늬 캡처확인 v01 4번. 생활일지 탭은 지금처럼 막 위 폼)
+  function html(d, opts) {
+    const P = RW.parse(d.lines || []), list = RW.listOf(P, R.kind), inline = !!(opts && opts.inline);
     R.list = list; R.P = P;
+    if (inline && R.form) return `<div class="records rc-inline-wrap" data-kind="${esc(R.kind)}">${formHtml(true)}</div>`;
     let h = `<div class="records" data-kind="${esc(R.kind)}"><div class="rc-bar">${pills(P)}${R.group.length < 2 ? `<b class="rc-title">${esc(R.kind)} <small>${list.length}</small></b>` : ''}` +
       (canWrite() ? `<button type="button" class="rc-add" data-focus="rc-add">${esc(PL().add || '+ 기록하기')}</button>` : '') + '</div>';
     if (P.error) h += `<p class="fmt">${esc(P.error)}</p>`;
@@ -59,18 +61,18 @@
     if (R.form) h += formHtml();
     return h + '</div>';
   }
-  function formHtml() {
+  function formHtml(inline) {
     const v = R.draft || {}, edit = R.form.mode === 'edit', t = today(), any = !isDefault(R.form.kind);
     const head = R.group.length > 1 && R.group.includes(R.form.kind)
       ? `<span class="rc-pills rc-form-pills" role="radiogroup" aria-label="무엇을 봤나요">` + R.group.map((k) => `<button type="button" role="radio" class="rc-pill ${k === R.form.kind ? 'on' : ''}" data-fkind="${esc(k)}" aria-checked="${k === R.form.kind}">${esc(k)}</button>`).join('') + '</span>'
       : `<div class="bk-name">${esc(R.form.kind)} ${edit ? '기록 고치기' : '기록하기'}</div>`;
-    return `<div class="bk-overlay rc-overlay" data-kind="form"><form class="bk-dlg bk-form rc-form" role="dialog" aria-modal="true" aria-label="${esc(R.form.kind)} 기록" novalidate>
+    return `<div class="${inline ? 'rc-inline' : 'bk-overlay'} rc-overlay" data-kind="form"><form class="bk-dlg bk-form rc-form" ${inline ? 'role="group"' : 'role="dialog" aria-modal="true"'} aria-label="${esc(R.form.kind)} 기록" novalidate>
       ${head}
       <label class="bk-row"><span class="bk-lab">${esc(PL().title || '제목')}</span><input class="rc-in-title${R.err ? ' bad' : ''}" maxlength="${RW.TITLE_MAX}" autocomplete="off" placeholder="${esc(PL().titleHolder || '')}" value="${esc(v.title || '')}" data-focus="rc-title"></label>
+      <p class="bk-err rc-err" role="alert">${esc(R.err)}</p>
       <label class="bk-row"><span class="bk-lab">${esc(any ? (PL().dateAny || '한 날') : (PL().date || '본 날'))}</span><input class="rc-in-date" type="date" max="${t}" value="${esc(v.date || '')}" data-focus="rc-date"><small class="bk-hint">${v.date ? '' : esc(PL().dateNote || '')}</small></label>
       <label class="bk-row top"><span class="bk-lab">${esc(any ? (PL().summaryAny || '요약·메모') : (PL().summary || '요약·줄거리'))}</span><textarea class="rc-in-sum" rows="5" maxlength="${RW.SUMMARY_MAX}" placeholder="${esc(PL().summaryHolder || '')}" data-focus="rc-sum">${esc(v.summary || '')}</textarea></label>
-      <p class="bk-err" role="alert">${esc(R.err)}</p>
-      <div class="bk-btns"><button type="button" class="bk-cancel">${esc(PL().cancel || '그만두기')}</button><button type="submit" class="bk-save">${esc(edit ? (PL().fix || '고치기') : (PL().save || '적기'))}</button></div>
+      <div class="bk-btns"><button type="button" class="bk-cancel">${esc(PL().cancel || '그만두기')}</button><button type="submit" class="bk-save">${esc(edit ? (PL().fix || '고치기') : (PL().save || '저장'))}</button></div>
     </form></div>`;
   }
 
@@ -109,8 +111,10 @@
     const rs = box.querySelector('.rc-restore'); if (rs) rs.addEventListener('click', undo);
     const ov = box.querySelector('.rc-overlay');
     if (ov) {
-      ov.addEventListener('mousedown', (e) => { if (e.target === ov) { readDraft(); ov.dataset.down = '1'; } });
-      ov.addEventListener('click', (e) => { if (e.target === ov && ov.dataset.down === '1' && !R.busy) closeForm(); });
+      if (!ov.classList.contains('rc-inline')) { // 막 바깥 누르기 = 닫기 (막 없는 TV 창 안 폼은 그만두기·Esc로)
+        ov.addEventListener('mousedown', (e) => { if (e.target === ov) { readDraft(); ov.dataset.down = '1'; } });
+        ov.addEventListener('click', (e) => { if (e.target === ov && ov.dataset.down === '1' && !R.busy) closeForm(); });
+      }
       ov.addEventListener('keydown', (e) => {
         if (e.isComposing || e.keyCode === 229) return;
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!R.busy) closeForm(); }

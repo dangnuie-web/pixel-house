@@ -48,7 +48,7 @@
   function paint(focus) {
     if (!el || !st.open) return;
     const body = q('.bm-body'), L = Life();
-    body.innerHTML = L && L.data ? BS().html(L.data) : `<p class="fmt">${(root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.browserOnly) || '생활 기록을 읽지 못했어요.'}</p>`;
+    body.innerHTML = L && L.data ? BS().html(L.data, { inline: true }) : `<p class="fmt">${(root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.browserOnly) || '생활 기록을 읽지 못했어요.'}</p>`;
     if (L && L.data) BS().bind(body, paint);
     if (focus) { const f = [...el.querySelectorAll('[data-focus]')].find((x) => x.dataset.focus === focus); if (f) f.focus({ preventScroll: false }); }
   }
@@ -96,7 +96,7 @@
   function state() {
     const body = el && q('.bm-body');
     return { open: st.open, from: st.from, opened: st.opened, rows: body ? body.querySelectorAll('.rc-it').length : 0, pills: body ? [...body.querySelectorAll('.rc-bar .rc-pill')].map((b) => b.textContent) : [],
-      overlay: body && body.querySelector('.bk-overlay') ? body.querySelector('.bk-overlay').dataset.kind : null, list: BS() ? BS().state() : null };
+      overlay: body && body.querySelector('.rc-overlay') ? body.querySelector('.rc-overlay').dataset.kind : null, inline: !!(body && body.querySelector('.rc-inline')), list: BS() ? BS().state() : null };
   }
   Object.assign(BM, { open, close, isOpen: () => st.open, state, build, fit, paint, blockedNow });
   root.PHRecordModal = BM;

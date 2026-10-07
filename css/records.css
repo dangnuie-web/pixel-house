@@ -51,6 +51,9 @@
 /* 생활 습관 탭 "기록 항목" 칸 (js/record_kinds_ui.js). 습관 편집과 같은 버튼 결 */
 .rk-list { list-style: none; margin: 6px 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .rk-it { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; background: var(--ui-paper); border-radius: 999px; box-shadow: inset 0 -1px 0 var(--ui-inner); font: 600 14px var(--font); }
+/* 13번: 이름 첫 글자 동그라미 (무늬 디자인 4절 새 항목 만들기, 지름 22px) */
+.rk-it { padding-left: 5px; }
+.rk-ic { flex: none; width: 22px; height: 22px; box-sizing: border-box; border-radius: 50%; background: var(--ui-hover); border: 1px solid var(--A); font: 700 12px/20px var(--font); font-style: normal; text-align: center; color: var(--A); }
 .rk-fixed { font-size: 12px; color: var(--ui-sub); padding-right: 6px; }
 .rk-card .rk-del { font: 500 13px var(--font); color: var(--ui-danger); background: none; border: 0; border-radius: 5px; height: 24px; padding: 0 6px; cursor: pointer; }
 .rk-card .rk-del:hover { background: var(--ui-hover); }
@@ -90,3 +93,15 @@
 .gr-legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 8px; font-size: 11px; color: var(--ui-sub); }
 .gr-legend i { width: 10px; height: 10px; border-radius: 2px; }
 .gr-legend span { margin: 0 3px; }
+.gr-legend b { font-weight: 500; margin: 0 2px 0 6px; } .gr-legend i.lv0 { box-shadow: inset 0 0 0 1px #E2D6BE; }
+/* ---- 무늬 캡처확인 v01 고칠 것 (2026-10-08 비트) ---- */
+/* 5번: "제목을 적어 주세요" = 제목 칸 바로 아래 6px (이름 칸 84px + 사이 12px 만큼 들여씀). 비면 자리 없음 */
+.rc-form .rc-err { margin: -6px 0 12px 96px; min-height: 0; font-weight: 500; }
+.rc-form .rc-err:empty { display: none; }
+/* 4번: TV 창 안 폼 = 막 없이 목록 자리에 (창 두 겹 아님). 생활일지 탭 폼은 그대로 막 위 */
+.bm-body .rc-inline { position: static; display: block; padding: 0; background: none; }
+.bm-body .rc-inline .bk-dlg { width: auto; max-height: none; overflow: visible; background: transparent; border: 0; border-radius: 0; box-shadow: none; filter: none; padding: 6px 2px 4px; }
+/* 12번: 펼친 줄은 펼친 동안 바탕 #F1E3C7 */
+.rc-it.open { background: var(--ui-hover); }
+/* 11번: 생활일지 폴더 판 안 달 머리(sticky) 바탕 = 판 바탕 */
+.jn-panel.folder .rc-month { background: var(--K); }

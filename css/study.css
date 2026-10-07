@@ -70,7 +70,7 @@
 .st-edit .g-row .g-bar { top: 5px; height: 20px; background: transparent; border: 0; border-radius: 4px; }
 .st-edit .g-row .g-bar::before { content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 4px; border-radius: 2px; background: var(--sc, var(--G)); }
 .st-edit .g-row .g-bar.open::before { background: linear-gradient(90deg, var(--sc, var(--G)) 80%, transparent); }
-.st-edit .g-row .g-bar.sel { outline: 2px solid var(--O); outline-offset: 0; box-shadow: none; }
+.st-edit .g-row .g-bar.sel { outline: 2px solid var(--O); outline-offset: -2px; box-shadow: none; } /* 테가 트랙 밖으로 안 넘게 안쪽에 (무늬 캡처확인 v01 10번) */
 .st-edit .g-label b { display: inline-flex; align-items: center; gap: 6px; }
 /* 단원 줄 */
 .g-plabel { padding-left: 16px; font-size: 14px; min-height: 28px; cursor: pointer; }

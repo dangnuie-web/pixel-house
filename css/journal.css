@@ -197,3 +197,10 @@ html.night .bk-dlg { background: #EFE3CB; box-shadow: inset 0 -3px 0 #D2C2A3; fi
 .cal-list > .he-form { margin: 10px 0 0; }
 .cal-list > .he-undo { margin: 8px 0 0; }
 .mte-in-time { width: 96px; } .mte-in-text { width: 220px; } .mte-in-date { width: 150px; }
+/* 무늬 캡처확인 v01 1번 (2026-10-08 비트): 판 안에서 뜬 폼 막(.bk-overlay)이 고른 폴더 탭(z 9)보다 위에 오게. 판(z 6)이 쌓임 맥락이라 판째 올림 */
+.jn-panel:has(.bk-overlay) { z-index: 30; }
+/* 무늬 캡처확인 v01 15번 (2026-10-08 비트): 약속 적기 폼 칸 = 새 기록 폼과 같은 결 (먹선 2px, 높이 40px, 모서리 6px, 글 16px) */
+.he-form.mte-form input, .he-form.mte-form select { height: 40px; padding: 0 12px; border: 2px solid var(--ui-line); border-radius: 6px; font-size: 16px; box-shadow: inset 0 2px 0 var(--ui-inner); }
+.he-form.mte-form input:focus, .he-form.mte-form select:focus { border-color: var(--ui-sub); box-shadow: inset 0 2px 0 var(--ui-inner), 0 0 0 2px var(--ui-sub); }
+.he-form.mte-form input.err { border-color: var(--ui-danger); box-shadow: inset 0 2px 0 var(--ui-inner), 0 0 0 2px var(--ui-danger-ring); }
+.he-form.mte-form .mte-in-time { width: 110px; } .he-form.mte-form .mte-in-date { width: 170px; }

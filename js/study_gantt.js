@@ -119,7 +119,7 @@
     for (let i = 0; i < R.days; i++) {
       const dt = SW.addDays(R.start, i), wd = new Date(dt.slice(0, 4), Number(dt.slice(5, 7)) - 1, Number(dt.slice(8, 10)), 12).getDay();
       if (R.view === 'week') weeks += `<span class="${i === R.todayIdx ? 'today' : ''}" style="left:${pct(i)};width:${pct(1)}">${WD[wd]} ${Number(dt.slice(8, 10))}</span>`;
-      else if (wd === 1 || i === 0) weeks += `<span style="left:${pct(i)}">${md(dt)}</span>`;
+      else if (wd === 1) weeks += `<span style="left:${pct(i)}">${md(dt)}</span>`; // 월 보기 머리 = 월요일만 (1일 글 뺌, 무늬 캡처확인 v01 9번)
       if (i > 0 && (R.view === 'week' || wd === 1)) vlines += `<i class="g-vline" style="left:calc(var(--gl) + (100% - var(--gl)) * ${i / R.days})"></i>`;
     }
     const bad = [];
@@ -155,7 +155,7 @@
     h += '</div>';
     if (SP && canPaint()) h += `<p class="st-help st-paint-help">${esc(SPL.hint || '칸을 눌러 칠하면 그날 공부한 거예요. 다시 누르면 지워져요')}</p>`;
     if (St.partUndo) h += `<div class="st-undo st-undo-part" role="status"><span>${esc(St.partUndo.part)} 뺐어요</span><button type="button" class="st-unpart">${esc(EP().undo || '되돌리기')}</button></div>`;
-    if (bad.length) h += '<p class="fmt">날짜를 못 읽은 줄: ' + bad.map((r) => esc(r.name)).join(', ') + ' · ' + esc(UI.studyFormat) + '</p>';
+    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
     h += `<div class="st-info" aria-live="polite">${info(d)}</div>`;
     return h + archiveList(d) + '</section>';
   }

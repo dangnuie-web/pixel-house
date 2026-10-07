@@ -66,7 +66,7 @@
   P.uiPlain.recordForm = {
     tabs: { movie: '영화', play: '연극' }, title: '제목', date: '본 날', dateAny: '한 날', summary: '요약·줄거리', summaryAny: '요약·메모',
     summaryHolder: '줄거리나 남기고 싶은 한 줄 (비워 둬도 돼요)', titleHolder: '제목 (꼭 적어 주세요)', dateNote: '고르지 않으면 오늘로 적어요',
-    save: '적기', cancel: '그만두기', fix: '고치기', del: '지우기', undo: '되돌리기', add: '+ 기록하기', windowTitle: '영화·연극', keys: 'Esc 닫기',
+    save: '저장', cancel: '그만두기', fix: '고치기', del: '지우기', undo: '되돌리기', add: '+ 기록하기', windowTitle: '영화·연극', keys: 'Esc 닫기',
     removedNote: '{title} 지웠어요', updatedNote: '{title} 고쳤어요', badTitle: '제목을 적어 주세요',
   };
   P.uiPlain.recordKind = { add: '+ 기록 항목 추가', name: '항목 이름', nameHolder: '예: 전시, 공연', note: '제목·날짜·요약으로 적는 기록 칸이 하나 생겨요', title: '기록 항목', save: '만들기', cancel: '그만두기', del: '지우기', undo: '되돌리기', removedNote: '{kind} 칸 지웠어요 (적은 기록은 남아요)', fixed: '기본' };
