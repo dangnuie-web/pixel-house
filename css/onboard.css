@@ -1,0 +1,48 @@
+/* 공용판 첫 실행 온보딩 (js/onboard.js, 2026-10-08). 앱 공통 종이 칸(--ui-*, 무늬 편집연동화면 v01 2장)·습관 편집 칩과 같은 모양.
+   새 디자인이 아니라 있는 칸 모양을 다시 씀 -> 무늬 확인 대기 */
+body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility: hidden; }
+#screen-onboard { display: flex; align-items: center; justify-content: center; background: var(--D); overflow: auto; padding: 24px; }
+.ob-card { width: min(560px, 100%); background: var(--ui-paper); color: var(--ui-line); border: 2px solid var(--ui-line); border-radius: 12px;
+  box-shadow: 0 4px 0 var(--ui-shadow); padding: 22px 24px 18px; display: flex; flex-direction: column; gap: 14px; }
+.ob-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.ob-steps li { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line); color: var(--ui-sub); background: var(--ui-field); }
+.ob-steps li.past { color: var(--ui-off-tx); border-color: var(--ui-inner); }
+.ob-steps li.on { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 700; }
+.ob-dubu { display: flex; align-items: flex-end; gap: 12px; }
+#ob-dubu-cv { image-rendering: pixelated; flex: none; }
+.ob-say { position: relative; margin: 0 0 8px; flex: 1; min-height: 44px; font-size: 15px; line-height: 1.5; word-break: keep-all;
+  padding: 9px 12px; background: var(--C); border: 2px solid var(--ui-line); border-radius: 8px; }
+.ob-body { display: flex; flex-direction: column; gap: 10px; }
+.ob-h { margin: 0; font-size: 15px; }
+.ob-label { display: block; font-size: 13px; color: var(--ui-sub); margin-bottom: 6px; font-weight: 700; }
+.ob-field input, .ob-add input { width: 100%; font: 16px var(--font); padding: 9px 11px; border: 2px solid var(--ui-line); border-radius: 8px; background: var(--ui-field); color: var(--ui-line); }
+.ob-field input::placeholder, .ob-add input::placeholder { color: var(--ui-ph); }
+.ob-field input:focus, .ob-add input:focus { outline: 3px solid var(--ui-ring); }
+.ob-note { margin: 0; font-size: 12.5px; color: var(--ui-sub); line-height: 1.5; }
+.ob-avatars { display: flex; gap: 12px; }
+.ob-av, .ob-house { font: 14px var(--font); color: var(--ui-line); background: var(--ui-field); border: 2px solid var(--ui-inner); border-radius: 10px; cursor: pointer; }
+.ob-av { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px 8px; }
+.ob-av canvas, .ob-house canvas { image-rendering: pixelated; display: block; }
+.ob-av:hover, .ob-house:hover { background: var(--ui-hover); }
+.ob-av[aria-checked="true"], .ob-house[aria-checked="true"] { border-color: var(--ui-sel); box-shadow: 0 0 0 3px var(--ui-ring); font-weight: 700; }
+.ob-houses { list-style: none; margin: 0; padding: 0; }
+.ob-house { display: flex; align-items: center; gap: 14px; padding: 8px; width: 100%; text-align: left; }
+.ob-house canvas { width: 128px; height: 120px; flex: none; border-radius: 4px; }
+.ob-house-t { display: flex; flex-direction: column; gap: 4px; }
+.ob-house-t small { color: var(--ui-sub); font-weight: 400; }
+.ob-folder { display: flex; gap: 8px; align-items: center; }
+.ob-folder code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; padding: 8px 10px; background: var(--ui-field); border: 2px solid var(--ui-inner); border-radius: 8px; direction: rtl; text-align: left; }
+.ob-file { color: var(--ui-line); font-weight: 700; }
+.ob-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ob-chip { font: 14px var(--font); display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line); background: var(--ui-field); color: var(--ui-line); cursor: pointer; }
+.ob-chip small { font-size: 11.5px; color: var(--ui-sub); }
+.ob-chip[aria-pressed="true"] { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); }
+.ob-chip[aria-pressed="true"] small { color: var(--ui-ring); }
+.ob-add { display: flex; gap: 8px; }
+.ob-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.ob-nav-r { display: flex; gap: 8px; }
+.ob-btn { font: 14px var(--font); padding: 8px 16px; border-radius: 8px; border: 2px solid var(--ui-line); background: var(--ui-field); color: var(--ui-line); cursor: pointer; white-space: nowrap; }
+.ob-btn:hover { background: var(--ui-hover); }
+.ob-btn.main { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 700; }
+.ob-btn.main:hover { background: var(--ui-sel-hover); }
+.ob-btn:focus-visible, .ob-chip:focus-visible, .ob-av:focus-visible, .ob-house:focus-visible { outline: 3px solid var(--ui-ring); outline-offset: 1px; }

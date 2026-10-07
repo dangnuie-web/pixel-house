@@ -1,0 +1,146 @@
+// 설정 묶음 고르기 + 첫 실행 온보딩 (메인 프로세스, 2026-10-08 로드맵 4단계). 규칙·묶음 합치기는 js/profile.js
+//   저장: 앱 설정 폴더 userData/profile.json
+//     제작자 판 = { bundle: 'player' }  /  공용판 = { bundle: 'default', name, avatar, house, dir, furniture: { 자리 id: 그림 이름 }, createdAt }
+//   고르는 순서
+//     1) 환경변수 PH_PROFILE (시험): 'player' | 'default'
+//     2) userData/profile.json
+//     3) 제작자 묶음(profiles/player)이 있고 그 기록 파일이 있으면(PH_HOUSE 또는 묶음 houseDir) 제작자 판 -> profile.json 에 적어 둠
+//        = 제작자 컴퓨터는 지금처럼 바로 열림 (가장 중요한 시험). 공개 저장소에는 profiles/player 가 없음
+//     4) 그 밖 = 공용판 온보딩 (이름 -> 아바타 -> 집 -> 기록 폴더 -> 습관)
+//   기록 폴더는 사용자가 폴더 고르기 창에서 고른 곳 또는 기본(~/Documents/PixelHouse)만 받는다 (화면이 아무 경로나 보낼 수 없음)
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const NAME_MAX = 12;
+const NAME_BAD = /[|｜\\/<>`*#{}\[\]\u0000-\u001f\u007f\u2028\u2029]/;
+const HOUSES = ['room1']; // 집 목록 (목록형, 지금은 원룸 하나. 투룸·쓰리룸은 원룸 확인 뒤)
+const AVATARS = ['avatar1', 'avatar2', 'avatar3'];
+const SLOT_RE = /^[a-z][a-z0-9_]{0,30}$/, SPRITE_RE = /^[a-z][a-z0-9_]{0,40}$/;
+
+function cleanName(s) {
+  if (typeof s !== 'string') return { ok: false, code: 'empty' };
+  const t = s.replace(/\s+/g, ' ').trim();
+  if (!t) return { ok: false, code: 'empty' };
+  if (NAME_BAD.test(t)) return { ok: false, code: 'bad' };
+  if (Array.from(t).length > NAME_MAX) return { ok: false, code: 'tooLong' };
+  return { ok: true, name: t };
+}
+function cleanFurniture(f) {
+  const out = {};
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return out;
+  Object.keys(f).slice(0, 40).forEach((k) => { if (SLOT_RE.test(k) && typeof f[k] === 'string' && SPRITE_RE.test(f[k])) out[k] = f[k]; });
+  return out;
+}
+const expand = (p) => (typeof p === 'string' && p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p);
+
+module.exports = function create(o) {
+  const { app, ROOT, env } = o;
+  const store = () => path.join(app.getPath('userData'), 'profile.json');
+  const bundleFile = (id) => path.join(ROOT, 'profiles', id, 'profile.json');
+  function loadBundle(id) { try { const v = JSON.parse(fs.readFileSync(bundleFile(id), 'utf8')); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } }
+  function read() {
+    try {
+      const v = JSON.parse(fs.readFileSync(store(), 'utf8'));
+      if (!v || typeof v !== 'object') return null;
+      if (v.bundle === 'player') return { bundle: 'player' };
+      if (v.bundle !== 'default') return null;
+      const n = cleanName(v.name);
+      if (!n.ok || !AVATARS.includes(v.avatar) || !HOUSES.includes(v.house) || typeof v.dir !== 'string' || !path.isAbsolute(v.dir)) return null;
+      return { bundle: 'default', name: n.name, avatar: v.avatar, house: v.house, dir: v.dir, furniture: cleanFurniture(v.furniture), createdAt: v.createdAt || null };
+    } catch (e) { return null; }
+  }
+  function write(v) {
+    const f = store(), tmp = f + '.tmp';
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(tmp, JSON.stringify(v, null, 2));
+    fs.renameSync(tmp, f);
+    return v;
+  }
+  const lifeRel = (S) => String(S.LIFE_FILE || '').split('/').filter(Boolean);
+
+  // -> { id, bundle, user, dir(기록 폴더, 온보딩이면 null), onboard }
+  function choose() {
+    const want = env.PH_PROFILE;
+    const player = loadBundle('player');
+    const asPlayer = () => ({ id: 'player', bundle: player, user: {}, dir: env.PH_HOUSE ? path.resolve(env.PH_HOUSE) : expand(player.houseDir), onboard: false });
+    const asDefault = (u) => ({ id: 'default', bundle: loadBundle('default') || {}, user: u || {}, dir: env.PH_HOUSE ? path.resolve(env.PH_HOUSE) : (u && u.dir) || null, onboard: !u });
+    if (want === 'player' && player) return asPlayer();
+    const saved = read();
+    if (want === 'default') return asDefault(saved && saved.bundle === 'default' ? saved : null);
+    if (saved && saved.bundle === 'player' && player) return asPlayer();
+    if (saved && saved.bundle === 'default') return asDefault(saved);
+    if (player) {
+      const dir = env.PH_HOUSE ? path.resolve(env.PH_HOUSE) : expand(player.houseDir);
+      const life = (((player.patch || {}).PH_SETTINGS || {}).LIFE_FILE || '').split('/').filter(Boolean);
+      if (dir && life.length && fs.existsSync(path.join(dir, ...life))) { try { write({ bundle: 'player', savedAt: new Date().toISOString() }); } catch (e) { /* 못 적어도 이번엔 제작자 판 */ } return asPlayer(); }
+    }
+    return asDefault(null);
+  }
+
+  // ---- 온보딩 (공용판 첫 실행) ----
+  // onDone(user) = 메인이 집을 열기 (IPC 등록 + 화면 다시 열기). S = settings (LIFE_FILE)
+  function registerOnboard({ ipcMain, dialog, getWin, S, onDone }) {
+    const defaultDir = env.PH_DEFAULT_DIR ? path.resolve(env.PH_DEFAULT_DIR) : path.join(app.getPath('documents'), 'PixelHouse');
+    const allowed = new Set([defaultDir]);
+    function folderInfo(dir) {
+      const file = path.join(dir, ...lifeRel(S));
+      let exists = false; try { exists = fs.statSync(file).isFile(); } catch (e) { exists = false; }
+      return { dir, file: path.basename(file), found: exists, isDefault: dir === defaultDir };
+    }
+    ipcMain.handle('ph:onboardInfo', () => ({ ok: true, defaultDir, folder: folderInfo(defaultDir), houses: HOUSES, avatars: AVATARS, nameMax: NAME_MAX }));
+    ipcMain.handle('ph:onboardCheckName', (e, name) => cleanName(name));
+    // 폴더 고르기 창 (시험은 PH_PICK_DIR 로 고른 것처럼)
+    ipcMain.handle('ph:onboardPickFolder', async () => {
+      let dir = null;
+      if (env.PH_SHOTS === '1') dir = env.PH_PICK_DIR ? path.resolve(env.PH_PICK_DIR) : null;
+      else {
+        const r = await dialog.showOpenDialog(getWin(), { title: '기록 폴더 고르기', defaultPath: fs.existsSync(defaultDir) ? defaultDir : app.getPath('documents'), properties: ['openDirectory', 'createDirectory'] });
+        dir = r.canceled || !r.filePaths || !r.filePaths[0] ? null : r.filePaths[0];
+      }
+      if (!dir) return { ok: false, canceled: true };
+      allowed.add(dir);
+      return Object.assign({ ok: true }, folderInfo(dir));
+    });
+    // 끝: 폴더 확인 -> (기록 파일이 없으면) 빈 틀 + 고른 습관 -> profile.json -> 집 열기
+    ipcMain.handle('ph:onboardFinish', async (e, req) => {
+      const r = req || {}, n = cleanName(r.name);
+      if (!n.ok) return { ok: false, code: 'name:' + n.code };
+      if (!AVATARS.includes(r.avatar)) return { ok: false, code: 'avatar' };
+      if (!HOUSES.includes(r.house)) return { ok: false, code: 'house' };
+      if (typeof r.dir !== 'string' || !allowed.has(r.dir)) return { ok: false, code: 'dir' };
+      const dir = r.dir, file = path.join(dir, ...lifeRel(S));
+      let made = false, added = [], skipped = [];
+      try {
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        if (!fs.existsSync(file)) {
+          const LT = require(path.join(ROOT, 'js', 'life_template.js'));
+          const b = LT.build(Array.isArray(r.habits) ? r.habits : []);
+          fs.writeFileSync(file, b.text, { flag: 'wx' }); // 없을 때만 (사이에 생겼으면 덮지 않음)
+          made = true; added = b.added; skipped = b.skipped;
+        }
+        fs.accessSync(file, fs.constants.R_OK | fs.constants.W_OK);
+      } catch (err) { return { ok: false, code: 'folder', message: String(err && err.message || err) }; }
+      const user = { bundle: 'default', name: n.name, avatar: r.avatar, house: r.house, dir, furniture: {}, createdAt: new Date().toISOString() };
+      write(user);
+      setTimeout(() => onDone(read()), 30); // 답을 먼저 보내고 화면을 다시 엶
+      return { ok: true, made, added, skipped, file: path.basename(file) };
+    });
+  }
+
+  // ---- 집 꾸미기 (가): 정해진 자리마다 고른 그림 (공용판만) ----
+  function registerFurniture({ ipcMain, onChange }) {
+    ipcMain.handle('ph:furnitureSet', (e, req) => {
+      const v = read(); if (!v || v.bundle !== 'default') return { ok: false, code: 'profile' };
+      const slot = req && req.slot, sprite = req && req.sprite;
+      if (!SLOT_RE.test(String(slot)) || !SPRITE_RE.test(String(sprite))) return { ok: false, code: 'bad' };
+      v.furniture = Object.assign({}, v.furniture, { [slot]: sprite });
+      write(v);
+      if (onChange) onChange(read());
+      return { ok: true, furniture: v.furniture };
+    });
+  }
+
+  return { choose, read, write, store, loadBundle, registerOnboard, registerFurniture, cleanName, cleanFurniture, HOUSES, AVATARS };
+};

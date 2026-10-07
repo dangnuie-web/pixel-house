@@ -1,0 +1,199 @@
+/* 생활일지 · 독서 책꽂이 · 약속 달력 (js/journal.js, js/bookshelf.js, js/calendar.js. journal 브랜치 2026-10-03)
+   색은 app.css 팔레트 변수 그대로. 입력 창·상세 창은 하단 대화창(css/dialog.css #dd)과 같은 둥근 결·같은 색 값 */
+
+/* ===== 생활일지 안 탭: 모양 3가지 (settings.JOURNAL_TAB_STYLE) ===== */
+.journal { margin-top: -4px; }
+.jn-tabs { display: flex; align-items: flex-end; margin: 0 0 0; position: relative; }
+.jn-tab { font: 600 15px var(--font); color: var(--A); cursor: pointer; }
+.jn-tab:focus-visible, .jn-drop:focus-visible, .jn-opt:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+
+/* (a) 겹친 폴더 탭: 뒤 탭이 조금씩 겹쳐 있고, 고른 탭이 앞으로 나와 아래 종이(패널)와 이어짐 */
+.jn-tabs.folder { padding-left: 6px; }
+.jn-tabs.folder .jn-tab { position: relative; margin-left: -12px; padding: 9px 22px 9px; min-width: 84px; background: var(--I); border: 2px solid var(--A); border-bottom: 0;
+  border-radius: 12px 12px 0 0; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .35); color: var(--w); transform: translateY(4px); }
+.jn-tabs.folder .jn-tab:first-child { margin-left: 0; }
+.jn-tabs.folder .jn-tab:nth-child(1) { z-index: 5; } .jn-tabs.folder .jn-tab:nth-child(2) { z-index: 4; } .jn-tabs.folder .jn-tab:nth-child(3) { z-index: 3; }
+.jn-tabs.folder .jn-tab:nth-child(4) { z-index: 2; } .jn-tabs.folder .jn-tab:nth-child(5) { z-index: 1; }
+.jn-tabs.folder .jn-tab:hover { background: var(--e); color: var(--A); }
+.jn-tabs.folder .jn-tab.on { z-index: 9; background: var(--K); color: var(--A); transform: translateY(2px); padding-bottom: 11px; }
+.jn-panel.folder { position: relative; z-index: 6; background: var(--K); border: 2px solid var(--A); border-radius: 0 14px 14px 14px; padding: 20px 22px 22px; box-shadow: 0 3px 0 var(--I); }
+
+/* (b) 알약 (기본): 따로 떨어진 둥근 칸, 고른 것 = 나무색 */
+.jn-tabs.pill { gap: 8px; flex-wrap: wrap; }
+.jn-tabs.pill .jn-tab { padding: 8px 18px; border-radius: 999px; background: var(--K); border: 2px solid var(--I); }
+.jn-tabs.pill .jn-tab:hover { border-color: var(--W); }
+.jn-tabs.pill .jn-tab.on { background: var(--W); border-color: var(--A); color: var(--K); box-shadow: 0 2px 0 var(--A); }
+.jn-panel.pill, .jn-panel.dropdown { padding-top: 18px; }
+
+/* (c) 드롭다운: 지금 보기 이름 + 꺾쇠, 누르면 목록 */
+.jn-tabs.dropdown { display: inline-flex; }
+.jn-drop { display: inline-flex; align-items: center; gap: 12px; min-width: 170px; justify-content: space-between; font: 700 16px var(--font); color: var(--A); background: var(--K);
+  border: 2px solid var(--A); border-radius: 10px; padding: 8px 14px; cursor: pointer; box-shadow: 0 2px 0 var(--A); }
+.jn-drop:hover { background: #fff7e8; }
+.jn-caret { width: 10px; height: 6px; background: var(--A); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.jn-drop[aria-expanded="true"] .jn-caret { transform: rotate(180deg); }
+.jn-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 170px; z-index: 20; list-style: none; margin: 0; padding: 4px; background: var(--K); border: 2px solid var(--A); border-radius: 10px; box-shadow: 0 3px 0 var(--A); }
+.jn-opt { padding: 8px 12px; border-radius: 6px; font-size: 15px; cursor: pointer; }
+.jn-opt:hover { background: var(--h); }
+.jn-opt.on { background: var(--W); color: var(--K); font-weight: 700; }
+
+/* 물·요가·러닝: 날짜와 함께 한 줄씩 */
+.jn-count { margin: 0 0 10px; font-size: 13px; color: var(--w); }
+.jn-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: 560px; }
+.jn-list li { display: flex; align-items: baseline; gap: 10px; background: var(--K); border: 2px solid var(--I); border-radius: 10px; padding: 10px 16px; font-size: 16px; }
+.jn-panel.folder .jn-list li { background: var(--C); }
+.jn-date { font-weight: 700; min-width: 74px; font-variant-numeric: tabular-nums; }
+.jn-sep { color: var(--s); }
+.jn-panel .records { margin-top: 4px; }
+
+/* ===== 독서 책꽂이 ===== */
+.bookshelf { --row: 150px; --plank: 14px; }
+.bk-pages { display: inline-block; margin: 0 0 12px; font-size: 14px; background: var(--h); border: 2px solid var(--I); border-radius: 999px; padding: 4px 14px; }
+.bk-pages b { color: var(--d); }
+.bk-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.bk-count { margin: 0; font-size: 14px; color: var(--w); }
+.bk-count b { color: var(--A); }
+.life button.bk-add { font: 700 15px var(--font); padding: 8px 18px; border: 2px solid var(--A); border-radius: 10px; background: var(--W); color: var(--K); cursor: pointer; box-shadow: 0 2px 0 var(--A); }
+.life button.bk-add:hover { background: #BE875A; }
+.life button.bk-add:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+/* 책장: 나무 테(W), 안쪽 판(h), 선반(먹선 + J 윗면 + W 앞면 + w 그늘) = 줄마다 반복 */
+.bk-case { position: relative; background: var(--W); border: 2px solid var(--A); border-radius: 8px; padding: 12px 12px 10px; box-shadow: inset 0 3px 0 #C89466, inset 0 -3px 0 var(--w), 0 3px 0 var(--d); max-width: 900px; }
+.bk-shelf { display: flex; flex-wrap: wrap; align-content: flex-start; column-gap: 3px; min-height: calc(var(--row) * 3); padding: 0 12px; border: 2px solid var(--A); border-radius: 3px;
+  background-color: var(--h);
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(var(--row) - var(--plank)),
+    var(--A) calc(var(--row) - var(--plank)), var(--A) calc(var(--row) - var(--plank) + 2px),
+    var(--J) calc(var(--row) - var(--plank) + 2px), var(--J) calc(var(--row) - var(--plank) + 5px),
+    var(--W) calc(var(--row) - var(--plank) + 5px), var(--W) calc(var(--row) - 3px),
+    var(--w) calc(var(--row) - 3px), var(--w) var(--row)),
+    linear-gradient(to right, rgba(126, 82, 54, .16) 0, transparent 14px, transparent calc(100% - 14px), rgba(126, 82, 54, .16) 100%); }
+.bk-empty { position: absolute; left: 50%; top: calc(12px + var(--row) * 1.5); transform: translate(-50%, -60%); margin: 0; font-size: 14px; color: var(--w); background: var(--K); border: 2px dashed var(--s); border-radius: 10px; padding: 8px 14px; white-space: nowrap; }
+/* 책 한 권 = 줄 높이 버튼, 책등은 선반 위에 바닥 붙임 */
+.bk-book { height: var(--row); width: var(--bw); flex: none; padding: 0 0 var(--plank); margin: 0; border: 0; background: none; display: flex; align-items: flex-end; cursor: pointer; }
+.bk-spine { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; height: var(--bh); background: var(--c); border: 2px solid var(--A); border-bottom-width: 2px; border-radius: 3px 3px 0 0;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, .22), inset -4px 0 0 rgba(41, 38, 47, .2); transition: transform .12s steps(2, end); overflow: hidden; }
+.bk-book:hover .bk-spine, .bk-book:focus-visible .bk-spine { transform: translateY(-6px); }
+.bk-book:focus { outline: none; }
+.bk-book:focus-visible .bk-spine { outline: 3px solid var(--O); outline-offset: 1px; }
+.bk-title { flex: 1; min-height: 0; writing-mode: vertical-rl; font: 700 11px/1 var(--font); letter-spacing: 1px; padding: 10px 0 8px; overflow: hidden; white-space: nowrap; }
+.bk-spine.dark .bk-title { color: var(--K); } .bk-spine.light .bk-title { color: var(--A); }
+.bk-band { position: absolute; left: 0; right: 0; display: block; }
+/* 띠 모양 4가지 (제목+날짜로 정해짐) */
+.band0 .bk-band.t { top: 6px; height: 3px; background: var(--Y); box-shadow: 0 1px 0 var(--A); }
+.band0 .bk-band.b { bottom: 6px; height: 3px; background: var(--Y); box-shadow: 0 -1px 0 var(--A); }
+.band1 .bk-band.t { top: 0; height: 9px; background: color-mix(in srgb, var(--c) 55%, var(--A)); }
+.band1 .bk-band.b { bottom: 0; height: 9px; background: color-mix(in srgb, var(--c) 55%, var(--A)); }
+.band2 .bk-band.t { top: 5px; height: 6px; border-top: 2px solid var(--K); border-bottom: 2px solid var(--K); }
+.band2 .bk-band.b { bottom: 5px; height: 6px; border-top: 2px solid var(--K); border-bottom: 2px solid var(--K); }
+.band3 .bk-band.t { top: 0; height: 4px; background: color-mix(in srgb, var(--c) 60%, var(--K)); }
+.band3 .bk-band.b { bottom: 4px; height: 12px; background: color-mix(in srgb, var(--c) 45%, var(--K)); border-top: 2px solid var(--A); border-bottom: 2px solid var(--A); }
+.light.band2 .bk-band { border-color: var(--A); }
+/* 꽂히는 움직임: 위에서 내려와 살짝 튀고 제자리 (계단식, 0.42초) */
+.bk-book.just .bk-spine { animation: bk-in 420ms steps(7, end) both; }
+@keyframes bk-in { 0% { transform: translateY(-56px); opacity: 0; } 55% { transform: translateY(4px); opacity: 1; } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bk-book.just .bk-spine { animation: none; } .bk-spine { transition: none; } }
+/* 보관함 */
+.bk-arch { margin-top: 14px; font-size: 14px; max-width: 900px; }
+.bk-arch summary { cursor: pointer; color: var(--w); }
+.bk-arch summary small { background: var(--w); color: var(--K); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+.bk-arch ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.bk-arch li { display: flex; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--I); flex-wrap: wrap; }
+.bk-arch li span, .bk-arch li small { color: var(--w); }
+.life .bk-restore { margin-left: auto; font: 13px var(--font); padding: 4px 10px; border: 2px solid var(--A); border-radius: 6px; background: var(--K); color: var(--A); cursor: pointer; }
+.life .bk-restore:hover { background: var(--h); }
+.bk-chip { display: inline-block; width: 12px; height: 16px; background: var(--c); border: 2px solid var(--A); border-radius: 2px; vertical-align: -3px; margin-right: 4px; }
+
+/* ===== 입력 창·상세 창 (대화창 #dd와 같은 결: 크림 바탕, 먹선, 둥근 모서리, 아래 그림자) ===== */
+.bk-overlay { position: fixed; left: var(--side); right: 0; top: var(--bar); bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(41, 38, 47, .42); }
+.bk-dlg { width: min(580px, 100%); max-height: 100%; overflow: auto; background: #F7F0E1; color: #29262F; border: 2px solid #29262F; border-radius: 12px;
+  box-shadow: inset 0 -3px 0 #DDCFB4; filter: drop-shadow(0 4px 0 #5C3E2B); padding: 16px 20px 18px; font-size: 15px; }
+html.night .bk-dlg { background: #EFE3CB; box-shadow: inset 0 -3px 0 #D2C2A3; filter: drop-shadow(0 4px 0 #1E1B25); }
+.bk-name { display: inline-block; font-size: 13px; font-weight: 700; color: #F7F0E1; background: #86593A; border: 1px solid #29262F; border-radius: 4px; padding: 1px 8px; margin-bottom: 12px; }
+.bk-row { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.bk-row.top { align-items: flex-start; }
+.bk-lab { flex: none; width: 84px; font-size: 13px; font-weight: 700; color: #86593A; }
+.bk-row.top .bk-lab { padding-top: 8px; }
+.bk-colors { display: flex; flex-wrap: wrap; gap: 7px; }
+.bk-color { width: 26px; height: 30px; padding: 0; background: var(--c); border: 2px solid #29262F; border-radius: 5px; box-shadow: inset 0 -4px 0 rgba(41, 38, 47, .22); cursor: pointer; }
+.bk-color.on { box-shadow: inset 0 -4px 0 rgba(41, 38, 47, .22), 0 0 0 2px #F7F0E1, 0 0 0 4px #86593A; transform: translateY(-2px); }
+.bk-color:focus { outline: none; } .bk-color:focus-visible { outline: 2px dashed #29262F; outline-offset: 5px; }
+.bk-form input, .bk-form textarea { flex: 1; min-width: 0; font: 15px var(--font); color: #29262F; background: #FBFAF6; border: 2px solid #29262F; border-radius: 6px; padding: 7px 10px; box-shadow: inset 0 2px 0 #DDCFB4; outline: none; }
+.bk-form input:focus, .bk-form textarea:focus { border-color: #86593A; box-shadow: inset 0 2px 0 #DDCFB4, 0 0 0 2px #86593A; }
+.bk-form input::placeholder, .bk-form textarea::placeholder { color: #A0876C; }
+.bk-form input[type=date] { flex: none; width: 170px; }
+.bk-form textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+.bk-hint { font-size: 12px; color: #86593A; }
+.bk-note { margin: 0 0 6px 96px; font-size: 13px; color: #86593A; } /* 2026-10-08 "다 읽은 책만 책꽂이에 꽂혀요" */
+.bk-err { min-height: 1.2em; margin: 0 0 6px; color: var(--r); font-size: 13px; font-weight: 700; }
+.bk-btns { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.bk-btns button { font: 700 14px var(--font); padding: 7px 16px; border: 2px solid #29262F; border-radius: 6px; cursor: pointer; background: #F1E3C7; color: #29262F; box-shadow: inset 0 -2px 0 #DDBF98; }
+.bk-btns button:hover { background: #E0C79E; }
+.bk-btns .bk-save, .bk-btns .bk-edit { background: #86593A; color: #F7F0E1; box-shadow: inset 0 -2px 0 #29262F; }
+.bk-btns .bk-save:hover, .bk-btns .bk-edit:hover { background: #75492C; }
+.bk-btns button:focus-visible { outline: 2px solid #29262F; outline-offset: 2px; }
+.bk-d-top { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+.bk-d-spine { flex: none; width: 22px; height: 64px; background: var(--c); border: 2px solid #29262F; border-radius: 3px 3px 0 0; box-shadow: inset 3px 0 0 rgba(255, 255, 255, .22), inset -4px 0 0 rgba(41, 38, 47, .2); }
+.bk-d-top h3 { margin: 0 0 4px; font-size: 20px; word-break: keep-all; overflow-wrap: anywhere; }
+.bk-d-meta { margin: 0; font-size: 13px; color: #86593A; }
+.bk-d-sum { white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.6; background: #FBFAF6; border: 2px solid #DDCFB4; border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; max-height: 42vh; overflow: auto; }
+.bk-d-none { color: #A0876C; margin: 0 0 14px; }
+
+/* ===== 약속 달력 (약속 탭 "다가오는 약속" 아래) ===== */
+.cal { background: var(--K); border: 2px solid var(--I); border-radius: 12px; padding: 16px 18px 14px; max-width: 760px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.cal-head h3 { margin: 0; }
+.cal-nav { display: inline-flex; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.cal-nav button { font: 13px var(--font); border: 0; border-left: 2px solid var(--A); background: var(--K); color: var(--A); padding: 4px 11px; cursor: pointer; }
+.cal-nav button:first-child { border-left: 0; }
+.cal-nav button:hover:not(:disabled) { background: var(--h); }
+.cal-nav button:disabled { color: var(--s); cursor: default; }
+.cal-nav button:focus-visible { outline: 2px solid var(--O); outline-offset: -3px; }
+/* 달력 = 한 장의 표 (무늬 기록기능디자인 v01 6절, 제작자 2026-10-08): 칸 간격 0, 선으로만 구분, 바깥 네 귀퉁이 칸만 바깥쪽 모서리 하나씩 둥글게 */
+.cal-grid { display: flex; flex-direction: column; gap: 0; border: 2px solid var(--I); border-radius: 10px; overflow: hidden; background: var(--C); }
+.cal-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+.cal-wd { margin-bottom: 4px; }
+.cal-wd span { font-size: 12px; font-weight: 700; color: var(--w); text-align: center; padding: 2px 0; }
+.cal-wd .sat { color: var(--n); } .cal-wd .sun { color: var(--r); }
+.cal-day { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 64px; padding: 6px 7px; text-align: left; font: 13px var(--font); color: var(--A);
+  background: var(--C); border: 0; border-right: 1px solid var(--I); border-bottom: 1px solid var(--I); border-radius: 0; cursor: pointer; overflow: hidden; }
+.cal-grid .cal-row .cal-day:last-child { border-right: 0; }
+.cal-grid .cal-row:last-child .cal-day { border-bottom: 0; }
+.cal-grid .cal-row:first-child .cal-day:first-child { border-top-left-radius: 8px; }
+.cal-grid .cal-row:first-child .cal-day:last-child { border-top-right-radius: 8px; }
+.cal-grid .cal-row:last-child .cal-day:first-child { border-bottom-left-radius: 8px; }
+.cal-grid .cal-row:last-child .cal-day:last-child { border-bottom-right-radius: 8px; }
+.cal-day:hover { background: #F1E3C7; }
+.cal-day.out { background: #EFE6D3; }
+.cal-day.out .cal-n { color: #B9A88F; }
+.cal-day.out .cal-mt small, .cal-day.out .cal-more { color: #C8A57C; }
+.cal-day.out .cal-dot { background: #C8A57C; box-shadow: 0 0 0 1px #C8A57C; }
+.cal-day.sun .cal-n { color: var(--r); } .cal-day.sat .cal-n { color: var(--n); }
+.cal-day.out.sun .cal-n, .cal-day.out.sat .cal-n { color: #B9A88F; }
+.cal-n { font-weight: 700; font-size: 13px; line-height: 20px; width: 22px; height: 22px; text-align: center; border-radius: 50%; }
+.cal-day.today .cal-n { background: var(--r); color: var(--K); }
+.cal-day.sel { background: var(--h); box-shadow: inset 0 0 0 2px var(--A); }
+.cal-day:focus { outline: none; } .cal-day:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--O); }
+.cal-day.sel:focus-visible { box-shadow: inset 0 0 0 2px var(--A), inset 0 0 0 4px var(--O); }
+.cal-marks { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cal-mt { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.cal-mt small, .cal-more { font-size: 12px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--d); }
+.cal-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--W); box-shadow: 0 0 0 1px var(--A); }
+.cal-day.past .cal-dot { background: var(--I); box-shadow: 0 0 0 1px var(--s); }
+.cal-day.past .cal-mt small, .cal-day.past .cal-more { color: var(--s); }
+.cal-more { color: var(--w); }
+.cal-list { margin-top: 14px; border-top: 1px solid var(--I); padding-top: 12px; }
+.cal-list h4 { margin: 0 0 8px; font-size: 15px; }
+.cal-list h4 small { font-size: 12px; background: var(--r); color: var(--K); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+.cal-its { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } /* 약속 목록(.mt)과 같은 모양, 이름만 따로 (옛 시험이 .mt 수를 셈) */
+.cal-it { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 12px; background: var(--C); border: 2px solid var(--I); border-left: 8px solid var(--W); border-radius: 10px; padding: 11px 16px; font-size: 16px; }
+.cal-it-time { color: var(--w); }
+.cal-it.past { color: var(--w); background: var(--i); border-left-color: var(--I); opacity: .75; }
+.cal-none { margin: 0; font-size: 14px; color: var(--w); }
+/* 약속 쓰기 (2026-10-07, js/meeting_edit_ui.js): 버튼·입력 모양은 css/habit_edit.css 그대로. 여기는 자리만 */
+.cal-it { grid-template-columns: 80px 1fr auto; }
+.cal-it .he-btns { margin-left: 0; }
+.cal-it .he-form { grid-column: 1 / -1; margin: 4px 0 0; }
+.cal-list > .he-add { margin: 10px 0 0; }
+.cal-list > .he-form { margin: 10px 0 0; }
+.cal-list > .he-undo { margin: 8px 0 0; }
+.mte-in-time { width: 96px; } .mte-in-text { width: 220px; } .mte-in-date { width: 150px; }

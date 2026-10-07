@@ -1,0 +1,91 @@
+/* 공부 간트 편집 (js/study_gantt.js, study 브랜치 2026-10-03). 색은 app.css 팔레트 그대로 (막대 --G, 칠한 날 --g, 고른 테두리 --O) */
+.st-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.st-head h3 { margin: 0; }
+.st-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.st-nav { display: inline-flex; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.st-nav button { font: 13px var(--font); border: 0; border-left: 2px solid var(--A); background: var(--K); color: var(--A); padding: 4px 10px; cursor: pointer; }
+.st-nav button:first-child { border-left: 0; }
+.st-nav button:disabled { color: var(--s); cursor: default; }
+.st-edit button { font-family: var(--font); }
+.st-add, .st-btns button, .st-form button, .st-restore { font-size: 13px; padding: 5px 10px; border: 2px solid var(--A); border-radius: 6px; background: var(--K); color: var(--A); cursor: pointer; }
+.st-add { font-weight: 700; background: var(--G); }
+.st-btns button.primary { background: var(--G); font-weight: 700; }
+.st-edit button:hover:not(:disabled) { background: var(--h); }
+.st-edit button:focus-visible, .st-edit .g-label:focus-visible { outline: 2px solid var(--O); outline-offset: 1px; }
+.st-head + .kind-desc { margin-top: 8px; }
+
+/* 막대: 끌기 (가운데 = 옮기기, 양끝 손잡이 = 시작·끝) */
+.st-edit .g-bar { cursor: grab; touch-action: none; user-select: none; z-index: 1; }
+.st-edit .g-bar.dragging { cursor: grabbing; }
+.st-edit .g-bar:focus { outline: none; }
+.st-edit .g-bar:focus-visible { outline: 2px dashed var(--A); outline-offset: 2px; }
+.st-edit .g-bar.sel { outline: 3px solid var(--O); outline-offset: 1px; box-shadow: 0 0 0 1px var(--A); }
+.g-h { position: absolute; top: -2px; bottom: -2px; width: 7px; cursor: ew-resize; }
+.g-h.s { left: -4px; } .g-h.e { right: -4px; }
+.st-edit .g-bar:hover .g-h, .st-edit .g-bar.sel .g-h { background: rgba(41, 38, 47, .25); border-radius: 2px; }
+/* 오늘 공부한 날 칸 (습관 기록 "이름 n시간") */
+.g-done { position: absolute; top: 9px; height: 12px; background: var(--g); border-radius: 1px; z-index: 2; pointer-events: none; box-shadow: inset 0 0 0 1px var(--A); }
+.st-edit .g-label { cursor: pointer; border-radius: 6px; padding-left: 6px; margin-left: -6px; }
+.st-edit .g-label.sel { background: var(--h); box-shadow: inset 3px 0 0 var(--O); }
+.st-edit .g-row { cursor: pointer; }
+
+/* 고른 공부 정보 */
+.st-info { margin-top: 14px; border-top: 1px solid var(--I); padding-top: 12px; }
+.st-sel h4 { margin: 0 0 8px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.st-state { font-size: 12px; font-weight: 400; background: var(--w); color: var(--K); border-radius: 4px; padding: 1px 7px; }
+.st-sel dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0 0 10px; font-size: 14px; }
+.st-sel dt { color: var(--w); }
+.st-sel dd { margin: 0; }
+.st-day { display: inline-block; background: var(--g); color: var(--K); border-radius: 4px; padding: 0 6px; margin-right: 4px; font-size: 13px; }
+.st-none { color: var(--s); }
+.st-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.st-help { font-size: 12px; color: var(--w); margin: 10px 0 2px; }
+.st-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; padding: 10px 12px; background: var(--i); border: 2px solid var(--I); border-radius: 8px; font-size: 14px; }
+.st-form label { display: inline-flex; gap: 6px; align-items: center; }
+.st-form input { font: 14px var(--font); padding: 4px 8px; border: 2px solid var(--A); border-radius: 6px; background: var(--C); color: var(--A); }
+.st-form .st-in-name, .st-form .st-in-text { width: 220px; }
+.st-err { flex-basis: 100%; margin: 0; color: var(--r); font-size: 13px; }
+
+/* 보관함 (지운 공부, 되돌리기) */
+.st-arch { margin-top: 12px; font-size: 14px; }
+.st-arch summary { cursor: pointer; color: var(--w); }
+.st-arch summary small { background: var(--w); color: var(--K); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+.st-arch ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.st-arch li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--I); flex-wrap: wrap; }
+.st-arch li span, .st-arch li small { color: var(--w); }
+.st-arch li .st-restore { margin-left: auto; }
+
+/* ===== 2026-10-08 과목 기간 띠 + 단원 줄 (칠하기) + 주/월 보기 (무늬 기록기능디자인 v01 5-2) ===== */
+.st-view { display: inline-flex; height: 28px; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.st-view .st-v { border: 0; border-left: 2px solid var(--A); border-radius: 0; padding: 0 12px; font: 500 13px var(--font); background: var(--ui-paper); color: var(--ui-sub); }
+.st-view .st-v:first-child { border-left: 0; }
+.st-view .st-v.on { background: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 600; }
+.st-edit .st-view .st-v.on:hover { background: var(--ui-sel-hover); }
+/* 칸 세로선: 주 보기 = 매일, 월 보기 = 주 경계 (트랙 바탕 줄무늬 대신) */
+.gantt.v-week .g-track, .gantt.v-month .g-track { background: none; }
+.g-vline { position: absolute; top: 0; bottom: 0; width: 1px; background: #DDCFB4; pointer-events: none; }
+.gantt.v-week .g-weeks span { text-align: center; padding-left: 0; border-left: 0; font-size: 12px; }
+.gantt.v-week .g-weeks span.today { color: var(--r); font-weight: 700; }
+/* 과목 줄 = 얇은 기간 띠 (과목 색, 끌기 손잡이는 그대로) */
+.st-edit .g-row .g-bar { top: 5px; height: 20px; background: transparent; border: 0; border-radius: 4px; }
+.st-edit .g-row .g-bar::before { content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 4px; border-radius: 2px; background: var(--sc, var(--G)); }
+.st-edit .g-row .g-bar.open::before { background: linear-gradient(90deg, var(--sc, var(--G)) 80%, transparent); }
+.st-edit .g-row .g-bar.sel { outline: 2px solid var(--O); outline-offset: 0; box-shadow: none; }
+.st-edit .g-label b { display: inline-flex; align-items: center; gap: 6px; }
+/* 단원 줄 */
+.g-plabel { padding-left: 16px; font-size: 14px; min-height: 28px; cursor: pointer; }
+.g-plabel span { display: inline-flex; align-items: center; gap: 6px; }
+.g-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sc); box-shadow: 0 0 0 1px var(--A); }
+.g-prow { min-height: 28px; cursor: cell; }
+.g-prow:hover { background-color: rgba(241, 227, 199, .55); }
+.g-pbar { position: absolute; top: 6px; height: 16px; box-sizing: border-box; background: var(--sc); border: 2px solid var(--A); border-radius: 4px; pointer-events: none; }
+.g-pbar.review { background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(41, 38, 47, .18) 4px 6px), var(--sc); }
+.gantt.v-month .g-pbar { top: 8px; height: 12px; border-width: 1.5px; }
+.st-v-parts { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-part { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; background: var(--ui-paper); border-radius: 999px; font-size: 13px; }
+.st-part small { color: var(--ui-sub); }
+.st-edit .st-part button { font: 500 12px var(--font); border: 0; background: none; padding: 2px 6px; border-radius: 5px; cursor: pointer; color: var(--A); }
+.st-edit .st-part .st-pdel { color: var(--ui-danger); }
+.st-paint-help { margin-top: 8px; }
+/* 오늘 세로선은 클릭을 받지 않음 (오늘 칸 칠하기를 가로채던 것, 2026-10-08) */
+.g-today { pointer-events: none; }

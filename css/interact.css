@@ -1,0 +1,23 @@
+/* 집 안 상호작용 (interact). 임시 모양: 무늬(디자인) 그림·시안이 오면 바꿈.
+   - 말풍선 중 누를 수 있는 것(A 약속 한 줄 -> 약속 탭)
+   - 대화창 "오늘 하루" 카드 (C 하루 마감), 기분 4칸 선택지 (D) */
+.bubble.act { pointer-events: auto; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.bubble.act:hover { background: var(--h, #F4E6C6); }
+
+/* 오늘 하루 카드: 대사 위, 한 것만. 단위 = 대화창 du */
+.dd-card { background: var(--dlg-chip, #FBF6EA); border: 1px solid var(--dlg-line, #29262F); border-radius: var(--dlg-r-s, 4px);
+  padding: calc(2 * var(--du)) calc(4 * var(--du)); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo, #E7D5B2); }
+.dd-card[hidden] { display: none; }
+.dd-card-title { font-weight: 700; font-size: max(11px, calc(6.5 * var(--du))); color: var(--dlg-sub, #6B5B4E); margin-bottom: calc(1 * var(--du)); }
+.dd-card-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 calc(6 * var(--du)); }
+.dd-card-list li { font-size: max(12px, calc(7 * var(--du))); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-card-list b { font-weight: 700; margin-right: calc(2 * var(--du)); color: var(--dlg-sub, #6B5B4E); }
+
+/* 기분 4칸: 2x2 (무늬 배치: 위 줄 = 기운 있음 mood_0·mood_2, 아래 줄 = 기운 없음 mood_1·mood_3) */
+.dd-choices[data-kind="mood"] .dd-ch { height: calc(14 * var(--du)); }
+.dd-icon { flex: none; width: calc(12 * var(--du)); height: calc(12 * var(--du)); image-rendering: pixelated; } /* 무늬 mood_0~3 (16x16) */
+.dd-desc { margin-left: calc(3 * var(--du)); font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub, #6B5B4E); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-ch.on .dd-desc { color: var(--dlg-sel-tx, #fff); }
+
+/* 기능 입구로 연 사이드바 칸 잠깐 표시 (공부 카드, 요가 줄) */
+.ix-flash { outline: 2px solid var(--dlg-dot, #E59A4F); outline-offset: 2px; border-radius: 4px; }

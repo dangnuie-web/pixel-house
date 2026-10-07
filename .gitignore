@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+dist/
+.env
+.env.*
+# 개인 설정 묶음은 이 저장소에 넣지 않음 (공용 묶음 default만)
+profiles/*
+!profiles/default/
+preview/

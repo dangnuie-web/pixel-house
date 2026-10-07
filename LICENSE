@@ -1,0 +1,7 @@
+Copyright (c) 2026 Pixel House authors. All rights reserved.
+
+이 저장소의 코드, 그림(픽셀 아트), 대사 글은 저작권자에게 모든 권리가 있습니다.
+저작권자의 허락 없이 복제, 수정, 배포, 판매할 수 없습니다.
+배포 방식(무료 공개, 후원, 판매)이 정해지면 이 파일을 새 라이선스로 바꿉니다.
+
+이 앱이 개발에 쓰는 Electron, electron-builder는 각자의 라이선스(MIT)를 따르며, 이 저장소에 포함되어 있지 않습니다(npm install 로 받음).

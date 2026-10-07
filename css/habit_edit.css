@@ -1,0 +1,97 @@
+/* 습관 편집 칸 + 공부 지우기 고르기. 무늬 편집연동화면 v01 (제작자 승인 2026-10-04) 3장 값.
+   "버튼 상자를 걷어 내고, 종이 위 글과 갈색 고름만": 먹선은 바깥 틀에만, 안쪽은 바탕색 차이. 주 버튼 하나만 갈색 칠, 나머지는 흰 칩·글자 버튼.
+   색은 app.css :root의 --ui-* (팔레트 밖 색 없음). 작은 그림(자물쇠·계단 화살표) = js/ui_icons.js --ic-* */
+
+/* ---- 버튼 세 가지 ---- */
+/* 흰 칩 (고치기·+ 추가·편집) */
+.life button.he-toggle, .he-panel .he-fix, .he-panel .he-add, .he-panel .he-fn-add, .cal-list .he-fix, .cal-list .he-add {
+  font: 500 13px var(--font); color: var(--A); background: var(--ui-field); border: 1px solid var(--ui-chip-line); border-radius: 5px; height: 26px; padding: 0 10px; cursor: pointer; }
+.life button.he-toggle:hover, .he-panel .he-fix:hover, .he-panel .he-add:hover, .he-panel .he-fn-add:hover, .cal-list .he-fix:hover, .cal-list .he-add:hover { background: var(--ui-ring); }
+.life button.he-toggle:active, .he-panel .he-fix:active, .he-panel .he-add:active, .he-panel .he-fn-add:active, .cal-list .he-fix:active, .cal-list .he-add:active { background: var(--ui-ring); transform: translateY(1px); }
+/* 주 버튼 (편집 끝·되돌리기·저장·보관함으로): 갈색 칠, 먹선 없음 */
+.life button.he-toggle.on, .he-panel .he-undo-b, .cal-list .he-undo-b, .he-form .he-save, .st-rm .st-archive, .st-undo button {
+  font: 600 13px var(--font); color: var(--ui-sel-tx); background: var(--ui-sel); border: 0; border-radius: 5px; height: 26px; padding: 0 12px; cursor: pointer; }
+.life button.he-toggle.on:hover, .he-panel .he-undo-b:hover, .cal-list .he-undo-b:hover, .he-form .he-save:hover:not(:disabled), .st-rm .st-archive:hover, .st-undo button:hover { background: var(--ui-sel-hover); }
+.he-panel .he-undo-b:active, .cal-list .he-undo-b:active, .he-form .he-save:active:not(:disabled), .st-rm .st-archive:active, .st-undo button:active { transform: translateY(1px); }
+.he-form .he-save:disabled { background: var(--ui-off-bg); color: var(--ui-off-tx); cursor: default; }
+/* 글자 버튼 (삭제·완전히 삭제 = 빨강, 그만두기 = 갈색) */
+.he-panel .he-del, .cal-list .he-del, .he-form .he-cancel, .st-rm .st-rm-del, .st-rm .st-rm-cancel {
+  font: 500 13px var(--font); color: var(--ui-danger); background: none; border: 0; border-radius: 5px; height: 26px; padding: 0 8px; cursor: pointer; }
+.he-form .he-cancel, .st-rm .st-rm-cancel { color: var(--ui-sub); }
+.he-panel .he-del:hover, .cal-list .he-del:hover, .he-form .he-cancel:hover, .st-rm .st-rm-del:hover, .st-rm .st-rm-cancel:hover { background: var(--ui-hover); }
+/* 키보드 포커스: 먹 링 (갈색 버튼 위에서도 보이게) */
+.life button.he-toggle:focus-visible, .he-panel button:focus-visible, .cal-list .he-btns button:focus-visible, .cal-list .he-add:focus-visible, .cal-list .he-undo button:focus-visible, .he-form button:focus-visible, .st-rm button:focus-visible, .st-undo button:focus-visible {
+  outline: 2px solid var(--ui-line); outline-offset: 2px; }
+
+.card h3 .he-toggle { margin-left: auto; }
+.card h3 .chk-open + .he-toggle { margin-left: 0; }
+
+/* ---- 편집 칸 (쟁반): 테두리 없음, 위 안쪽 그늘 ---- */
+.he-panel { background: var(--i); border: 0; border-radius: 10px; box-shadow: inset 0 2px 0 var(--ui-inner); padding: 4px 0 12px; margin: 12px 0; }
+.kind .he-panel ul.he-list { list-style: none; margin: 0 0 6px; padding: 0; }
+.kind .he-panel li.he-row { position: relative; display: flex; flex-wrap: wrap; align-items: center; min-height: 38px; padding: 6px 8px 6px 10px; border-top: 0; font-size: 15px; }
+.kind .he-panel li.he-row + li.he-row::before { content: ""; position: absolute; left: 8px; right: 8px; top: 0; height: 1px; background: var(--ui-inner); }
+.he-name { display: inline-flex; align-items: baseline; gap: 8px; min-width: 0; margin-left: 12px; }
+.he-name b { font-size: 15px; font-weight: 700; color: var(--A); }
+.he-name small { font-size: 12px; color: var(--w); }
+.he-btns { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+
+/* ▲▼ 묶음 칩 (이름 앞 고정 열): 52x26, 가운데 1px 나눔, 계단 화살표 9x5 (끝에 닿으면 화살표만 연하게) */
+.he-order { flex: none; display: inline-flex; height: 26px; border: 1px solid var(--ui-chip-line); border-radius: 5px; background: var(--ui-field); }
+.he-panel .he-order button { width: 25px; height: 24px; padding: 0; border: 0; background: transparent no-repeat center / 9px 5px; cursor: pointer; image-rendering: pixelated; }
+.he-panel .he-order .he-up { border-radius: 4px 0 0 4px; background-image: var(--ic-up); border-right: 1px solid var(--ui-chip-line); }
+.he-panel .he-order .he-down { border-radius: 0 4px 4px 0; background-image: var(--ic-down); }
+.he-panel .he-order .he-up:disabled { background-image: var(--ic-up-off); cursor: default; }
+.he-panel .he-order .he-down:disabled { background-image: var(--ic-down-off); cursor: default; }
+.he-panel .he-order button:hover:not(:disabled), .he-panel .he-order button:active:not(:disabled) { background-color: var(--ui-ring); }
+.he-panel .he-order button:focus-visible { outline: 2px solid var(--ui-line); outline-offset: 0; position: relative; z-index: 1; }
+
+/* 잠김 표시: 자물쇠 8x10 + 6px + 글 */
+.he-lock { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--font); color: var(--ui-sub); white-space: nowrap; padding: 0 4px; }
+.he-lock::before { content: ""; width: 8px; height: 10px; background: var(--ic-lock) no-repeat; image-rendering: pixelated; flex: none; }
+
+/* + 추가: 흰 칩, 글 갈색, 이름 열(왼쪽 10px)에 맞춤 */
+.he-panel .he-add, .cal-list .he-add { height: 28px; color: var(--ui-sub); margin-left: 10px; }
+
+/* 되돌리기 줄: 쟁반보다 밝은 쪽지(점선 없음), 버튼은 오른쪽 끝 */
+.he-undo { display: flex; align-items: center; gap: 10px; margin: 2px 8px 8px; min-height: 36px; padding: 0 6px 0 12px; background: var(--ui-paper); border: 0; border-radius: 6px; font: 500 13px var(--font); color: var(--A); }
+.he-undo .he-undo-b { margin-left: auto; }
+
+/* ---- 입력칸 (추가·고치기): 쟁반 안 종이 한 장. 1줄 = 입력들, 2줄 = 안내·오류 | 저장·그만두기 ---- */
+.he-form { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 6px 0 2px; padding: 12px 14px; background: var(--ui-paper); border: 1px solid var(--ui-chip-line); border-radius: 8px; font-size: 14px; }
+.he-panel > .he-form { margin: 4px 8px; }
+.he-form > label, .he-f-cycle { display: inline-flex; align-items: center; gap: 8px; }
+.he-form label, .he-lab { font: 500 13px var(--font); color: var(--ui-sub); }
+.he-form input, .he-form select { font: 14px var(--font); color: var(--A); height: 30px; padding: 0 8px; border: 1px solid var(--ui-chip-line); border-radius: 5px; background-color: var(--ui-field); box-shadow: inset 0 1px 0 var(--ui-inner); box-sizing: border-box; }
+.he-form input::placeholder { color: var(--ui-ph); }
+.he-form input:focus, .he-form select:focus { outline: none; border-color: var(--ui-sub); box-shadow: inset 0 1px 0 var(--ui-inner), 0 0 0 2px var(--ui-ring); }
+.he-form input.err { border-color: var(--ui-danger); box-shadow: inset 0 1px 0 var(--ui-inner), 0 0 0 2px var(--ui-danger-ring); }
+.he-form select { appearance: none; -webkit-appearance: none; padding-right: 26px; background-image: var(--ic-down); background-repeat: no-repeat; background-position: right 9px center; background-size: 9px 5px; }
+.he-in-name { width: 150px; } .he-in-target { width: 120px; } .he-in-n { width: 56px; }
+.he-f-foot { flex-basis: 100%; display: flex; align-items: center; gap: 14px; }
+.he-f-msg { flex: 1; min-width: 0; }
+.he-f-btns { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.he-form .he-save { height: 30px; padding: 0 14px; }
+.he-form .he-cancel { height: 30px; }
+.he-note { margin: 0; font-size: 12px; color: var(--ui-sub); }
+/* 오류 2줄: 무엇이 문제(13px 600) / 날짜·이유(12px) */
+.he-err { margin: 0; color: var(--ui-danger); }
+.he-err b { display: block; font: 600 13px var(--font); }
+.he-err span { display: block; font: 400 12px var(--font); margin-top: 2px; }
+
+/* 매일 n회 칸: 주 칸과 같은 네모, 칸 번호 순서로 참 */
+.daily-row .wk.dk.on { background: var(--G); }
+
+/* ---- 공부: 지우기 -> 보관함으로(주) / 완전히 삭제(빨강 글자) / 그만두기 ---- */
+.st-rm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; min-height: 50px; padding: 6px 12px 6px 14px; background: var(--ui-hover); border: 0; border-radius: 8px; font: 500 14px var(--font); color: var(--A); }
+.st-rm .st-rm-q { margin-right: auto; }
+.st-rm .st-rm-q b { font-weight: 700; }
+.st-rm .st-archive { margin-right: 6px; }
+.st-undo { display: flex; align-items: center; gap: 10px; margin: 8px 0; min-height: 36px; padding: 0 6px 0 12px; background: var(--ui-paper); border: 0; border-radius: 6px; font: 500 13px var(--font); color: var(--A); }
+.st-undo button { margin-left: auto; }
+
+/* 일지 기능 습관 (2026-10-04): "가구 연동" 잠김, 꺼진 일지 기능 다시 더하기 */
+.he-fn-lock { margin-right: 4px; }
+.he-fn-picks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 10px 8px 0; padding: 8px 2px 0; border-top: 1px solid var(--ui-inner); }
+.he-fn-picks .he-lab { font-size: 13px; color: var(--ui-sub); }
+.he-panel .he-fn-add { color: var(--ui-sub); }

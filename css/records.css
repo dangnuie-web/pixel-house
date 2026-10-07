@@ -1,0 +1,92 @@
+/* 영화·연극·새 기록 항목 목록 (js/record_list.js, 2026-10-08 비트). 무늬 기록기능디자인 v01 3절(리스트형)·4절(폼 = 독서 폼 .bk-* 그대로)
+   생활일지 탭과 집 TV 창(.bm, css/book_modal.css) 안에서 같이 씀. 버튼 결 = 습관 편집 (고치기 흰 칩, 지우기 빨강 글자, 되돌리기 갈색) */
+.records { max-width: 760px; }
+.rc-bar { display: flex; align-items: center; gap: 12px; margin: 4px 0 6px; }
+.rc-add { margin-left: auto; font: 700 15px var(--font); color: var(--K); background: var(--W); border: 2px solid var(--A); border-radius: 8px; padding: 7px 16px; cursor: pointer; box-shadow: 0 3px 0 var(--A); }
+.rc-add:hover { background: var(--w); }
+.rc-add:focus-visible, .rc-pill:focus-visible, .rc-row:focus-visible, .rc-btns button:focus-visible, .rc-restore:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+.rc-title { font-size: 18px; } .rc-title small { font-size: 13px; color: var(--ui-sub); margin-left: 4px; }
+/* [영화 12 | 연극 3] 알약: 두 칸 붙은 하나, 높이 30px, 먹선 2px, 칸 사이 2px 먹선 (약속 달력 ◀ 이번 달 ▶ 묶음과 같은 결) */
+.rc-pills { display: inline-flex; height: 30px; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.rc-pill { font: 500 14px var(--font); color: var(--ui-sub); background: var(--ui-paper); border: 0; border-left: 2px solid var(--A); padding: 0 14px; cursor: pointer; }
+.rc-pill:first-child { border-left: 0; }
+.rc-pill small { font-size: 12px; margin-left: 4px; }
+.rc-pill.on { background: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 600; }
+.rc-pill:not(.on):hover { background: var(--ui-hover); }
+.rc-form-pills { align-self: flex-start; margin-bottom: 4px; }
+.rc-list { position: relative; }
+.rc-month { position: sticky; top: 0; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; padding: 18px 2px 6px; border-bottom: 2px solid var(--ui-inner); background: var(--ui-paper); }
+.rc-month h4 { margin: 0; font-size: 15px; font-weight: 700; color: var(--A); }
+.rc-month span { font-size: 13px; color: var(--ui-sub); }
+.rc-items { list-style: none; margin: 0; padding: 0; }
+.rc-it { border-bottom: 1px solid var(--ui-inner); }
+.rc-it.just { animation: rc-just 600ms ease-out; }
+@keyframes rc-just { from { background: var(--ui-hover); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .rc-it.just { animation: none; } }
+.rc-row { display: flex; align-items: stretch; width: 100%; min-height: 60px; padding: 10px 0; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.rc-row:hover { background: var(--ui-hover); }
+.rc-row:focus-visible { outline-offset: -2px; }
+.rc-date { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--ui-inner); }
+.rc-date b { font-size: 15px; font-weight: 700; color: var(--A); font-variant-numeric: tabular-nums; }
+.rc-date small { font-size: 12px; color: var(--ui-sub); } .rc-date small.sat { color: var(--n); } .rc-date small.sun { color: var(--r); }
+.rc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding-left: 14px; }
+.rc-t { font-size: 16px; font-weight: 600; color: var(--A); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-s { font-size: 13px; color: var(--ui-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-detail { padding: 0 8px 12px 70px; }
+.rc-full { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--A); }
+.rc-none { margin: 0; font-size: 13px; color: var(--ui-sub); }
+.rc-btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.rc-btns .rc-fix { font: 500 13px var(--font); color: var(--A); background: var(--ui-field); border: 1px solid var(--ui-chip-line); border-radius: 5px; height: 26px; padding: 0 10px; cursor: pointer; }
+.rc-btns .rc-fix:hover { background: var(--ui-ring); }
+.rc-btns .rc-del { font: 500 13px var(--font); color: var(--ui-danger); background: none; border: 0; border-radius: 5px; height: 26px; padding: 0 8px; cursor: pointer; }
+.rc-btns .rc-del:hover { background: var(--ui-hover); }
+.rc-undo { display: flex; align-items: center; gap: 10px; margin: 8px 0; min-height: 36px; padding: 0 6px 0 12px; background: var(--ui-off-bg); border-left: 4px solid var(--ui-sel); border-radius: 6px; font: 500 13px var(--font); }
+.rc-restore { margin-left: auto; font: 600 13px var(--font); color: var(--ui-sel-tx); background: var(--ui-sel); border: 0; border-radius: 5px; height: 26px; padding: 0 12px; cursor: pointer; }
+.rc-empty { padding: 36px 0; text-align: center; } .rc-empty p { margin: 0; font-size: 15px; color: var(--ui-sub); }
+.rc-form .rc-in-title.bad { border-color: var(--ui-danger); }
+.rc-form .bk-err { color: var(--ui-danger); }
+/* 집 TV 창 안: 창 높이에 맞춰 스크롤 (달 머리 sticky 바탕 = 창 바탕) */
+.bm .records { max-width: none; }
+.bm .rc-month { background: var(--dlg-bg); }
+/* 생활 습관 탭 "기록 항목" 칸 (js/record_kinds_ui.js). 습관 편집과 같은 버튼 결 */
+.rk-list { list-style: none; margin: 6px 0 8px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.rk-it { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; background: var(--ui-paper); border-radius: 999px; box-shadow: inset 0 -1px 0 var(--ui-inner); font: 600 14px var(--font); }
+.rk-fixed { font-size: 12px; color: var(--ui-sub); padding-right: 6px; }
+.rk-card .rk-del { font: 500 13px var(--font); color: var(--ui-danger); background: none; border: 0; border-radius: 5px; height: 24px; padding: 0 6px; cursor: pointer; }
+.rk-card .rk-del:hover { background: var(--ui-hover); }
+.rk-card .rk-add { font: 500 13px var(--font); color: var(--ui-sub); background: var(--ui-field); border: 1px solid var(--ui-chip-line); border-radius: 5px; height: 28px; padding: 0 10px; cursor: pointer; }
+.rk-card .rk-add:hover { background: var(--ui-ring); }
+.rk-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rk-form label { display: flex; align-items: center; gap: 8px; }
+.rk-lab { font: 700 13px var(--font); color: var(--ui-sub); }
+.rk-in { font: 15px var(--font); height: 34px; width: 180px; padding: 0 10px; border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); }
+.rk-in.bad { border-color: var(--ui-danger); }
+.rk-err { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--ui-danger); }
+.rk-err:empty { display: none; }
+.rk-card .rk-undo { margin: 4px 0 8px; background: var(--ui-off-bg); border-left: 4px solid var(--ui-sel); }
+.rk-card button:focus-visible, .rk-in:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+.rk-card .he-undo-b { font: 600 13px var(--font); color: var(--ui-sel-tx); background: var(--ui-sel); border: 0; border-radius: 5px; height: 26px; padding: 0 12px; cursor: pointer; margin-left: auto; }
+/* TV 창은 높이를 고정 (목록이 짧아도 폼이 잘리지 않게), 안에서 스크롤 */
+.bm.rm .bm-box { height: min(calc(330 * var(--du)), calc(100% - 24px)); }
+/* 생활일지 > 공부 잔디 (js/study_grass.js, 무늬 기록기능디자인 v01 5-3) */
+.grass { max-width: 760px; }
+.gr-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.gr-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 2px solid var(--A); border-radius: 999px; background: var(--ui-paper); font: 500 13px var(--font); color: var(--A); cursor: pointer; }
+.gr-pill i { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px var(--A); }
+.gr-pill.on { background: var(--ui-sel); color: var(--ui-sel-tx); }
+.gr-pill:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+.gr-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.gr-head h3 { margin: 0; font-size: 18px; } .gr-head span { font-size: 13px; color: var(--ui-sub); }
+.gr-empty { font-size: 13px; color: var(--ui-sub); margin: 0 0 8px; }
+.gr-board { display: grid; grid-template-columns: 22px auto; grid-template-rows: 16px auto; column-gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.gr-months { grid-column: 2; display: grid; grid-template-columns: repeat(var(--weeks), 12px); column-gap: 3px; font-size: 11px; color: var(--ui-sub); white-space: nowrap; }
+.gr-months span { grid-row: 1; }
+.gr-wd { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: repeat(7, 12px); row-gap: 3px; font-size: 11px; color: var(--ui-sub); line-height: 12px; }
+.gr-cells { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: repeat(var(--weeks), 12px); grid-template-rows: repeat(7, 12px); gap: 3px; }
+.gr-c { width: 12px; height: 12px; border-radius: 2px; }
+.gr-c[data-lv="0"] { box-shadow: inset 0 0 0 1px #E2D6BE; }
+.gr-c.out { background: transparent; }
+.gr-c.today { box-shadow: inset 0 0 0 2px var(--A); }
+.gr-legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 8px; font-size: 11px; color: var(--ui-sub); }
+.gr-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.gr-legend span { margin: 0 3px; }

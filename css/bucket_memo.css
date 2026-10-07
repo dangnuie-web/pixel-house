@@ -1,0 +1,57 @@
+/* 버킷리스트 메모지 (js/bucket_memo.js) + 벽 자리 고르기 (js/memo_wall.js). 디자인 = 무늬 기록기능디자인 v01 1·2절 (숫자는 문서 값)
+   du = 집 그림 높이 / 432, u = 집 그림 1px. 집 위 창은 뒤를 어둡게 덮지 않음 (냉장고 메모지와 같음). 사이드바 탭 안은 du 2px·u 3px 고정 */
+#bkm { --du: 2px; --u: 3px; position: absolute; inset: 0; z-index: 7; background: transparent; font-family: var(--font); color: #29262F; }
+#bkm[hidden] { display: none; }
+#bkm.enter .bkm-box { animation: dd-pop 80ms steps(2, end); }
+.bkm-inline { --du: 2.4px; --u: 3px; display: flex; flex-direction: column; align-items: center; gap: calc(10 * var(--du)); padding: 40px 0 12px; font-family: var(--font); color: #29262F; }
+.bkm-box { position: absolute; left: 50%; top: calc(40 * var(--du)); transform: translateX(-50%); outline: none; display: flex; flex-direction: column; align-items: center; gap: calc(10 * var(--du)); }
+.bkm-paper-wrap { position: relative; width: calc(168 * var(--du)); margin-top: calc(14 * var(--du)); }
+/* 색인 탭: 고른 탭은 종이와 이어짐(아랫변 선 없음, 종이 위), 안 고른 탭은 2du 낮게 종이 뒤 */
+.bkm-tabs { position: absolute; left: 0; top: calc(-14 * var(--du)); height: calc(18 * var(--du)); display: flex; gap: calc(4 * var(--du)); padding-left: calc(12 * var(--du)); }
+.bkm-tab { position: relative; width: calc(44 * var(--du)); height: calc(18 * var(--du)); box-sizing: border-box; padding: 0 0 calc(3 * var(--du)); border: max(2px, var(--du)) solid #29262F; border-bottom: 0;
+  border-radius: calc(3 * var(--du)) calc(3 * var(--du)) 0 0; background: #CFE3E6; color: #4E6E96; font: 500 max(11px, calc(7.5 * var(--du))) var(--font); cursor: pointer; z-index: 0; margin-top: calc(2 * var(--du)); }
+.bkm-tab b { font-weight: inherit; }
+.bkm-tab.on { background: #FBFAF6; color: #3F6340; font-weight: 700; z-index: 2; margin-top: 0; height: calc(18 * var(--du) + max(2px, var(--du))); }
+.bkm-tab:focus-visible { outline: 2px solid #29262F; outline-offset: 2px; }
+.bkm-paper { --gl: max(1px, calc(.5 * var(--du))); position: relative; z-index: 1; box-sizing: border-box; width: 100%; height: calc(152 * var(--du)); padding: 0 calc(12 * var(--du)) calc(8 * var(--du));
+  background: linear-gradient(#CFE3E6 var(--gl), transparent 0) 0 0 / 100% calc(8 * var(--du)), linear-gradient(90deg, #CFE3E6 var(--gl), transparent 0) 0 0 / calc(8 * var(--du)) 100%, #FBFAF6;
+  background-attachment: local; border: max(2px, var(--du)) solid #29262F; border-radius: calc(2 * var(--du)); filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba(92, 62, 43, .35)); overflow-y: auto; overflow-x: hidden; }
+html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba(30, 27, 37, .5)); }
+.bkm-pin { position: sticky; float: right; top: calc(-4 * var(--u)); margin-right: calc(16 * var(--du)); width: calc(9 * var(--u)); image-rendering: pixelated; z-index: 2; }
+.bkm-head { position: sticky; top: 0; height: calc(28 * var(--du)); padding-top: calc(14 * var(--du) - 2px); padding-left: calc(2 * var(--du)); box-sizing: border-box; }
+.bkm-title { height: calc(14 * var(--u)); max-height: calc(16 * var(--du)); image-rendering: pixelated; display: block; }
+.bkm-title.txt { font-size: max(13px, calc(9 * var(--du))); color: #3F6340; height: auto; }
+.bkm-lines { list-style: none; margin: calc(12 * var(--du)) 0 0; padding: 0; }
+.bkm-it, .bkm-addline, .bkm-empty { position: relative; display: flex; align-items: flex-end; height: calc(16 * var(--du)); padding-left: calc(16 * var(--du)); padding-bottom: calc(3 * var(--du)); box-sizing: border-box; font-size: max(12px, calc(8 * var(--du))); }
+.bkm-chk { position: absolute; left: 0; bottom: 0; width: calc(11 * var(--u)); height: calc(10 * var(--u)); max-width: calc(14 * var(--du)); padding: 0; border: 0; background: none; cursor: pointer; }
+.bkm-chk:focus-visible, .bkm-t:focus-visible, .bkm-add:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
+.bkm-chk-i { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.bkm-it.edit .bkm-chk-i, .bkm-it.adding .bkm-chk-i { position: absolute; left: 0; bottom: 0; width: calc(11 * var(--u)); height: calc(10 * var(--u)); max-width: calc(14 * var(--du)); opacity: .55; }
+.bkm-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text; }
+.bkm-date { flex: none; margin-left: calc(4 * var(--du)); font-size: max(10px, calc(6.5 * var(--du))); font-weight: 500; color: #3F6340; }
+.bkm-it.leaving { animation: bkm-leave 120ms steps(3, end) 880ms forwards; }
+@keyframes bkm-leave { to { transform: translateX(calc(8 * var(--du))); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bkm-it.leaving, #bkm .bkm-box { animation: none !important; } }
+.bkm-add { padding: 0; border: 0; background: none; font: 600 max(11px, calc(7.5 * var(--du))) var(--font); color: #3F6340; cursor: pointer; }
+.bkm-in { flex: 1; min-width: 0; height: calc(12 * var(--du)); padding: 0; border: 0; border-bottom: max(1px, calc(.75 * var(--du))) dashed #3F6340; background: transparent; font: max(12px, calc(8 * var(--du))) var(--font); color: #29262F; outline: none; }
+.bkm-in.bad { border-bottom-color: #94443A; }
+.bkm-del { flex: none; margin-left: calc(3 * var(--du)); padding: 0 4px; border: 0; background: none; font: 500 max(10px, calc(6.5 * var(--du))) var(--font); color: #94443A; cursor: pointer; }
+.bkm-empty { color: #7F7C78; flex-direction: column; align-items: flex-start; justify-content: flex-end; height: auto; min-height: calc(16 * var(--du)); padding-left: calc(16 * var(--du)); }
+.bkm-empty small { font-size: max(10px, calc(6.5 * var(--du))); }
+.bkm-err { margin: calc(3 * var(--du)) 0 0 calc(16 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); color: #94443A; }
+/* 아래 막대 = 냉장고 메모지 막대 틀 (css/fridge_memo.css .memo-bar) */
+.bkm-bar { display: flex; align-items: center; gap: calc(6 * var(--du)); padding: calc(4 * var(--du)); background: #F7F0E1; border: max(2px, var(--du)) solid #29262F; border-radius: calc(5 * var(--du)); filter: drop-shadow(0 calc(2 * var(--du)) 0 #5C3E2B); }
+.bkm-bar:empty { display: none; }
+.bkm-move { height: calc(13 * var(--du)); min-width: calc(56 * var(--du)); padding: 0 calc(4 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: #86593A; color: #F7F0E1; font: 600 max(11px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
+.bkm-esc { font-size: max(10px, calc(6 * var(--du))); font-weight: 500; color: #86593A; }
+.bkm-undo { display: inline-flex; align-items: center; gap: calc(4 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); }
+.bkm-restore { height: calc(13 * var(--du)); padding: 0 calc(4 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: #86593A; color: #F7F0E1; font: 600 max(11px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
+.bkm-bar button:focus-visible { outline: 2px solid #29262F; outline-offset: 2px; }
+.bkm-say { margin: 0; display: flex; gap: 6px; align-items: center; font-size: max(12px, calc(7 * var(--du))); }
+/* 벽 자리 고르기 (가구 기능 연동 .fn-hover 값 그대로) */
+#mw { position: absolute; inset: 0; z-index: 6; }
+#mw[hidden] { display: none; }
+.mw-slot { position: absolute; padding: 0; cursor: pointer; box-sizing: border-box; }
+.mw-slot img { position: absolute; opacity: .45; image-rendering: pixelated; pointer-events: none; }
+.mw-slot:hover:not(.sel) { border-style: solid; }
+.mw-slot:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }

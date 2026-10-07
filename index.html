@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data: blob:; font-src 'self'">
+<title>Pixel House</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dialog.css">
+<link rel="stylesheet" href="css/study.css">
+<link rel="stylesheet" href="css/interact.css">
+<link rel="stylesheet" href="css/wardrobe.css">
+<link rel="stylesheet" href="css/journal.css">
+<link rel="stylesheet" href="css/water_modal.css">
+<link rel="stylesheet" href="css/inventory.css">
+<link rel="stylesheet" href="css/fridge_memo.css">
+<link rel="stylesheet" href="css/book_modal.css">
+<link rel="stylesheet" href="css/habit_edit.css">
+<link rel="stylesheet" href="css/logs.css">
+<link rel="stylesheet" href="css/furnish.css">
+<link rel="stylesheet" href="css/records.css">
+<link rel="stylesheet" href="css/bucket_memo.css">
+<link rel="stylesheet" href="css/onboard.css">
+</head>
+<body>
+<!-- 창 맨 위 띠: 잡아서 창 옮기기 (titleBarStyle hiddenInset이라 제목 막대가 없음). 본문은 이 띠 아래에서 시작해서 누르는 것과 안 겹침 -->
+<div id="dragbar" aria-hidden="true"></div>
+<div id="app">
+  <!-- 왼쪽 탭: pixel-office nav#tabs와 같은 구조 (색·글꼴만 하우스 팔레트) -->
+  <nav id="tabs" role="tablist" aria-label="탭">
+    <div class="brand">Pixel House</div>
+    <button role="tab" data-tab="home" aria-selected="true">우리집</button>
+    <button role="tab" data-tab="habits" aria-selected="false">생활 습관</button>
+    <button role="tab" data-tab="meetings" aria-selected="false">약속</button>
+    <button role="tab" data-tab="bucket" aria-selected="false" hidden>버킷리스트</button>
+    <button role="tab" data-tab="archive" aria-selected="false">생활일지</button>
+    <div class="tab-foot">
+      <!-- 우리집 탭이 아닐 때 두부가 여기 작게 앉아 있음 (누르면 한마디) -->
+      <div id="side-dubu" hidden>
+        <div id="side-bubble" class="side-bubble" hidden aria-live="polite"></div>
+        <button id="side-dubu-btn" type="button" aria-label="두부에게 말 걸기"><canvas id="side-dubu-cv" width="16" height="20"></canvas></button>
+      </div>
+    </div>
+  </nav>
+<main id="main">
+  <section id="screen-start" class="screen center">
+    <div id="cover">
+      <canvas id="cover-cv" aria-label="작은 원목 지붕 집. 돌길이 현관문까지 이어져 있어요"></canvas>
+      <div id="cover-bubble" class="cover-bubble" hidden aria-live="polite"></div>
+      <button id="btn-enter" class="game">입장하기</button>
+    </div>
+  </section>
+  <section id="screen-onboard" class="screen" hidden aria-label="처음 설정"></section>
+  <section id="screen-house" class="screen" hidden>
+    <div id="stage" tabindex="0" aria-label="우리 집. 방향키나 클릭으로 두부가 걸어요. 두부를 누르거나 Space를 누르면 말해요.">
+      <canvas id="cv"></canvas>
+      <div id="overlay">
+        <div id="room-name" class="tag" aria-live="polite"></div>
+        <div id="bubble" class="bubble" hidden aria-live="polite"></div>
+      </div>
+      <div id="dlg" hidden><div class="dl-box">
+        <div class="dl-text"><div class="dl-name"></div><div class="dl-body"><span class="dl-vis" aria-hidden="true"></span><span class="dl-sr" aria-live="polite"></span></div><div class="dl-more"></div></div>
+      </div></div>
+    </div>
+  </section>
+  <section id="screen-habits" class="screen panel" hidden><div class="life" id="life-habits"></div></section>
+  <section id="screen-meetings" class="screen panel" hidden><div class="life" id="life-meetings"></div></section>
+  <section id="screen-bucket" class="screen panel" hidden><div class="life" id="life-bucket"></div></section>
+  <section id="screen-archive" class="screen panel" hidden><div class="life" id="life-archive"></div></section>
+</main>
+</div>
+<script src="js/data/palette.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/data/settings.js"></script>
+<script src="js/data/lines.js"></script>
+<script src="js/data/actors.js"></script>
+<script src="js/assets_rooms.js"></script>
+<script src="js/house_rooms.js"></script>
+<script src="js/artset.js"></script>
+<script src="js/house_slots.js"></script>
+<script src="js/ui_icons.js"></script>
+<script src="js/placeholders.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/world.js"></script>
+<script src="js/render.js"></script>
+<script src="js/data/wardrobe.js"></script>
+<script src="js/outfit.js"></script>
+<script src="js/game.js"></script>
+<script src="js/life_md.js"></script>
+<script src="js/data/dialog_lines.js"></script>
+<script src="js/features.js"></script>
+<script src="js/data/furnish_lines.js"></script>
+<script src="js/furnish.js"></script>
+<script src="js/log_table.js"></script>
+<script src="js/meal_log.js"></script>
+<script src="js/life_log.js"></script>
+<script src="js/life_log_view.js"></script>
+<script src="js/life_write.js"></script>
+<script src="js/record_rename.js"></script>
+<script src="js/life_check.js"></script>
+<script src="js/habit_cycle.js"></script>
+<script src="js/life.js"></script>
+<script src="js/data/household.js"></script>
+<script src="js/data/household_lines.js"></script>
+<script src="js/household.js"></script>
+<script src="js/household_ui.js"></script>
+<script src="js/household_card.js"></script>
+<script src="js/data/study_lines.js"></script>
+<script src="js/study_write.js"></script>
+<script src="js/study_gantt.js"></script>
+<script src="js/data/habit_edit_lines.js"></script>
+<script src="js/habit_edit.js"></script>
+<script src="js/habit_edit_ui.js"></script>
+<script src="js/data/journal_lines.js"></script>
+<script src="js/data/record_lines.js"></script>
+<script src="js/table_section.js"></script>
+<script src="js/record_write.js"></script>
+<script src="js/bucket_write.js"></script>
+<script src="js/study_parts.js"></script>
+<script src="js/book_write.js"></script>
+<script src="js/bookshelf.js"></script>
+<script src="js/record_list.js"></script>
+<script src="js/study_grass.js"></script>
+<script src="js/record_kinds_ui.js"></script>
+<script src="js/journal.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/meeting_edit.js"></script>
+<script src="js/meeting_edit_ui.js"></script>
+<script src="js/dialog_flow.js"></script>
+<script src="js/dialog.js"></script>
+<script src="js/data/interactions.js"></script>
+<script src="js/data/interact_lines.js"></script>
+<script src="js/interact_logic.js"></script>
+<script src="js/interact.js"></script>
+<script src="js/wardrobe.js"></script>
+<script src="js/water_modal.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/fridge_memo.js"></script>
+<script src="js/book_modal.js"></script>
+<script src="js/record_modal.js"></script>
+<script src="js/memo_wall.js"></script>
+<script src="js/bucket_memo.js"></script>
+<script src="js/poop_log.js"></script>
+<script src="js/data/logs_lines.js"></script>
+<script src="js/log_modal.js"></script>
+<script src="js/logs_view.js"></script>
+<script src="js/furnish_ui.js"></script>
+<script src="js/life_sync.js"></script>
+<script src="js/enter_button.js"></script>
+<script src="js/data/onboard_lines.js"></script>
+<script src="js/life_template.js"></script>
+<script src="js/onboard.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

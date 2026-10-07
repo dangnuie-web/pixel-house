@@ -1,0 +1,104 @@
+/* 두부 하단 대화창 (js/dialog.js). 무늬 대화창 디자인 v01 (디자인/20261003_pixel-house_대화창디자인_v01.md)
+   + 제작자 수정 2026-10-03: ① 초상 나무 액자 없앰 → 테두리 없이 모서리만 둥글게 ② 1du 계단 모서리 대신 둥근 모서리(border-radius)
+     (대화창 5du, 선택지 반전 칸·칩·입력창·버튼 2du, 초상 4du). 먹색 테두리·아래 그림자는 둥근 모양을 따라감(drop-shadow)
+   단위 --du = 화면에 보이는 집 그림 높이 / 432 (dialog.js fitDu). 그림 세트(v08 480x432, v10 336x304 등)가 바뀌어도 대화창 크기 같음
+   글자는 du로 늘되 최소 12px. 색은 --dlg-* (팔레트 v08 낮 값), 밤은 바탕만 한 단계 낮춤 (메모 5장) */
+#dd {
+  --du: 2px;
+  --dlg-bg: #F7F0E1; --dlg-line: #29262F; --dlg-line-w: max(2px, var(--du)); --dlg-inner: #DDCFB4; --dlg-shadow: #5C3E2B;
+  --dlg-text: #29262F; --dlg-sub: #86593A; --dlg-name-bg: #86593A; --dlg-name-tx: #F7F0E1;
+  --dlg-hover: #E9D2B0; --dlg-sel: #86593A; --dlg-sel-tx: #F7F0E1;
+  --dlg-chip: #F1E3C7; --dlg-chip-lo: #DDBF98; --dlg-chip-hover: #E0C79E; --dlg-field: #FBFAF6; --dlg-field-in: #DDCFB4; --dlg-dot: #E59A4F;
+  --dlg-pad: calc(6 * var(--du)); --dlg-portrait: calc(78 * var(--du)); --dlg-gap: calc(8 * var(--du)); --dlg-row: calc(13 * var(--du));
+  --dlg-chip-h: calc(12 * var(--du)); --dlg-field-h: calc(16 * var(--du));
+  --dlg-r: calc(5 * var(--du)); --dlg-r-s: calc(2 * var(--du)); --dlg-r-face: calc(4 * var(--du));
+  position: absolute; left: calc(8 * var(--du)); right: calc(8 * var(--du)); bottom: calc(8 * var(--du)); z-index: 6;
+  filter: drop-shadow(0 calc(2 * var(--du)) 0 var(--dlg-shadow));
+  font-family: var(--font); color: var(--dlg-text);
+}
+html.night #dd { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25; }
+/* 위로 옮기기(#dd.top) 없앰: 대화창은 언제나 하단 (제작자 2026-10-03) */
+#dd.enter { animation: dd-pop 80ms steps(2, end); } /* 2프레임 80ms: 2du 아래 -> 제자리 */
+@keyframes dd-pop { from { transform: translateY(calc(2 * var(--du))); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #dd, #dd * { animation: none !important; } }
+
+.dd-box { position: relative; display: flex; gap: var(--dlg-gap); align-items: flex-start; outline: none;
+  min-height: calc(90 * var(--du)); max-height: calc(118 * var(--du)); padding: var(--dlg-pad);
+  background: var(--dlg-bg); border: var(--dlg-line-w) solid var(--dlg-line); border-radius: var(--dlg-r);
+  box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-inner); }
+/* 초상: 액자 없이, 박스 안에서 모서리만 둥글게. 그림은 부드럽게 줄임(무늬 4-2: pixelated면 선이 끊김). 자르기는 사본 PNG에 이미 들어 있음 */
+.dd-face { flex: none; width: var(--dlg-portrait); height: var(--dlg-portrait); object-fit: cover; object-position: 50% 45%;
+  border-radius: var(--dlg-r-face); image-rendering: auto; display: block; user-select: none; }
+.dd-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(3 * var(--du)); padding-bottom: calc(6 * var(--du)); }
+.dd-name { align-self: flex-start; height: calc(11 * var(--du)); line-height: calc(11 * var(--du) - 2px); padding: 0 calc(4 * var(--du));
+  font-size: max(12px, calc(7 * var(--du))); font-weight: 700; color: var(--dlg-name-tx); background: var(--dlg-name-bg);
+  border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); }
+/* 대사: 키운 줄 높이 안에서 줄바꿈(keep-all), 두 줄까지 */
+.dd-line { margin: 0; font-size: max(12px, calc(9 * var(--du))); line-height: 1.4; min-height: 1.4em; word-break: keep-all; overflow-wrap: anywhere; }
+.dd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.dd-more { font-style: normal; margin-left: calc(3 * var(--du)); font-size: max(10px, calc(6 * var(--du))); color: var(--dlg-sub); display: inline-block; animation: dd-bob 800ms steps(2, end) infinite; }
+@keyframes dd-bob { 50% { transform: translateY(calc(1 * var(--du))); } }
+/* 글자가 다 나오기 전에는 선택지·칩·입력창 자리만 잡아 두고 숨김 (높이가 출렁이지 않게) */
+#dd.typing .dd-choices, #dd.typing .dd-times, #dd.typing .dd-form { visibility: hidden; }
+
+/* 선택지: 2열, 한 칸 13du (바탕 12du + 1du 틈). 선택 = 반전 + ▶ */
+.dd-choices { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: calc(1 * var(--du)) calc(8 * var(--du)); }
+.dd-choices:empty { display: none; }
+.dd-ch { display: flex; align-items: center; gap: calc(2 * var(--du)); height: calc(12 * var(--du)); padding: 0 calc(3 * var(--du)) 0 0; margin: 0;
+  font: 500 max(12px, calc(8 * var(--du))) var(--font); color: var(--dlg-text); text-align: left; background: transparent; border: 0; border-radius: var(--dlg-r-s); cursor: pointer; }
+.dd-ch:hover { background: var(--dlg-hover); }
+.dd-ch.on { background: var(--dlg-sel); color: var(--dlg-sel-tx); }
+.dd-ch:active { transform: translateY(calc(1 * var(--du))); }
+.dd-ch:focus { outline: none; } .dd-ch:focus-visible:not(.on) { outline: 2px solid var(--dlg-line); }
+.dd-arrow { flex: none; width: calc(10 * var(--du)); height: calc(7 * var(--du)); display: inline-block; }
+.dd-ch.on .dd-arrow { background: var(--dlg-sel-tx); width: calc(4 * var(--du)); margin: 0 calc(3 * var(--du));
+  clip-path: polygon(0 0, 25% 0, 25% 14%, 50% 14%, 50% 29%, 75% 29%, 75% 43%, 100% 43%, 100% 57%, 75% 57%, 75% 71%, 50% 71%, 50% 86%, 25% 86%, 25% 100%, 0 100%);
+  animation: dd-nudge 400ms steps(2, end) infinite; }
+@keyframes dd-nudge { 50% { transform: translateX(calc(1 * var(--du))); } }
+.dd-num { flex: none; font-size: max(10px, calc(6 * var(--du))); font-weight: 600; color: var(--dlg-sub); min-width: calc(5 * var(--du)); }
+.dd-ch.on .dd-num { color: var(--dlg-sel-tx); }
+.dd-lab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 시각 칩 줄 */
+.dd-times:empty { display: none; }
+.dd-trow { display: flex; align-items: center; gap: calc(3 * var(--du)); height: calc(14 * var(--du)); }
+.dd-tname { flex: none; width: calc(24 * var(--du)); font-size: max(10px, calc(6 * var(--du))); font-weight: 600; color: var(--dlg-sub); }
+.dd-chips { display: flex; gap: calc(3 * var(--du)); flex-wrap: nowrap; }
+.dd-chip { position: relative; height: var(--dlg-chip-h); padding: 0 calc(5 * var(--du)); margin: 0; display: inline-flex; align-items: center;
+  font: 600 max(12px, calc(7 * var(--du))) var(--font); color: var(--dlg-text); background: var(--dlg-chip);
+  border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo); cursor: pointer; }
+button.dd-chip:hover { background: var(--dlg-chip-hover); }
+.dd-chip.on, .dd-chip.picked { background: var(--dlg-sel); color: var(--dlg-sel-tx); box-shadow: none; }
+.dd-chip.on { transform: translateY(calc(0.5 * var(--du))); }
+.dd-chip:focus { outline: none; } .dd-chip:focus-visible:not(.on) { outline: 2px solid var(--dlg-line); }
+.dd-chip.dot::after { content: ""; position: absolute; right: calc(-1 * var(--du)); top: calc(-1 * var(--du)); width: calc(2 * var(--du)); height: calc(2 * var(--du)); background: var(--dlg-dot); border-radius: 50%; }
+.dd-trow.done { opacity: 1; } .dd-trow.done .dd-chip { cursor: default; }
+
+/* 한 줄 입력창 + 넘어가기 + 적기 */
+.dd-form { display: flex; gap: calc(3 * var(--du)); align-items: stretch; margin: calc(1 * var(--du)) 0 0; }
+.dd-form[hidden] { display: none; }
+.dd-field { flex: 1; min-width: 0; height: var(--dlg-field-h); padding: 0 calc(4 * var(--du)); font: 400 max(12px, calc(8 * var(--du))) var(--font);
+  color: var(--dlg-text); caret-color: var(--dlg-text); background: var(--dlg-field); border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s);
+  box-shadow: inset 0 calc(1 * var(--du)) 0 var(--dlg-field-in); outline: none; }
+.dd-field::placeholder { color: var(--dlg-sub); opacity: 1; }
+.dd-field:focus { border-color: var(--dlg-sub); box-shadow: inset 0 calc(1 * var(--du)) 0 var(--dlg-field-in), 0 0 0 calc(1 * var(--du)) var(--dlg-sub); }
+.dd-submit, .dd-skip { flex: none; min-width: calc(36 * var(--du)); height: var(--dlg-field-h); padding: 0 calc(5 * var(--du)); font: 600 max(12px, calc(7 * var(--du))) var(--font);
+  border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); cursor: pointer; }
+.dd-submit { background: var(--dlg-sel); color: var(--dlg-sel-tx); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-line); }
+.dd-skip { background: var(--dlg-chip); color: var(--dlg-text); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo); }
+.dd-skip[hidden] { display: none; }
+.dd-submit:focus-visible, .dd-skip:focus-visible { outline: 2px solid var(--dlg-line); outline-offset: 1px; }
+.dd-esc { position: absolute; right: 0; bottom: 0; font-size: max(10px, calc(6 * var(--du))); color: var(--dlg-sub); }
+
+/* 기록 보관 탭: 생활 기록 (잠·식사·한마디) */
+.lifelog h3 small { font-size: 13px; color: var(--w); font-weight: 400; margin-left: 6px; }
+.lifelog td { vertical-align: top; }
+.lifelog small { display: block; font-size: 12px; color: var(--w); }
+.lg-meal, .lg-note { display: block; line-height: 1.5; }
+.lg-meal b { font-size: 12px; color: var(--K); background: var(--w); border-radius: 4px; padding: 0 5px; margin-right: 4px; font-weight: 600; }
+.lg-sleep { white-space: nowrap; font-weight: 600; }
+/* 입력창에 포커스가 있으면 칩 커서(반전)는 끔: 지금 고르는 곳이 입력창임을 분명히 */
+#dd.typing-field .dd-chip.on { background: var(--dlg-chip); color: var(--dlg-text); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo); transform: none; }
+/* 입력창이 있는 단계에서는 "Esc 닫기"를 숨김 (적기 버튼과 겹치지 않게) */
+#dd[data-mode="time"] .dd-esc, #dd[data-mode="input"] .dd-esc { display: none; }
+.lifelog h3 small { display: inline; }

@@ -1,0 +1,74 @@
+/* 가구 기능 연동 모드. 무늬 편집연동화면 v01 (제작자 승인 2026-10-04) 4장 값. 큰 틀(아래 띠 + 이름표 + 가구 옆 목록 + 왼쪽 기능/오른쪽 가구)은 그대로.
+   먹선은 바깥 틀(목록 창·아래 띠·이름표)에만, 목록 줄은 테두리 없음. 색 = app.css --ui-*, 작은 그림 = js/ui_icons.js --ic-*. 글자 크기는 무대 배율과 상관없이 고정 */
+#stage .fn-toggle { position: absolute; top: 8px; right: 8px; z-index: 6; font: 700 13px var(--font); color: var(--A); background: var(--ui-paper); border: 2px solid var(--ui-line); border-radius: 6px; padding: 4px 10px; cursor: pointer; box-shadow: 0 2px 0 var(--ui-shadow); }
+#stage .fn-toggle:hover { background: var(--ui-hover); }
+#stage .fn-toggle.on { background: var(--ui-sel); color: var(--ui-sel-tx); }
+#stage .fn-toggle:focus-visible { outline: 2px solid var(--ui-line); outline-offset: 2px; }
+#stage.fn-on .fn-toggle { display: none; }
+
+/* ---- 아래 띠: 대화창과 같은 틀 (2px 먹선, 둥근 10, 안쪽 아래 2px, 흐림 없는 그림자 3px) ---- */
+.fn-bar { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 10px; min-width: min(464px, calc(100% - 16px)); max-width: calc(100% - 16px); height: 44px; box-sizing: border-box;
+  padding: 0 8px 0 14px; background: var(--ui-paper); border: 2px solid var(--ui-line); border-radius: 10px; box-shadow: inset 0 -2px 0 var(--ui-inner); filter: drop-shadow(0 3px 0 var(--ui-shadow)); font: 13px var(--font); color: var(--A); white-space: nowrap; }
+.fn-bar-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ui-sel); }
+.fn-bar-m { flex: none; font: 700 13px var(--font); color: var(--A); }
+.fn-bar-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 400 13px var(--font); color: var(--ui-sub); }
+.fn-bar .fn-reset { flex: none; font: 500 12px var(--font); color: var(--ui-sub); background: none; border: 0; border-radius: 5px; height: 26px; padding: 0 8px; cursor: pointer; }
+.fn-bar .fn-reset:hover { background: var(--ui-hover); }
+.fn-bar .fn-done { flex: none; font: 600 13px var(--font); color: var(--ui-sel-tx); background: var(--ui-sel); border: 0; border-radius: 5px; height: 26px; padding: 0 12px; cursor: pointer; }
+.fn-bar .fn-done:hover { background: var(--ui-sel-hover); }
+.fn-bar .fn-done:active { transform: translateY(1px); }
+.fn-bar button:focus-visible { outline: 2px solid var(--ui-line); outline-offset: 2px; }
+
+/* ---- 집 위 이름표: 크림 + 1px 먹선 + 꼬리 7x4 (칸 이름표는 꼬리 없음, 가운데) ---- */
+.fn-tags { position: absolute; inset: 0; pointer-events: none; } /* #overlay(말풍선) 앞에 넣어 말풍선이 위로 */
+.fn-tag { position: absolute; transform: translate(-50%, calc(-100% - 2px)); height: 18px; box-sizing: border-box; font: 700 11px var(--font); line-height: 16px; padding: 0 6px; color: var(--ui-line);
+  background: var(--ui-paper); border: 1px solid var(--ui-line); border-radius: 4px; box-shadow: 0 1px 0 var(--ui-shadow); white-space: nowrap; }
+.fn-tag:not(.part)::after { content: ""; position: absolute; left: 50%; top: 100%; width: 7px; height: 4px; transform: translateX(-50%); background: var(--ic-tail) no-repeat; image-rendering: pixelated; }
+.fn-tag.part { transform: translate(-50%, -50%); }
+.fn-tag.sel { background: var(--ui-sel); color: var(--ui-sel-tx); }
+.fn-tag.sel:not(.part)::after { background-image: var(--ic-tail-sel); }
+.fn-tag.off { background: var(--ui-off-bg); color: var(--ui-off-tx); border-color: var(--ui-off-tx); text-decoration: line-through; }
+/* 누른 가구 테두리(집 그림 안의 빛 = 노랑)는 그대로 */
+.fn-hover { position: absolute; border: 2px dashed var(--W); border-radius: 3px; background: rgba(243, 207, 107, .18); }
+.fn-hover.sel { border: 2px solid var(--A); background: rgba(243, 207, 107, .3); }
+
+/* ---- 기능 목록: 띠와 같은 틀, 폭 272 ---- */
+.fn-menu { position: absolute; z-index: 7; width: 272px; box-sizing: border-box; max-height: calc(100% - 48px); overflow-y: auto; padding: 10px 8px; background: var(--ui-paper); border: 2px solid var(--ui-line); border-radius: 10px;
+  box-shadow: inset 0 -2px 0 var(--ui-inner); filter: drop-shadow(0 3px 0 var(--ui-shadow)); }
+.fn-menu-t { margin: 0 10px; font: 500 11px var(--font); color: var(--ui-sub); }
+.fn-menu-furn { margin: 2px 10px 6px; font: 700 16px var(--font); color: var(--A); }
+.fn-list { display: flex; flex-direction: column; gap: 2px; }
+.fn-menu .fn-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; text-align: left; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; font: 12px var(--font); color: var(--A); }
+.fn-menu .fn-item .fn-fn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 12px var(--font); color: var(--A); } /* 왼쪽 기능 이름 (작게) */
+.fn-menu .fn-item .fn-furn { flex: none; display: inline-flex; align-items: center; gap: 5px; font: 700 13px var(--font); color: var(--A); white-space: nowrap; } /* 오른쪽 가구 이름 (진하게) */
+.fn-menu .fn-item .fn-furn.empty { font: 400 11px var(--font); color: var(--ui-sub); } /* 연동 안 됨·그냥 가구로 */
+.fn-menu .fn-item:hover:not(.cur):not(.taken):not(.off) { background: var(--ui-hover); }
+/* 이 가구에 붙음 = 갈색 반전 */
+.fn-menu .fn-item.cur { background: var(--ui-sel); }
+.fn-menu .fn-item.cur .fn-fn { font-weight: 400; color: var(--ui-ring); }
+.fn-menu .fn-item.cur .fn-furn { color: var(--ui-sel-tx); }
+/* 다른 가구가 씀 = 갈색 글 한 단계 낮춤. 올리면·누르면 바탕 + 자물쇠 */
+.fn-menu .fn-item.taken { cursor: not-allowed; }
+.fn-menu .fn-item.taken .fn-fn { font-weight: 400; color: var(--ui-sub); }
+.fn-menu .fn-item.taken .fn-furn { font-weight: 600; color: var(--ui-sub); }
+.fn-lock { display: none; width: 8px; height: 10px; background: var(--ic-lock) no-repeat; image-rendering: pixelated; }
+.fn-menu .fn-item.taken:hover, .fn-menu .fn-item.taken:focus-visible, .fn-menu .fn-item.taken.clicked { background: var(--ui-off-bg); }
+.fn-menu .fn-item.taken:hover .fn-lock, .fn-menu .fn-item.taken:focus-visible .fn-lock, .fn-menu .fn-item.taken.clicked .fn-lock { display: inline-block; }
+.fn-menu .fn-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ui-line); }
+/* 사용 중 안내: 누른 줄 바로 아래 2줄 */
+.fn-note { margin: 0; padding: 4px 10px; border-radius: 6px; background: var(--ui-hover); font: 12px/1.45 var(--font); }
+.fn-note b { display: block; font-weight: 500; color: var(--A); }
+.fn-note span { display: block; color: var(--ui-sub); }
+.fn-menu .fn-item.off { background: var(--ui-off-bg); color: var(--ui-off-tx); cursor: not-allowed; }
+.fn-menu .fn-item.off .fn-fn, .fn-menu .fn-item.off .fn-furn { color: var(--ui-off-tx); font-weight: 400; }
+/* 연동 풀기: 1px 나눔 아래 같은 28px 줄, 왼쪽 "연동 풀기" / 오른쪽 "그냥 가구로" */
+.fn-sep { margin: 8px 4px 6px; border: 0; border-top: 1px solid var(--ui-inner); }
+.fn-menu .fn-item.fn-unlink .fn-fn { font-weight: 600; color: var(--ui-sub); }
+
+/* 집 꾸미기 (가) (2026-10-08 로드맵 4단계, js/furnish_ui.js swap): 공용 집 정해진 자리의 가구 후보. 비트 임시 모양 = 아래 기능 목록 줄과 같은 글·색 (무늬 확인 대기) */
+.fn-swap-t { margin: 0 10px 4px; font: 11px var(--font); color: var(--ui-sub, #86593A); }
+.fn-swap { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 8px 8px; }
+.fn-swap-b { font: 12px var(--font); padding: 4px 9px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line, #C8A57C); background: var(--ui-field, #FFFDF8); color: var(--A); cursor: pointer; }
+.fn-swap-b:hover { background: var(--ui-hover, #F1E3C7); }
+.fn-swap-b[aria-pressed="true"] { background: var(--ui-sel, #86593A); border-color: var(--ui-sel, #86593A); color: var(--ui-sel-tx, #F7F0E1); font-weight: 700; }
+.fn-swap-b:focus-visible { outline: 2px solid var(--ui-ring, #E9D2B0); outline-offset: 1px; }

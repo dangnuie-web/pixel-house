@@ -1,0 +1,69 @@
+/* 옷 갈아입기 창 (js/wardrobe.js, wardrobe 브랜치 2026-10-03 비트). 하단 대화창(css/dialog.css)과 같은 결:
+   둥근 베이지 박스, 먹색 테두리, 아래 그림자, du 단위(= 보이는 집 그림 높이 / 432). 색은 대화창 --dlg-* 값 그대로 (무늬 시안이 오면 맞춤)
+   왼쪽 = 원형 거울 느낌의 미리보기, 오른쪽 = 탭 + 옷 칸 목록 + 두부 한 줄 */
+#wd {
+  --du: 2px;
+  --dlg-bg: #F7F0E1; --dlg-line: #29262F; --dlg-line-w: max(2px, var(--du)); --dlg-inner: #DDCFB4; --dlg-shadow: #5C3E2B;
+  --dlg-text: #29262F; --dlg-sub: #86593A; --dlg-name-bg: #86593A; --dlg-name-tx: #F7F0E1;
+  --dlg-hover: #E9D2B0; --dlg-sel: #86593A; --dlg-sel-tx: #F7F0E1; --dlg-chip: #F1E3C7; --dlg-chip-lo: #DDBF98;
+  --wd-off: #CFC8BB; --wd-off-tx: #8D867B; --wd-mirror: #EADFC8;
+  --dlg-r: calc(5 * var(--du)); --dlg-r-s: calc(2 * var(--du));
+  position: absolute; inset: 0; z-index: 7; background: rgba(41, 38, 47, 0.25);
+  font-family: var(--font); color: var(--dlg-text);
+}
+#wd[hidden] { display: none; }
+html.night #wd { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25; --wd-mirror: #E2D3B6; }
+#wd.enter .wd-box { animation: dd-pop 80ms steps(2, end); }
+@media (prefers-reduced-motion: reduce) { #wd, #wd * { animation: none !important; } }
+
+.wd-box { position: absolute; left: calc(8 * var(--du)); right: calc(8 * var(--du)); bottom: calc(8 * var(--du));
+  height: calc(196 * var(--du)); display: flex; gap: calc(8 * var(--du)); padding: calc(6 * var(--du)); outline: none; box-sizing: border-box;
+  background: var(--dlg-bg); border: var(--dlg-line-w) solid var(--dlg-line); border-radius: var(--dlg-r);
+  box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-inner); filter: drop-shadow(0 calc(2 * var(--du)) 0 var(--dlg-shadow)); }
+
+/* 왼쪽: 거울 (세로 타원) + 방향 */
+.wd-left { flex: none; width: calc(104 * var(--du)); display: flex; flex-direction: column; align-items: center; gap: calc(3 * var(--du)); }
+/* 거울 테두리·유리·마룻바닥은 캔버스(.wd-pv)에 픽셀로 칠함 (js/wardrobe.js mirrorBg). 칸은 자리만 */
+.wd-mirror { flex: 1; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.wd-pv { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.wd-turn { display: flex; align-items: center; gap: calc(3 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); color: var(--dlg-sub); }
+.wd-rot { width: calc(12 * var(--du)); height: calc(12 * var(--du)); padding: 0; font: 600 max(10px, calc(6 * var(--du))) var(--font); color: var(--dlg-text);
+  background: var(--dlg-chip); border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo); cursor: pointer; }
+.wd-rot:hover { background: var(--dlg-hover); }
+.wd-face { min-width: calc(22 * var(--du)); text-align: center; }
+
+/* 오른쪽 */
+.wd-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(4 * var(--du)); }
+.wd-tabs { display: flex; gap: calc(2 * var(--du)); flex-wrap: nowrap; }
+.wd-tab { flex: 1; min-width: 0; height: calc(13 * var(--du)); padding: 0; font: 600 max(11px, calc(7 * var(--du))) var(--font); color: var(--dlg-text);
+  background: var(--dlg-chip); border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-chip-lo); cursor: pointer; white-space: nowrap; }
+.wd-tab:hover { background: var(--dlg-hover); }
+.wd-tab.on { background: var(--dlg-sel); color: var(--dlg-sel-tx); box-shadow: none; transform: translateY(calc(0.5 * var(--du))); }
+.wd-tab:focus { outline: none; }
+
+.wd-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: calc(1 * var(--du)); }
+.wd-cell { flex: none; display: flex; align-items: center; gap: calc(4 * var(--du)); height: calc(20 * var(--du)); padding: 0 calc(4 * var(--du)) 0 calc(2 * var(--du)); margin: 0;
+  font: 500 max(12px, calc(8 * var(--du))) var(--font); color: var(--dlg-text); text-align: left; background: transparent; border: 0; border-radius: var(--dlg-r-s); cursor: pointer; }
+.wd-cell.sel { background: var(--dlg-hover); }
+.wd-cell.sel::before { content: "▶"; font-size: max(9px, calc(5 * var(--du))); color: var(--dlg-sub); margin-right: calc(-2 * var(--du)); }
+.wd-cell:not(.sel)::before { content: ""; width: calc(4 * var(--du)); }
+.wd-cell.worn { background: var(--dlg-sel); color: var(--dlg-sel-tx); }
+.wd-cell.worn.sel::before { color: var(--dlg-sel-tx); }
+.wd-cell.off { color: var(--wd-off-tx); cursor: default; }
+.wd-cell.off .wd-thumb { background: var(--wd-off); }
+.wd-cell:focus { outline: none; }
+.wd-thumb { flex: none; width: calc(18 * var(--du)); height: calc(18 * var(--du)); display: flex; align-items: center; justify-content: center;
+  background: var(--dlg-chip); border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); overflow: hidden; box-sizing: border-box; }
+.wd-thumb.none::after { content: ""; width: 55%; height: 1px; background: var(--dlg-sub); transform: rotate(-45deg); }
+.wd-ti { image-rendering: pixelated; width: 86%; height: 86%; object-fit: contain; } /* 칠한 부분만 자른 그림을 칸에 맞춤 */
+.wd-lab { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wd-wait { flex: none; font-size: max(10px, calc(6 * var(--du))); padding: 0 calc(3 * var(--du)); border-radius: var(--dlg-r-s); background: var(--wd-off); color: var(--dlg-bg); }
+.wd-mark { flex: none; font-size: max(10px, calc(6 * var(--du))); opacity: .9; }
+
+/* 두부 한 줄 */
+.wd-say { margin: 0; min-height: 1.4em; display: flex; align-items: center; gap: calc(4 * var(--du)); font-size: max(12px, calc(8 * var(--du))); line-height: 1.4; padding-right: calc(10 * var(--du)); }
+.wd-name { flex: none; height: calc(11 * var(--du)); line-height: calc(11 * var(--du) - 2px); padding: 0 calc(4 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); font-weight: 700;
+  color: var(--dlg-name-tx); background: var(--dlg-name-bg); border: 1px solid var(--dlg-line); border-radius: var(--dlg-r-s); box-sizing: border-box; }
+.wd-line { min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
+.wd-esc { position: absolute; right: 0; top: calc(-10 * var(--du)); font-size: max(9px, calc(5.5 * var(--du))); color: var(--dlg-sub); display: none; }
+.wd-main .wd-esc { position: static; display: block; text-align: right; }

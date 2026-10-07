@@ -1,0 +1,50 @@
+{
+  "name": "pixel-house",
+  "productName": "Pixel House",
+  "version": "0.1.0",
+  "private": true,
+  "description": "고양이 집사 두부와 사는 픽셀 집. 물·잠·식사·약속·독서 같은 생활 기록을 내 컴퓨터 파일 하나에 남기는 맥 앱",
+  "main": "electron/main.js",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "start": "electron .",
+    "test": "node tests/test_profile.js && node tests/test_public_app.js",
+    "dist:mac": "electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "app.pixelhouse.desktop",
+    "productName": "Pixel House",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "package.json",
+      "electron/**",
+      "css/**",
+      "js/**",
+      "profiles/default/**",
+      "!**/.DS_Store"
+    ],
+    "mac": {
+      "category": "public.app-category.lifestyle",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "identity": null
+    },
+    "dmg": {
+      "title": "Pixel House"
+    },
+    "electronDist": "node_modules/electron/dist"
+  }
+}
