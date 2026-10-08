@@ -44,6 +44,7 @@
   function closeHouseWindows() {
     HOUSE_WINDOWS.forEach((k) => { const m = root[k]; if (m && m.isOpen && m.isOpen()) m.close(); });
     const LM = root.PHLogModal; if (LM && LM.isOpen() && !['habits', 'journal'].includes(LM.state().from)) LM.close();
+    const SM = root.PHSleepModal; if (SM && SM.isOpen() && SM.state().from === 'bed') SM.close(); // 잠 칠하기 창(침대로 연 것만, 2026-10-09)
     if (root.PHDialog && root.PHDialog.isOpen()) root.PHDialog.close();
   }
   async function selectTab(tab, opt) {

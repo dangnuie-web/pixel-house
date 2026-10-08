@@ -70,19 +70,43 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await clickSel('.ob-av[data-av="avatar2"]'); await sleep(150);
     ok('아바타2 고름 -> avatar.pick 줄', (await ob()).avatar === 'avatar2', await ob());
     await clickSel('#ob-next'); await sleep(250);
-    { const hs = await js(`(() => { const c = document.getElementById('ob-house-cv'); return { n: [...document.querySelectorAll('.ob-house')].map((b) => b.dataset.house + ':' + b.querySelector('b').textContent + ':' + b.getAttribute('aria-checked')).join(), plans: [...document.querySelectorAll('canvas[data-plan]')].map((p) => p.width + 'x' + p.height).join(), w: c.width, h: c.height, cap: document.querySelector('.ob-preview figcaption').textContent }; })()`);
-      // 무늬 공용판투룸쓰리룸 v01 6절: 세 칸(평면 아이콘 1칸 3px) + 고른 집 1배 미리보기
-      ok('집 단계: 원룸·투룸·쓰리룸 세 칸 (평면 아이콘 48x45·63x48·72x60), 원룸 골라짐, 미리보기 256x240 + 콘셉트', (await ob()).step === 'house' && hs.n === 'room1:원룸:true,room2:투룸:false,room3:쓰리룸:false' && hs.plans === '48x45,63x48,72x60' && hs.w === 256 && hs.h === 240 && !!hs.cap, hs); }
+    // 무늬 공용판마무리 v01 1절 (2026-10-09): 넓은 창 = 왼쪽 목록 280 / 오른쪽 미리보기 틀 384x320 고정, 아이콘 72x60 틀(가운데·아래), 글 x 같게, 스크롤 없이 [다음]
+    const houseGeo = () => js(`(() => { const R = (e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), r: Math.round(r.right), b: Math.round(r.bottom) }; };
+      const card = document.querySelector('.ob-card'), box = document.querySelector('.ob-preview-box'), c = document.getElementById('ob-house-cv'), nx = document.getElementById('ob-next'), sc = document.getElementById('screen-onboard');
+      return { n: [...document.querySelectorAll('.ob-house')].map((b) => b.dataset.house + ':' + b.querySelector('b').textContent + ':' + b.getAttribute('aria-checked')).join(),
+        plans: [...document.querySelectorAll('canvas[data-plan]')].map((p) => p.width + 'x' + p.height).join(), frames: [...document.querySelectorAll('.ob-plan')].map((f) => R(f).w + 'x' + R(f).h).join(),
+        planBottom: [...document.querySelectorAll('.ob-plan')].map((f) => R(f).b - R(f.querySelector('canvas')).b).join(), textX: [...document.querySelectorAll('.ob-house')].map((b) => R(b.querySelector('.ob-house-t')).x - R(b).x).join(),
+        list: R(document.querySelector('.ob-houses')), box: R(box), boxIn: [box.clientWidth, box.clientHeight], cv: R(c), w: c.width, h: c.height, card: R(card), isHouse: card.classList.contains('is-house'),
+        cols: getComputedStyle(document.querySelector('.ob-houses')).gridTemplateColumns || '', smallShown: [...document.querySelectorAll('.ob-house-t small')].map((s) => getComputedStyle(s).display !== 'none').join(),
+        rooms: document.querySelector('.ob-rooms').textContent, roomsShown: getComputedStyle(document.querySelector('.ob-rooms')).display !== 'none', concept: document.querySelector('.ob-concept').textContent,
+        note: (document.querySelector('.ob-preview .ob-note') || {}).textContent || '', next: R(nx), vh: innerHeight, scroll: sc.scrollHeight > sc.clientHeight, padTop: getComputedStyle(sc).paddingTop }; })()`);
+    const PLN = await js('PH_ONBOARD_PLAIN');
+    { const hs = await houseGeo();
+      ok('집 단계: 원룸·투룸·쓰리룸 세 칸 (평면 아이콘 48x45·63x48·72x60 = 1칸 3px 그대로), 원룸 골라짐, 미리보기 256x240', (await ob()).step === 'house' && hs.n === 'room1:원룸:true,room2:투룸:false,room3:쓰리룸:false' && hs.plans === '48x45,63x48,72x60' && hs.w === 256 && hs.h === 240, hs);
+      ok('집 단계 넓은 창(기본 창): 카드 740·위 여백 24, 왼쪽 목록 280 / 20 띄고 오른쪽 미리보기 틀 안쪽 384x320, 아이콘 틀 72x60 세 칸 같음(아래 맞춤), 글 x 세 칸 같음, 방 구성 목록에', hs.isHouse && hs.card.w === 740 && hs.padTop === '24px' && hs.list.w === 280 && hs.box.x - hs.list.r === 20 && hs.boxIn.join() === '384,320' && Math.abs(hs.box.y - hs.list.y) <= 1 && hs.frames === '72x60,72x60,72x60' && hs.planBottom === '0,0,0' && new Set(hs.textX.split(',')).size === 1 && hs.smallShown === 'true,true,true' && !hs.roomsShown, hs);
+      ok('집 단계: 원룸 미리보기 = 틀 안 가로 가운데·아래 맞춤, 콘셉트 = 부기 houseConcept, 그 아래 houseNote 한 줄', Math.abs((hs.cv.x - hs.box.x) - (hs.box.r - hs.cv.r)) <= 1 && Math.abs(hs.box.b - 2 - hs.cv.b) <= 1 && hs.concept === PLN.houseConcept.room1 && hs.note === PLN.houseNote, hs);
+      ok('집 단계: 기본 창에서 스크롤 없이 [다음]까지 보임', !hs.scroll && hs.next.b <= hs.vh, hs); }
     await clickSel('.ob-house[data-house="room3"]'); await sleep(200);
-    { const h3 = await js(`(() => { const c = document.getElementById('ob-house-cv'); return { w: c.width, h: c.height, on: document.querySelector('.ob-house[aria-checked=true]').dataset.house, px: c.getContext('2d').getImageData(200, 200, 1, 1).data[3] }; })()`);
-      ok('쓰리룸 누르기 -> 고름 + 미리보기 384x320 (그림 있음)', (await ob()).house === 'room3' && h3.w === 384 && h3.h === 320 && h3.on === 'room3' && h3.px === 255, h3); }
+    { const h3 = await js(`(() => { const c = document.getElementById('ob-house-cv'); return { w: c.width, h: c.height, on: document.querySelector('.ob-house[aria-checked=true]').dataset.house, px: c.getContext('2d').getImageData(200, 200, 1, 1).data[3] }; })()`), g3 = await houseGeo(), HL = await js('PH_ONBOARD_LINES.house');
+      ok('쓰리룸 누르기 -> 고름 + 미리보기 384x320 (그림 있음) + pick_room3·pick 중 한 줄 + 콘셉트 바뀜', (await ob()).house === 'room3' && h3.w === 384 && h3.h === 320 && h3.on === 'room3' && h3.px === 255 && HL.pick_room3.concat(HL.pick).includes((await ob()).line) && g3.concept === PLN.houseConcept.room3, { h3, line: (await ob()).line, c: g3.concept });
+      ok('쓰리룸으로 바꿔도 미리보기 틀 자리·크기 그대로 (출렁이지 않음)', g3.boxIn.join() === '384,320' && g3.card.h === (await houseGeo()).card.h, g3); }
     await shot('public_03b_onboard_house_room3');
+    { const a = await houseGeo(); await clickSel('.ob-house[data-house="room2"]'); await sleep(200); const b = await houseGeo();
+      ok('투룸으로 바꿔도 미리보기 틀·카드 자리 그대로', b.box.x === a.box.x && b.box.y === a.box.y && b.card.h === a.card.h && b.w === 336 && b.concept === PLN.houseConcept.room2, { a: a.box, b: b.box, ah: a.card.h, bh: b.card.h }); }
+    await shot('public_03a_onboard_house_room2');
+    // 좁은 창 (무늬 1절: 창 폭 < 984 -> 목록 가로 3칸, 아이콘 위·이름 아래, 방 구성은 미리보기 아래 첫 줄, [다음]은 카드 아래에 붙음)
+    { const [W0, H0] = win.getContentSize(); win.setContentSize(800, 600); await sleep(400);
+      const n = await houseGeo();
+      ok('좁은 창(800x600): 목록 가로 3칸(칸 너비 같음)·방 구성 목록에서 빠지고 미리보기 아래 첫 줄·미리보기 틀 384x320 그대로', n.cols.split(' ').length === 3 && n.smallShown === 'false,false,false' && n.roomsShown && n.rooms.length > 0 && n.boxIn.join() === '384,320' && n.frames === '72x60,72x60,72x60', n);
+      ok('좁은 창: 스크롤이 생겨도 [다음]이 창 안에 보임 (sticky)', n.next.b <= n.vh && n.next.y >= 0, { next: n.next, vh: n.vh, scroll: n.scroll });
+      await shot('public_03c_onboard_house_narrow');
+      win.setContentSize(W0, H0); await sleep(400); }
     await clickSel('.ob-house[data-house="room1"]'); await sleep(200);
     await shot('public_03_onboard_house');
     await clickSel('#ob-next'); await sleep(250);
     { const fd = await js(`(() => { const d = document.getElementById('ob-dir'); return { title: d.title, text: d.textContent, tag: d.tagName, file: (document.querySelector('.ob-file-row') || {}).textContent || '', fileWrap: getComputedStyle(document.querySelector('.ob-file-row b')).whiteSpace, dash: getComputedStyle(document.querySelector('.ob-folder')).borderTopStyle, icon: !!document.getElementById('ob-folder-cv') }; })()`);
       // 무늬 3-1 #7: 경로 = 보통 글(코드 칸 아님), 홈은 ~, 전체 경로는 title / 파일 이름 따로 한 줄 nowrap / 점선 칸 + 폴더 그림
-      ok('기록 폴더 단계: 기본 폴더 경로 + 고르기 버튼 (점선 칸·폴더 그림·보통 글 경로, "만들 파일 PixelHouse_생활기록.md" 한 줄)', (await ob()).step === 'folder' && fd.title === DIR && fd.tag === 'SPAN' && fd.text === DIR.replace(/^\/Users\/[^/]+/, '~') && /^만들 파일 \S+\.md$/.test(fd.file) && fd.fileWrap === 'nowrap' && fd.dash === 'dashed' && fd.icon && !!(await center('#ob-pick')), fd); }
+      ok('기록 폴더 단계: 기본 폴더 경로 + 고르기 버튼 (점선 칸·폴더 그림·보통 글 경로, "새로 생길 파일 PixelHouse_생활기록.md" 한 줄)', (await ob()).step === 'folder' && fd.title === DIR && fd.tag === 'SPAN' && fd.text === DIR.replace(/^\/Users\/[^/]+/, '~') && /^새로 생길 파일 \S+\.md$/.test(fd.file) && fd.fileWrap === 'nowrap' && fd.dash === 'dashed' && fd.icon && !!(await center('#ob-pick')), fd); }
     await shot('public_04_onboard_folder');
     await clickSel('#ob-next'); await sleep(250);
     ok('습관 단계: 추천 6개, 물만 처음부터 골라 둠', (await ob()).step === 'habit' && (await js(`document.querySelectorAll('.ob-chip[data-habit]').length`)) === 6 && (await ob()).habits.join() === 'water', await ob());
@@ -195,8 +219,8 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     { const m = await js(`(() => { const M = document.getElementById('fn-menu'), cv = [...M.querySelectorAll('.fs-tile canvas')], sel = M.querySelector('.fs-tile[aria-pressed=true]');
         return { title: M.querySelector('.fn-menu-furn').textContent, heads: [...M.querySelectorAll('.fs-h')].map((x) => x.textContent), pics: cv.map((c) => [c.width, c.height, c.style.width]), selLine: sel && getComputedStyle(sel).borderTopWidth,
           sep: !!M.querySelector('.fs ~ .fn-sep'), bubble: document.getElementById('bubble').hidden, bar: document.querySelector('#fn-bar .fn-bar-t').textContent }; })()`);
-      // 무늬 3-2: 제목 = 자리 이름, "이 자리 가구 2개 중 고르기", 그림 칸(넓은 침대 48x64 / 소파베드 1배), 고른 칸 2px 테, 나눔선 + "붙일 기능", 말풍선 숨김, 띠 글 짧게
-      ok('가구 바꾸기 = 그림 칸 (제목 "침대 자리", 이 자리 가구·2개 중 고르기, 1배 그림 2장, 고른 칸 2px 테, 붙일 기능 나눔, 말풍선 숨김, 띠 "가구를 누르면 모양·기능을 바꿔요")', m.title === '침대 자리' && m.heads[0] === '이 자리 가구 2개 중 고르기' && m.heads[1] === '붙일 기능' && m.pics.length === 2 && m.pics[0][0] === 48 && m.pics[0][2] === '48px' && m.selLine === '2px' && m.sep && m.bubble && m.bar === '가구를 누르면 모양·기능을 바꿔요', m); }
+      // 무늬 3-2: 제목 = 자리 이름, "들일 가구 2개 중 하나", 그림 칸(넓은 침대 48x64 / 소파베드 1배), 고른 칸 2px 테, 나눔선 + "붙일 기능", 말풍선 숨김, 띠 글 짧게
+      ok('가구 바꾸기 = 그림 칸 (제목 "침대 자리", 들일 가구·2개 중 하나, 1배 그림 2장, 고른 칸 2px 테, 붙일 기능 나눔, 말풍선 숨김, 띠 "가구를 누르면 모양·기능을 바꿔요")', m.title === '침대 자리' && m.heads[0] === '들일 가구 2개 중 하나' && m.heads[1] === '붙일 기능' && m.pics.length === 2 && m.pics[0][0] === 48 && m.pics[0][2] === '48px' && m.selLine === '2px' && m.sep && m.bubble && m.bar === '가구를 누르면 모양·기능을 바꿔요', m); }
     await shot('public_11_furnish_swap');
     const re2 = new Promise((r) => wc.once('did-finish-load', r));
     await clickSel('.fn-swap-b[data-sprite="sofa"]');

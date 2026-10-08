@@ -1,5 +1,5 @@
 // 대변·식사 일지 화면 두 곳 (2026-10-04 비트, logs 브랜치). life.js·journal.js는 고치지 않음
-//   1) 생활 습관 탭 "기록" 카드: "대변"·"식사" 줄에 오늘 몇 번 · 마지막 기록 시각 + "기록하기" (누르면 창 js/log_modal.js)
+//   1) 생활 습관 탭 "기록" 카드: "대변"·"식사" 줄에 오늘 몇 번 · 최근 기록 시각 (2026-10-09 "마지막" -> "최근", 부기 잠기록 4절·토리) + "기록하기" (누르면 창 js/log_modal.js)
 //      생활습관 표에 그 줄이 아직 없으면 화면에만 같은 모양으로 붙임 (첫 기록 때 메인이 표에 "기록" 줄을 더함)
 //   2) 생활일지 > "대변"·"식사" 안 탭 (settings.JOURNAL_TABS의 poop·meal): 월 달력 (js/calendar.js monthGrid·shift 재사용, 월요일 시작)
 //      대변 = 기록 있는 날 칸에 작은 그림(그날 마지막 형태) + 횟수 / 식사 = 그날 메뉴 이름이 기록한 순서대로 쌓임(넘치면 +n)
@@ -31,7 +31,7 @@
   const rowsOf = (kind, d) => KINDS[kind].mod.parse(d.lines || []);
 
   // ---- 1) 생활 습관 탭 기록 카드 ----
-  function lastText(last) { if (!last) return '아직 기록 없음'; const t = last.time ? last.time : ''; return last.date === today() ? `마지막 ${t || '오늘'}` : `마지막 ${md(last.date)}${t ? ' ' + t : ''}`; }
+  function lastText(last) { if (!last) return '아직 기록 없음'; const t = last.time ? last.time : ''; return last.date === today() ? `최근 ${t || '오늘'}` : `최근 ${md(last.date)}${t ? ' ' + t : ''}`; }
   function habitsHook(tab, el, d) {
     if (tab !== 'habits' || !d) return;
     const card = el.querySelector('.card[data-card="기록"]'); if (!card) return;

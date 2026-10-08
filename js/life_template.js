@@ -2,6 +2,7 @@
 //   메인(electron/profile_main.js)이 고른 기록 폴더에 이 글로 settings.LIFE_FILE 을 만든다 (이미 있으면 안 건드림 = 이어 쓰기).
 //   습관 줄은 습관 편집(js/habit_edit.js addHabit)을 그대로 거쳐 더한다 = 앱 안 "생활 습관 > 편집"으로 더한 것과 같은 글자.
 //   표 모양은 제작자 판 생활기록 v01 과 같음 (js/life_md.js 가 읽는 섹션: 생활습관·공부·습관 기록·약속·버킷리스트). 나머지 섹션은 처음 쓸 때 앱이 만든다
+//   (## 수면·## 식사·## 한마디 = js/life_log.js. 수면은 하루 구간 여러 개 + 선잠, 2026-10-08. 버킷리스트 바로 앞에 생김)
 (function (root) {
   'use strict';
   const req = (n) => (typeof require !== 'undefined' ? require(n) : null);

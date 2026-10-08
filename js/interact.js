@@ -40,7 +40,7 @@
   // 반응하지 않는 때 (대화창·입장 연출·밝아지기·다른 탭·기능 입구 진행 중)
   function blocked() { const g = G(); return !g || g.mode !== 'play' || !g.active || !!g.dialog || g.fadeT != null || dlgOpen() || IX.busy || modalOpen() || !!IX.connect; }
   // 집 위 창 (물·인벤토리·메모지·옷장)이 열려 있으면 집 물건은 반응 안 함 (창 뒤 판이 덮지만 Space·표시도 막음)
-  function modalOpen() { return ['PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHWardrobe', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen()); }
+  function modalOpen() { return ['PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHWardrobe', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHLogModal', 'PHSleepModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen()); }
 
   // ---- 대사 ----
   // 공용 집 가구 대사 (부기 공용판 v01 3절): 배치표에 자리(slots)가 있는 집이면 objRoom[지금 그림] -> objRoom[type] -> obj[type]
@@ -366,7 +366,11 @@
   }
   async function bedClose(s) {
     const now = IX.now(), date = IL.logDate(now, S.DAY_START_HOUR);
-    if (!TB.CLOSE_BANDS.includes(band(now))) { say(pick([['close', 'day']]), { tag: 'obj:' + s.id }); return; }
+    if (!TB.CLOSE_BANDS.includes(band(now))) { // 아침·낮 = 잠 칠하기 창 (오늘 줄, js/sleep_modal.js). 제작자 2026-10-09: 저녁·밤(·새벽)은 하루 마감 그대로
+      const SM = root.PHSleepModal;
+      if (SM && root.PHDesktop && root.PHDesktop.setSleepWindow) { IX.lastBed = 'sleep'; SM.open({ from: 'bed', band: band(now), date }).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; }
+      IX.lastBed = 'noWrite'; say(pick([['close', 'day']]), { tag: 'obj:' + s.id }); return; // 쓰기가 안 되는 화면 (부기 잠기록 3절 bedNoWrite = close.day)
+    }
     if (IX.closedDate === date) { say(pick([['obj', 'bed', 'after']]), { tag: 'obj:' + s.id }); return; }
     if (!root.PHDialog || !root.PHDialog.openFlow) return;
     IX.busy = true;

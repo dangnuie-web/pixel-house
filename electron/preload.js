@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('PHDesktop', {
   onMenuArtSet: (cb) => { ipcRenderer.on('ph:menuArtSet', (e, set) => cb(String(set))); },
   // 두부 대화창 쓰기 (electron/life_log_ipc.js). 파일·섹션·날짜는 메인이 정함. 값과 읽은 시각만 보냄
   setSleep: (bed, wake, memo, lastModified) => ipcRenderer.invoke('ph:setSleep', { bed, wake, memo, lastModified }),
+  // 잠 칠하기: from('YYYY-MM-DD HH:MM')부터 hours시간 창 안 잠을 segments로 통째로 바꿈 (js/life_log.js setSleepWindow, 창 밖·다른 줄은 그대로)
+  //   dropOpen = 같이 지울 "잔 시각만" 줄의 시각 목록 (없어도 됨, 2026-10-09)
+  setSleepWindow: (from, hours, segments, lastModified, dropOpen) => ipcRenderer.invoke('ph:setSleepWindow', { from, hours, segments, lastModified, dropOpen }),
   addMeal: (kind, text, lastModified) => ipcRenderer.invoke('ph:addMeal', { kind, text, lastModified }),
   setNote: (text, lastModified, fix, mood) => ipcRenderer.invoke('ph:setNote', { text, lastModified, fix: fix === true, mood: typeof mood === 'string' ? mood : null }), // mood = 기분 4칸 (interact)
   // 생활 습관 체크 (electron/life_check_ipc.js). 파일·날짜·주는 메인이 정함

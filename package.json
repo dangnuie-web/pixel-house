@@ -8,7 +8,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/test_profile.js && node tests/test_houses.js && node tests/test_settings_app.js && node tests/test_public_app.js",
+    "test": "node tests/test_profile.js && node tests/test_houses.js && node tests/test_settings_app.js && node tests/test_public_app.js && node tests/test_public_life_app.js",
+    "predist:mac": "install-electron",
     "dist:mac": "electron-builder --mac --publish never"
   },
   "devDependencies": {

@@ -180,5 +180,7 @@ module.exports = async function shotsSettings(win, ROOT, opts) {
     // 바깥(막) 누르기 = 닫기
     await js(`document.getElementById('cfg').dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); 0`); await sleep(200);
     ok('막 누르기 -> 닫힘', !(await js('PHSettingsUI.isOpen()')));
+    { const sd = (await js('PHSettingsUI.state()')).said, PL = await js('PH_SETTINGS_LINES.plan');
+      ok('집 도면 바꾼 뒤 닫기 -> 한마디 = plan 줄 (부기 공용판3 3절)', sd && sd.kind === 'plan' && PL.some((t) => t.replace(/냥~$/, '') === sd.text.replace(/(냥|멍)~$/, '')), { sd, PL }); }
   }
 };

@@ -143,8 +143,8 @@
     if (swapOn) {
       pics = swapPics(slot);
       const n = slot.candidates.length;
-      h += `<p class="fs-h fn-swap-t">${esc(P_.swapTitle || '이 자리 가구')} <span>${esc((P_.swapCount || '{n}개 중 고르기').replace('{n}', n))}</span></p>` +
-        `<div class="fs fn-swap" role="group" aria-label="${esc(P_.swapTitle || '이 자리 가구')}" style="grid-template-columns:repeat(${n},1fr)">` +
+      h += `<p class="fs-h fn-swap-t">${esc(P_.swapTitle || '들일 가구')} <span>${esc((P_.swapCount || '{n}개 중 하나').replace('{n}', n))}</span></p>` +
+        `<div class="fs fn-swap" role="group" aria-label="${esc(P_.swapTitle || '들일 가구')}" style="grid-template-columns:repeat(${n},1fr)">` +
         slot.candidates.map((c) => `<button type="button" class="fs-tile fn-swap-b" data-slot="${esc(slot.id)}" data-sprite="${esc(c.sprite)}" aria-pressed="${c.sprite === slot.sprite}">` +
           `<span class="fs-pic" style="height:${pics.h + 8}px"><canvas data-fs="${esc(c.sprite)}" aria-hidden="true"></canvas></span><span class="fs-name">${esc(c.name)}</span></button>`).join('') + '</div>' +
         `<hr class="fn-sep" aria-hidden="true"><p class="fs-h">${esc(P_.fnTitle || '붙일 기능')}</p>`;

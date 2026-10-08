@@ -130,7 +130,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     if (root.PHDialog && root.PHDialog.isOpen()) return true;
-    if (['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen())) return true;
+    if (['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHSleepModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen())) return true;
     return !!(g && g.dialog);
   }
   function fresh(kind) {

@@ -74,3 +74,29 @@ body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility:
 .ob-btn.ghost { border-color: transparent; background: none; color: var(--ui-sub); }
 .ob-btn.ghost:hover { background: var(--ui-hover); }
 .ob-btn:focus-visible, .ob-chip:focus-visible, .ob-av:focus-visible, .ob-house:focus-visible { outline: 3px solid var(--ui-ring); outline-offset: 1px; }
+/* 집 고르기 배치 (무늬 공용판마무리 v01 1절, 2026-10-09). 기본 = 좁은 창: 목록 가로 3칸(아이콘 위·이름 아래), 방 구성은 미리보기 아래 첫 줄 */
+.ob-plan { flex: none; width: 72px; height: 60px; display: flex; align-items: flex-end; justify-content: center; } /* 평면 아이콘 고정 틀 (아이콘 1칸 3px 그대로, 가운데·아래 맞춤) */
+.ob-card.is-house .ob-houses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ob-card.is-house .ob-house { flex-direction: column; align-items: center; gap: 6px; padding: 8px; text-align: center; }
+.ob-card.is-house .ob-house-t small { display: none; }
+.ob-card.is-house .ob-preview { align-self: center; align-items: flex-start; max-width: 100%; }
+/* 미리보기 틀 384x320 고정 (안쪽 크기. 테 1.5px는 바깥이라 쓰리룸 384x320이 잘리지 않음), 고른 집 1배 가운데·아래 맞춤 */
+.ob-preview-box { box-sizing: content-box; width: 384px; height: 320px; max-width: calc(100% - 3px); background: var(--ui-field); border: 1.5px solid var(--ui-inner); border-radius: 4px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.ob-preview-box canvas { border-radius: 0; }
+.ob-preview figcaption { display: flex; flex-direction: column; gap: 2px; text-align: left; line-height: 1.5; }
+.ob-preview .ob-rooms { white-space: pre-line; word-break: keep-all; }
+.ob-preview .ob-note { margin-top: 2px; }
+/* 넓은 창 (사이드바 200 + 카드 740 + 양옆 24): 왼쪽 목록 280 / 오른쪽 미리보기. 무늬 값 736 + 미리보기 틀 테 바깥 3px */
+@media (min-width: 988px) {
+  #screen-onboard.is-house { padding-top: 24px; }
+  .ob-card.is-house { width: min(740px, 100%); }
+  .ob-card.is-house .ob-body { display: grid; grid-template-columns: 280px auto; column-gap: 20px; row-gap: 10px; align-items: start; }
+  .ob-card.is-house .ob-h { grid-column: 1 / -1; }
+  .ob-card.is-house .ob-houses { display: flex; flex-direction: column; gap: 8px; }
+  .ob-card.is-house .ob-house { flex-direction: row; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; text-align: left; }
+  .ob-card.is-house .ob-house-t small { display: block; }
+  .ob-card.is-house .ob-preview { align-self: start; }
+  .ob-card.is-house .ob-rooms { display: none; } /* 넓은 창은 목록 칸에 방 구성이 있음 */
+}
+/* 스크롤이 생겨도 [이전]/[다음]이 보이게 카드 아래에 붙임 (모든 단계 같은 규칙, 무늬 권장) */
+.ob-nav { position: sticky; bottom: 0; background: var(--ui-paper); padding-top: 8px; z-index: 1; }

@@ -190,6 +190,9 @@
       if (res.conflict) { B.busy = false; B.pick = null; B.editing = false; repaint(); say(LN().conflict, 'conflict'); return res; }
       if (res.code) { B.busy = false; B.err = PL().badText || '내용이 비었거나 못 쓰는 글자가 있어요.'; repaint(B.editing && B.pick ? '.bkm-in-edit' : '.bkm-in-add'); say(LN().badText, 'badText'); return res; }
       onOk(res);
+      // 첫 줄을 적으면 사이드바 버킷리스트 탭을 바로 보임 (BUCKET_TAB 'auto'). 전에는 다른 탭으로 옮겨야 보였음 (빈 틀로 시작하는 공용판 첫날, 2026-10-09 test_public_life_app)
+      //   보이게만 함: 마지막 줄을 지울 때 탭을 바로 숨기면 되돌리기 띠도 같이 사라져서, 숨기기는 전처럼 다음에 그릴 때 (main.js onLoad)
+      if (Life.bucketAsTab && Life.bucketAsTab(Life.data) && root.PHApp && root.PHApp.applyTabs) root.PHApp.applyTabs();
     } catch (e) { B.lastError = String(e.message || e); say(LN().fail, 'fail'); }
     B.busy = false;
     return res;
@@ -266,7 +269,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) ||
-      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHLogModal', 'PHSleepModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   async function open(from) {
     if (B.isOn || blockedNow()) return false;

@@ -73,7 +73,7 @@
       const [, mo, da] = c.date.split('-').map(Number), lab = `${mo}월 ${da}일${c.n ? ' · ' + c.parts.join(', ') : ''}`;
       return `<i class="gr-c${c.today ? ' today' : ''}" data-date="${c.date}" data-lv="${c.lv}" style="grid-column:${c.col + 1};grid-row:${c.row + 1};background:${lv[c.lv]}" title="${esc(lab)}" aria-label="${esc(lab)}"></i>`;
     }).join('') + '</div></div>';
-    h += `<div class="gr-legend" aria-label="칸 색 = 그날 계획 막대 수"><span>${esc(P.grassLegend || '계획')}</span>${lv.map((x, i) => `<b>${i < 3 ? i : '3+'}</b><i style="background:${x}"${i ? '' : ' class="lv0"'}></i>`).join('')}</div>`;
+    h += `<div class="gr-legend" aria-label="칸 색 = 그날 계획 막대 수"><span>${esc(P.grassLegend || '그날 계획')}</span>${lv.map((x, i) => `<b>${i < 3 ? i : '3+'}</b><i style="background:${x}"${i ? '' : ' class="lv0"'}></i>`).join('')}</div>`;
     return h + '</div>';
   }
   function bind(el) {

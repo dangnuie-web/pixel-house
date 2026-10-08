@@ -8,6 +8,9 @@
 //   그림이 없으면: 바탕·고른 상의·하의가 다 있으면 층 합성 / 기본 차림(상의2+하의5)이면 원래 playerM 그림을 몸으로 쓰고 외투·가방·모자만 겹침 /
 //   그 밖에는 원래 그림 그대로 (앱은 그대로 돌아감). 창에서는 그릴 수 없는 칸을 "준비 중"으로 막음
 //   색: 캐릭터 규칙 그대로 = 낮 팔레트 + 입장 밝아지기(PHArt.fadeT). palette_night는 안 씀 (무늬 규격 7장 "앱이 캐릭터에도 밤 색을 쓸 때만")
+// 공용판 (2026-10-09, 무늬 공용판마무리 v01 3·4절): 집 안 캐릭터가 아바타(avatarN)이고 js/outfit_public.js(PH_OUTFITS_PUBLIC)가 있으면 켜짐
+//   바탕 = 그 아바타 avatarN_body, 옷 = 공용 묶음(모자 v02). 옷 그림에 anims_avatar[아바타]가 있으면 그 장(모래 모자), 없으면 기본 anims
+//   한벌 0번 = "처음 옷" = 그 아바타 원래 그림(avatarN_base) 그대로. 처음 차림은 이것 (옷을 고르기 전엔 겉모습이 전과 같음)
 (function (root) {
   'use strict';
   const SLOTS = ['top', 'bottom', 'outer', 'bag', 'hat', 'onepiece'];
@@ -18,13 +21,14 @@
 
   // ---- 규칙 (화면 없이) ----
   const isNum = (v) => Number.isInteger(v) && v >= 1 && v <= 99;
+  const OWN = 0; // 한벌 0번 = 처음 옷 (아바타 원래 그림)
   function normalize(saved, def) {
     def = def || conf().DEFAULT || { top: 2, bottom: 5, outer: null, bag: null, hat: null, onepiece: null };
     const s = Object.assign({}, def), src = saved && typeof saved === 'object' ? saved : {};
     SLOTS.forEach((k) => {
       if (!(k in src)) return;
       const v = src[k];
-      if (isNum(v)) s[k] = v;
+      if (isNum(v) || (k === 'onepiece' && v === OWN)) s[k] = v;
       else if (v === null && k !== 'top' && k !== 'bottom') s[k] = null;
     });
     if (!isNum(s.top)) s.top = def.top; if (!isNum(s.bottom)) s.bottom = def.bottom;
@@ -34,7 +38,7 @@
     const s = Object.assign({}, state);
     if (!SLOTS.includes(slot)) return s;
     if (slot === 'top' || slot === 'bottom') { if (!isNum(num)) return s; s[slot] = num; s.onepiece = null; return s; }
-    if (slot === 'onepiece') { if (!isNum(num)) return s; s.onepiece = num; return s; }
+    if (slot === 'onepiece') { if (!isNum(num) && num !== OWN) return s; s.onepiece = num; return s; }
     s[slot] = isNum(num) ? num : null; // 외투·가방·모자 (null = 없음)
     return s;
   }
@@ -59,6 +63,13 @@
     const xs = extras.filter(([k, n]) => ready(k + '_' + n)).map(([k, n]) => ({ kind: 'item', id: k + '_' + n, z: zOf(k + '_' + n, k) }));
     const exactExtras = xs.length === extras.length;
     let layers;
+    if (state.onepiece === OWN) { // 처음 옷 = 원래 그림을 몸으로 (공용판 아바타만. 제작자 묶음엔 own 없음 -> 원래 그림 그대로)
+      if (!D.own) return { layers: null, exact: false };
+      if (!xs.length) return { layers: null, exact: true };
+      layers = [{ kind: 'orig', id: 'orig', z: Z.top + 0.5 }].concat(xs, hair ? [hair] : []);
+      layers.sort((a, b) => a.z - b.z);
+      return { layers, exact: exactExtras };
+    }
     if (D.base && D.base.ready && body.every(([k, n]) => ready(k + '_' + n))) {
       layers = [{ kind: 'base', id: 'base', z: typeof D.base.z === 'number' ? D.base.z : Z.base }]
         .concat(body.map(([k, n]) => ({ kind: 'item', id: k + '_' + n, z: zOf(k + '_' + n, k) })), xs, hair ? [hair] : []);
@@ -75,35 +86,55 @@
   function available(state, slot, num, D, def) {
     D = D || data(); def = def || conf().DEFAULT || {};
     if (num == null) return OPTIONAL.includes(slot) && drawable(choose(state, slot, null), D, def);
+    if (slot === 'onepiece' && num === OWN) return !!D.own && drawable(choose(state, slot, OWN), D, def);
     const it = (D.items || {})[slot + '_' + num];
     const stand = (slot === 'top' || slot === 'bottom') && def[slot] === num; // 기본 차림 칸 = 원래 그림으로 그려짐
     if (!(it && it.ready) && !stand) return false;
     return drawable(choose(state, slot, num), D, def);
   }
 
-  const Logic = { SLOTS, OPTIONAL, Z, normalize, choose, worn, isWorn, isDefaultBody, plan, drawable, available };
+  // 공용 묶음 -> 아바타 하나 몫 (바탕 = avatarN_body, 옷 장 = anims_avatar[아바타] 먼저). own = 처음 옷 칸이 있음
+  function forAvatar(P, av) {
+    const A = P && P.avatars && P.avatars[av]; if (!A || !A.base) return null;
+    const items = {};
+    Object.keys(P.items || {}).forEach((k) => { const it = P.items[k], sp = it.anims_avatar && it.anims_avatar[av]; items[k] = sp ? Object.assign({}, it, { anims: Object.assign({}, it.anims, sp) }) : it; });
+    return { base: A.base, fixed: A.fixed || {}, items, own: true, avatar: av };
+  }
+
+  const Logic = { SLOTS, OPTIONAL, Z, OWN, normalize, forAvatar, choose, worn, isWorn, isDefaultBody, plan, drawable, available };
   if (typeof module !== 'undefined' && module.exports && typeof window === 'undefined') { module.exports = Logic; return; }
 
   // ---- 화면: 합성 ----
   const Art = root.PHArt;
-  const O = Object.assign({ state: normalize(null), loaded: false, ver: 0, composed: 0 }, Logic);
   const cache = new Map();
   const origFrameCanvas = Art.frameCanvas, origSize = Art.size;
-  const KEY_RE = new RegExp('^' + (conf().PREFIX || 'playerM') + '_(idle|walk_(?:up|down|left|right))$');
+  // 공용판 아바타 모드: 집 안 캐릭터 그림이 avatarN이고 공용 묶음에 그 아바타 바탕이 있을 때
+  const AV_RE = /^avatar\d{1,2}$/;
+  const avatarId = () => { const ch = (root.PH_CHARS || {}).player, P = root.PH_OUTFITS_PUBLIC; return ch && !ch.fellBack && AV_RE.test(ch.sprite || '') && P && P.avatars && P.avatars[ch.sprite] && P.avatars[ch.sprite].base && P.avatars[ch.sprite].base.ready ? ch.sprite : null; };
+  let avCache = null;
+  const dataNow = () => { const av = avatarId(); if (!av) return data(); if (!avCache || avCache.avatar !== av || avCache.src !== root.PH_OUTFITS_PUBLIC) avCache = Object.assign(forAvatar(root.PH_OUTFITS_PUBLIC, av), { src: root.PH_OUTFITS_PUBLIC }); return avCache; };
+  const prefix = () => avatarId() || conf().PREFIX || 'playerM';
+  const defState = () => (avatarId() ? Object.assign({}, conf().DEFAULT, { onepiece: OWN }) : conf().DEFAULT); // 아바타 처음 차림 = 처음 옷
+  const O = Object.assign({ state: normalize(null, defState()), loaded: false, ver: 0, composed: 0 }, Logic);
+  O.data = dataNow; O.avatar = avatarId; O.defState = defState;
+  O.available = (st, slot, num, D, def) => available(st, slot, num, D || dataNow(), def || conf().DEFAULT);
+  O.drawable = (st, D, def) => drawable(st, D || dataNow(), def || conf().DEFAULT);
 
-  // 이 세트에서 옷 갈아입기가 되는지 (v10 + 플레이어 그림이 playerM)
+  // 이 세트에서 옷 갈아입기가 되는지 (v10·v12 + 플레이어 그림이 playerM / 공용 집 + 아바타)
   O.enabled = function () {
     const c = conf(), ch = (root.PH_CHARS || {}).player;
-    return (c.SETS || []).includes(root.PH_ART_SET) && !!ch && ch.sprite === c.PREFIX && !ch.fellBack;
+    if ((c.SETS || []).includes(root.PH_ART_SET) && !!ch && ch.sprite === c.PREFIX && !ch.fellBack) return true;
+    return !!avatarId();
   };
-  O.size = function () { const b = data().base; return b && b.size ? { w: b.size[0], h: b.size[1] } : { w: 32, h: 36 }; };
-  O.origin = function () { const b = data().base; return (b && b.origin) || conf().ORIGIN || [4, 6]; };
-  O.plan = (st) => plan(st || O.state, data(), conf().DEFAULT);
+  O.size = function () { const b = dataNow().base; return b && b.size ? { w: b.size[0], h: b.size[1] } : { w: 32, h: 36 }; };
+  O.origin = function () { const b = dataNow().base; return (b && b.origin) || conf().ORIGIN || [4, 6]; };
+  O.plan = (st) => plan(st || O.state, dataNow(), conf().DEFAULT);
 
   const sig = (st) => O.SLOTS.map((k) => k + (st[k] == null ? '-' : st[k])).join('.');
   function layerFrames(L, anim) { // -> { frames, palette, flip }
-    if (L.kind === 'base') { const a = data().base.anims[anim]; return a ? { frames: a.frames, palette: a.palette, flip: false } : null; }
-    const p = L.kind === 'fixed' ? data().fixed[L.id] : data().items[L.id]; if (!p) return null;
+    const D = dataNow();
+    if (L.kind === 'base') { const a = D.base.anims[anim]; return a ? { frames: a.frames, palette: a.palette, flip: false } : null; }
+    const p = L.kind === 'fixed' ? D.fixed[L.id] : D.items[L.id]; if (!p) return null;
     if (p.anims[anim]) return { frames: p.anims[anim].frames, palette: p.anims[anim].palette, flip: false };
     const other = { walk_left: 'walk_right', walk_right: 'walk_left' }[anim]; // 한쪽만 있으면 뒤집어 씀
     return other && p.anims[other] ? { frames: p.anims[other].frames, palette: p.anims[other].palette, flip: true } : null;
@@ -124,7 +155,7 @@
     st = st || O.state;
     const pl = O.plan(st); if (!pl.layers) return null;
     const ft = Art.fadeT == null ? '' : 'f' + Math.round(Art.fadeT * 1000);
-    const ck = sig(st) + '|' + anim + '#' + fi + (flip ? 'f' : '') + '|' + ft;
+    const ck = (avatarId() || '') + '|' + sig(st) + '|' + anim + '#' + fi + (flip ? 'f' : '') + '|' + ft;
     if (cache.has(ck)) return cache.get(ck);
     const { w: W, h: H } = O.size(), c = document.createElement('canvas'); c.width = W; c.height = H;
     const ctx = c.getContext('2d');
@@ -132,7 +163,7 @@
     for (const L of pl.layers) {
       if (L.kind === 'orig') { // 원래 playerM 그림을 (4, 6)에
         ctx.putImageData(img, 0, 0);
-        const oc = origFrameCanvas.call(Art, (conf().PREFIX || 'playerM') + '_' + anim, fi, false); const o = O.origin();
+        const oc = origFrameCanvas.call(Art, prefix() + '_' + anim, fi, false); const o = O.origin();
         if (oc) ctx.drawImage(oc, o[0], o[1]);
         img = ctx.getImageData(0, 0, W, H);
         continue;
@@ -151,7 +182,18 @@
   };
   // 옷 그림 하나 (칸 미리보기): idle 0번 장을 칠한 부분만 잘라서. 없으면 null
   O.thumb = function (slot, num) {
-    const id = slot + '_' + num, p = (data().items || {})[id];
+    if (slot === 'onepiece' && num === OWN) { // 처음 옷 = 원래 그림 정면 0번 장 (칠한 부분만)
+      if (!dataNow().own) return null;
+      const oc = origFrameCanvas.call(Art, prefix() + '_idle', 0, false); if (!oc) return null;
+      const g = oc.getContext('2d'), W = oc.width, H = oc.height, d = g.getImageData(0, 0, W, H).data;
+      let x1 = W, y1 = H, x2 = -1, y2 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3]) { x1 = Math.min(x1, x); x2 = Math.max(x2, x); y1 = Math.min(y1, y); y2 = Math.max(y2, y); }
+      if (x2 < 0) return null;
+      const out = document.createElement('canvas'); out.width = x2 - x1 + 1; out.height = y2 - y1 + 1;
+      out.getContext('2d').drawImage(oc, x1, y1, out.width, out.height, 0, 0, out.width, out.height);
+      return out;
+    }
+    const id = slot + '_' + num, p = (dataNow().items || {})[id];
     if (!p || !p.ready || !p.anims.idle) return null;
     const { w: W, h: H } = O.size(), keep = Art.fadeT; Art.fadeT = null;
     try {
@@ -173,16 +215,17 @@
     try {
       const c = O.compose(anim, fi, false, st); if (c) return c;
       const { w: W, h: H } = O.size(), out = document.createElement('canvas'); out.width = W; out.height = H;
-      const oc = origFrameCanvas.call(Art, (conf().PREFIX || 'playerM') + '_' + anim, fi, false), o = O.origin();
+      const oc = origFrameCanvas.call(Art, prefix() + '_' + anim, fi, false), o = O.origin();
       if (oc) out.getContext('2d').drawImage(oc, o[0], o[1]);
       return out;
     } finally { Art.fadeT = keep; }
   };
-  const frameCountOf = (anim) => { const b = data().base; if (b && b.anims[anim]) return b.anims[anim].frames.length; return Art.frameCount((conf().PREFIX || 'playerM') + '_' + anim) || 1; };
+  const frameCountOf = (anim) => { const b = dataNow().base; if (b && b.anims[anim]) return b.anims[anim].frames.length; return Art.frameCount(prefix() + '_' + anim) || 1; };
   O.frameCount = frameCountOf;
 
   // ---- PHArt 감싸기: 집 안 플레이어 그림만 ----
-  const hit = (key) => (O.enabled() ? KEY_RE.exec(key) : null);
+  const ANIM_RE = /^(.+)_(idle|walk_(?:up|down|left|right))$/;
+  const hit = (key) => { if (!O.enabled()) return null; const m = ANIM_RE.exec(key); return m && m[1] === prefix() ? [m[0], m[2]] : null; };
   Art.frameCanvas = function (key, frameIndex, flip) {
     const m = hit(key);
     if (m) { const c = O.compose(m[1], frameIndex || 0, flip); if (c) return c; }
@@ -201,7 +244,7 @@
   const listeners = [];
   O.onChange = (fn) => listeners.push(fn);
   O.set = function (st, opt) {
-    O.state = normalize(st); O.ver++;
+    O.state = normalize(st, defState()); O.ver++;
     listeners.forEach((fn) => { try { fn(O.state); } catch (e) { /* 화면 갱신 실패는 무시 */ } });
     if (!(opt && opt.noSave)) return O.save();
     return Promise.resolve(true);

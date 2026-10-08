@@ -121,14 +121,16 @@
   const tabConf = () => C.TABS[st.tab];
   function cells() {
     const t = tabConf(), out = [];
+    const D = O.data(), items = D.items || {};
     if (t.none) out.push({ slot: t.slot, num: null, label: C.NONE_LABEL });
+    if (t.slot === 'onepiece' && D.own) out.push({ slot: t.slot, num: O.OWN, label: C.OWN_LABEL || '처음 옷' }); // 공용판 아바타: 원래 모습 (js/outfit.js OWN)
     Object.keys(C.ITEMS[t.slot] || {}).map(Number).sort((a, b) => a - b).forEach((n) => out.push({ slot: t.slot, num: n, label: C.ITEMS[t.slot][n] }));
     // 표에 없는 번호의 그림이 오면 그것도 (그림 파일 label)
-    Object.values((root.PH_OUTFITS || {}).items || {}).filter((it) => it.slot === t.slot && !(C.ITEMS[t.slot] || {})[it.num])
+    Object.values(items).filter((it) => it.slot === t.slot && !(C.ITEMS[t.slot] || {})[it.num])
       .sort((a, b) => a.num - b.num).forEach((it) => out.push({ slot: t.slot, num: it.num, label: it.label || (t.label + ' ' + it.num) }));
     return out.map((c) => Object.assign(c, {
       ok: O.available(O.state, c.slot, c.num), on: c.num == null ? O.state[c.slot] == null : O.isWorn(O.state, c.slot, c.num),
-      title: c.num != null && root.PH_OUTFITS && root.PH_OUTFITS.items[c.slot + '_' + c.num] ? root.PH_OUTFITS.items[c.slot + '_' + c.num].label : '',
+      title: c.num != null && items[c.slot + '_' + c.num] ? items[c.slot + '_' + c.num].label : '',
     }));
   }
   function paintTabs() {
@@ -170,7 +172,7 @@
     if (c.on) { say(line('same')); return; }
     const saved = await Promise.resolve(O.pick(c.slot, c.num)); // 집 안 플레이어·미리보기는 onChange로 바로 바뀜
     st.lastChoice = { slot: c.slot, num: c.num, saved };
-    say(saved === false ? line('saveFail') : line(c.num == null ? 'none' : (c.slot === 'onepiece' ? 'onepiece' : 'pick')));
+    say(saved === false ? line('saveFail') : line(c.num == null ? 'none' : c.num === O.OWN && c.slot === 'onepiece' ? 'pick' : (c.slot === 'onepiece' ? 'onepiece' : 'pick')));
   }
   function turn(d) { const i = FACES.indexOf(st.face); st.face = FACES[(i + d + FACES.length) % FACES.length]; drawPreview(true); }
 

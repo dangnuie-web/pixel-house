@@ -20,6 +20,7 @@
       { slot: 'onepiece', label: '한벌', none: false },
     ],
     NONE_LABEL: '없음',
+    OWN_LABEL: '처음 옷', // 공용판 아바타만: 한벌 탭 맨 앞 = 고른 모습 그대로 (비트 임시 글, 부기 확인)
     NOT_READY: '준비 중',
     WEARING: '입는 중',
     FACES: { down: '앞', left: '왼쪽', up: '뒤', right: '오른쪽' },

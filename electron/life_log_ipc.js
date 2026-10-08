@@ -5,6 +5,8 @@
 //   - 쓰기 직전 백업(main.js backup), 바뀐 줄 검사(onlyLogChanged)를 통과해야 씀
 // 식사 일지 끄기 (2026-10-04 제작자): 생활습관 표에 "식사" 줄이 없고 전에 있었으면(features.isSeen('meal')) 대화창 식사 적기도 거절 { ok: false, off: true }
 //   (화면 대화창도 식사 선택지를 빼지만, 메인에서 한 번 더 막음. 잠·한마디는 습관 줄이 없어 그대로)
+// 잠 칠하기 (2026-10-08 잠 기록 살리기): ph:setSleepWindow = 창(from부터 hours시간) 안 잠 구간을 통째로 바꿈 (js/life_log.js setSleepWindow).
+//   같은 규칙: 읽은 시각 검사(conflict), 값 검사, 바뀐 줄 검사(onlySleepWindowChanged = 창 밖 잠·다른 섹션은 그대로), 쓰기 직전 백업. 날짜는 화면이 고른 창(지난 날도 고칠 수 있음)
 // main.js에서 한 번 부른다: require('./life_log_ipc.js')({ ipcMain, file, backup, settings, fixedDay, guard, features })
 'use strict';
 const fs = require('fs');
@@ -21,7 +23,8 @@ module.exports = function register(o) {
   const day = () => (fixedDay && fixedDay()) || LL.logDay(Date.now(), settings.DAY_START_HOUR);
   const str = (v) => (v == null ? '' : v);
 
-  function write(kind, req, plan) {
+  // verify(옛 글, 새 글, 날짜) = 바뀐 줄 검사. 없으면 onlyLogChanged (오늘 줄 하나)
+  function write(kind, req, plan, verify) {
     if (guard) guard();
     if (!req || typeof req !== 'object') throw new Error('요청 형식 오류');
     const seen = req.lastModified;
@@ -31,7 +34,7 @@ module.exports = function register(o) {
     if (isOff(kind, cur)) return { ok: false, off: true, text: cur, lastModified: mtime, date };
     const r = plan(cur, date);
     if (!r.changed) return { ok: true, unchanged: true, text: cur, lastModified: mtime, date };
-    if (!LL.onlyLogChanged(cur, r.text, kind, date)) throw new Error('## ' + LL.SECTIONS[kind].name + ' 표 밖이 바뀌려 해서 멈춤');
+    if (!(verify ? verify(cur, r.text, date) : LL.onlyLogChanged(cur, r.text, kind, date))) throw new Error('## ' + LL.SECTIONS[kind].name + ' 표 밖이 바뀌려 해서 멈춤');
     const dir = backup(cur);
     fs.writeFileSync(file, r.text);
     return { ok: true, text: r.text, lastModified: fs.statSync(file).mtimeMs, date, line: r.line, inserted: r.inserted, created: r.created, backupDir: dir };
@@ -43,6 +46,12 @@ module.exports = function register(o) {
     check(req.bed, req.wake, req.memo);
     return LL.setSleep(cur, { date, bed: str(req.bed), wake: str(req.wake), memo: str(req.memo) });
   }));
+  // req = { from: 'YYYY-MM-DD HH:MM', hours: 1~24(기본 24), segments: [{ a, b, light, memo } 또는 { start, end, light, memo }], dropOpen: ['YYYY-MM-DD HH:MM'](없어도 됨), lastModified }
+  //   dropOpen = 창 안 "잔 시각만·깬 시각만" 줄 중 지울 것 (2026-10-09 칠하기 창). 창 밖이나 구간 줄은 이 목록으로 못 지움 (js/life_log.js)
+  ipcMain.handle('ph:setSleepWindow', (e, req) => write('sleep', req, (cur) => {
+    if (typeof req.from !== 'string' || !(req.hours == null || Number.isInteger(req.hours)) || !Array.isArray(req.segments) || !(req.dropOpen == null || Array.isArray(req.dropOpen))) throw new Error('값 형식 오류');
+    return LL.setSleepWindow(cur, { from: req.from, hours: req.hours, segments: req.segments, dropOpen: req.dropOpen });
+  }, (cur, next) => LL.onlySleepWindowChanged(cur, next, req.from, req.hours, req.dropOpen)));
   ipcMain.handle('ph:addMeal', (e, req) => write('meal', req, (cur, date) => {
     check(req.kind, req.text);
     // 시각 = 지금 시계 'HH:MM' (식사 일지 표 시각 칸, logs 브랜치 2026-10-04). 날짜는 위 하루 경계 6시 기준 그대로

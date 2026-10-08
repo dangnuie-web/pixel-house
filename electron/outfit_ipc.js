@@ -1,6 +1,6 @@
 // 옷 갈아입기 차림 저장 (wardrobe 브랜치 2026-10-03, 비트). 생활 기록 파일이 아니라 앱 설정 폴더의 outfit.json 한 파일
 //   위치: app.getPath('userData')/outfit.json (= ~/Library/Application Support/Pixel House/outfit.json). 시험(PH_SHOTS)은 임시 사용자 폴더
-//   화면은 차림 값만 보낸다 (경로를 보낼 수 없음). 칸·값은 여기서 다시 검사: 정해진 칸만, 번호 1~99 정수 또는 null
+//   화면은 차림 값만 보낸다 (경로를 보낼 수 없음). 칸·값은 여기서 다시 검사: 정해진 칸만, 번호 1~99 정수 또는 null (한벌만 0 = 처음 옷)
 //   쓰기: 임시 파일에 쓰고 이름 바꾸기 (쓰다 끊겨도 옛 파일이 남음)
 // main.js에서 한 번 부른다: require('./outfit_ipc.js')({ ipcMain, app })
 'use strict';
@@ -15,6 +15,7 @@ function clean(o) {
     if (!SLOTS.includes(k)) throw new Error('모르는 칸: ' + k);
     const v = o[k];
     if (v === null) { if (k === 'top' || k === 'bottom') throw new Error('상의·하의는 비울 수 없음'); out[k] = null; return; }
+    if (k === 'onepiece' && v === 0) { out[k] = 0; return; } // 한벌 0번 = 공용판 아바타 "처음 옷" (원래 그림, js/outfit.js OWN)
     if (!Number.isInteger(v) || v < 1 || v > 99) throw new Error('번호 오류: ' + k);
     out[k] = v;
   });

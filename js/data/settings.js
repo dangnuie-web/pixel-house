@@ -64,6 +64,7 @@
       { id: 'water', label: '물', habit: '물' }, { id: 'yoga', label: '요가', habit: '요가' }, { id: 'run', label: '러닝', habit: '러닝' },
       { id: 'reading', label: '독서', books: true },
       { id: 'poop', label: '대변', poop: true }, { id: 'meal', label: '식사', meal: true }, // 2026-10-04 logs: 대변 관찰·식사 일지 달력 (js/logs_view.js)
+      { id: 'sleep', label: '잠', sleep: true }, // 2026-10-09: 잠 한 달 모눈 + 칠하기 창 (js/sleep_view.js, 무늬 잠기록 v01)
       { id: 'movie', label: '영화·연극', records: ['영화', '연극'] }, // 2026-10-08: 영화·연극 리스트 (js/record_list.js). 사용자가 만든 기록 항목 탭은 이 뒤에 저절로 붙음
       { id: 'study', label: '공부', grass: true }, // 2026-10-08: 과목 고르기 -> 잔디 (js/study_grass.js)
       { id: 'all', label: '모아 보기', all: true },

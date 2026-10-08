@@ -78,17 +78,20 @@
       const list = (OB.info && OB.info.avatars) || ['avatar1', 'avatar2', 'avatar3'], nm = P.avatarNames || {};
       return `<h3 class="ob-h">${esc(P.avatarTitle)}</h3><div class="ob-avatars" role="radiogroup">${list.map((a) => `<button type="button" class="ob-av" role="radio" data-av="${esc(a)}" aria-checked="${a === OB.avatar}"><canvas data-cv="${esc(a)}"></canvas><span>${esc(nm[a] || a)}</span></button>`).join('')}</div>`;
     }
-    if (st === 'house') { // 원룸·투룸·쓰리룸 (무늬 공용판투룸쓰리룸 v01 6절): 칸 = 평면 아이콘(배치표 rows 1칸 3px) + 이름 + 방 구성, 아래 = 고른 집 1배 미리보기 + 한 줄 콘셉트
-      const list = (OB.info && OB.info.houses) || ['room1'], meta = (h) => houseData(h).house || {};
-      return `<h3 class="ob-h">${esc(P.houseTitle)}</h3><ul class="ob-houses" role="radiogroup">${list.map((h) => `<li><button type="button" class="ob-house" role="radio" data-house="${esc(h)}" aria-checked="${OB.house === h}"><canvas data-plan="${esc(h)}" aria-hidden="true"></canvas><span class="ob-house-t"><b>${esc(meta(h).label || h)}</b><small>${esc(meta(h).rooms_ko || '')}</small></span></button></li>`).join('')}</ul>
-      <figure class="ob-preview"><canvas id="ob-house-cv" aria-label="${esc((meta(OB.house).label || OB.house) + ' ' + (P.previewLabel || '미리보기'))}"></canvas><figcaption>${esc(meta(OB.house).concept || '')}</figcaption></figure>`;
+    if (st === 'house') { // 원룸·투룸·쓰리룸. 무늬 공용판마무리 v01 1절 (2026-10-09): 넓은 창 = 왼쪽 목록 280 / 오른쪽 미리보기 틀 384x320 고정, 좁은 창(< 984) = 목록 가로 3칸 + 방 구성은 미리보기 아래 첫 줄
+      // 칸 = 평면 아이콘(배치표 rows 1칸 3px, 72x60 고정 틀 가운데·아래 맞춤) + 이름 + 방 구성. 콘셉트 글 = 부기 houseConcept(없으면 배치표 house.concept)
+      const list = (OB.info && OB.info.houses) || ['room1'], meta = (h) => houseData(h).house || {}, m = meta(OB.house);
+      const concept = (P.houseConcept || {})[OB.house] || m.concept || '';
+      return `<h3 class="ob-h">${esc(P.houseTitle)}</h3><ul class="ob-houses" role="radiogroup" aria-label="${esc(P.houseTitle)}">${list.map((h) => `<li><button type="button" class="ob-house" role="radio" data-house="${esc(h)}" aria-checked="${OB.house === h}"><span class="ob-plan" aria-hidden="true"><canvas data-plan="${esc(h)}"></canvas></span><span class="ob-house-t"><b>${esc(meta(h).label || h)}</b><small>${esc(meta(h).rooms_ko || '')}</small></span></button></li>`).join('')}</ul>
+      <figure class="ob-preview"><div class="ob-preview-box"><canvas id="ob-house-cv" aria-label="${esc((m.label || OB.house) + ' ' + (P.previewLabel || '미리보기'))}"></canvas></div><figcaption><span class="ob-rooms">${esc(m.rooms_ko || '')}</span><span class="ob-concept">${esc(concept)}</span></figcaption>
+      ${P.houseNote ? `<p class="ob-note">${esc(P.houseNote)}</p>` : ''}</figure>`;
     }
     if (st === 'folder') {
       const f = OB.folder;
       // 무늬 3-1 #7: 입력칸처럼 안 보이게 점선 칸 + 폴더 그림 + 보통 글꼴 경로(홈 ~), 파일 이름은 따로 한 줄 (끊기지 않게)
       return `<h3 class="ob-h">${esc(P.folderTitle)}</h3><div class="ob-folder"><canvas id="ob-folder-cv" aria-hidden="true"></canvas><span id="ob-dir" class="ob-dir" title="${esc(f && f.dir)}">${esc(f ? homeShort(f.dir) : '')}</span>
         <button type="button" id="ob-pick" class="ob-btn">${esc(P.folderBtn)}</button></div>
-        ${f ? `<p class="ob-file-row">${esc(f.found ? (P.fileFound || '이어 쓸 파일') : (P.fileNew || '만들 파일'))} <b class="ob-file">${esc(f.file)}</b></p>` : ''}
+        ${f ? `<p class="ob-file-row">${esc(f.found ? (P.fileFound || '이어 쓸 파일') : (P.fileNew || '새로 생길 파일'))} <b class="ob-file">${esc(f.file)}</b></p>` : ''}
         <p class="ob-note">${esc(P.folderNote)}</p>`;
     }
     const LT = root.PHLifeTemplate, rec = (LT && LT.RECOMMEND) || [];
@@ -101,7 +104,8 @@
   function render() {
     const el = $('screen-onboard'); if (!el) return;
     const P = PL(), last = OB.step === STEPS.length - 1;
-    el.innerHTML = `<div class="ob-card">${stepsBar()}
+    el.classList.toggle('is-house', STEPS[OB.step] === 'house'); // 집 단계만 넓은 카드 (무늬 공용판마무리 1절)
+    el.innerHTML = `<div class="ob-card${STEPS[OB.step] === 'house' ? ' is-house' : ''}">${stepsBar()}
       <div class="ob-dubu"><canvas id="ob-dubu-cv" aria-hidden="true"></canvas><p id="ob-say" class="ob-say" aria-live="polite">${esc(OB.line)}</p></div>
       <div class="ob-body">${body()}</div>
       <div class="ob-nav">${OB.step > 0 ? `<button type="button" id="ob-back" class="ob-btn">${esc(P.back)}</button>` : '<span></span>'}

@@ -12,7 +12,7 @@
   const TABS = ['pet', 'house', 'avatar', 'side'];
   const AVATARS = ['avatar1', 'avatar2', 'avatar3'], HOUSES = ['room1', 'room2', 'room3'];
   const SIDE_TABS = ['home', 'habits', 'meetings', 'bucket', 'archive'];
-  const SAY_KEY = 'pixel-house.settingsSay', SAY_ORDER = ['petSwap', 'petName', 'house', 'avatar', 'tabs', 'saved'];
+  const SAY_KEY = 'pixel-house.settingsSay', SAY_ORDER = ['plan', 'petSwap', 'petName', 'house', 'avatar', 'tabs', 'saved']; // plan = 집 도면 (새 집 입장 화면부터 열려 다른 말보다 먼저)
   const NAME_MAX = 12, BRAND_MAX = 10; // electron/profile_main.js 와 같음
   const U = { el: null, btn: null, on: false, tab: 'pet', last: null, timer: null, frame: 0, busy: false, log: [] };
   const reduce = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -172,7 +172,7 @@
       br.addEventListener('input', () => { if (root.PHApp && root.PHApp.setBrand) root.PHApp.setBrand(br.value.trim() || PL().houseHolder || 'Pixel House'); }); // 칠 때마다 사이드바 이름 미리보기
       textField(br, (v) => { if ((v.trim() || 'Pixel House') === brand()) return; save('brand', v, { say: 'house', input: br }); });
     }
-    p.querySelectorAll('.cfg-chip').forEach((c) => c.addEventListener('click', () => { if (c.dataset.house !== house()) save('house', c.dataset.house, { reload: 'house', say: 'saved' }); }));
+    p.querySelectorAll('.cfg-chip').forEach((c) => c.addEventListener('click', () => { if (c.dataset.house !== house()) save('house', c.dataset.house, { reload: 'house', say: 'plan' }); }));
     p.querySelectorAll('.cfg-sw:not(:disabled)').forEach((sw) => sw.addEventListener('click', () => {
       const k = sw.dataset.side, h = hidden(), next = h.includes(k) ? h.filter((x) => x !== k) : h.concat(k);
       save('tabsHidden', next, { say: 'tabs', focus: '.cfg-sw[data-side="' + k + '"]' });

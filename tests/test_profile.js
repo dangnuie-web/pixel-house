@@ -51,6 +51,12 @@ ok('빈 틀: 생활습관·공부·습관 기록·약속·버킷리스트 섹션
 const t1 = LT.build(['water', 'yoga', 'reading', { name: '일기' }, { name: '물' }, { name: 'a|b' }, 'nope']);
 ok('추천 + 직접: 물(6칸)·요가·일기 목표, 독서 기록 / 같은 이름·표 깨는 글자·모르는 id는 빠짐', Md.parse(t1.text).habits.rows.map((r) => r.name + ':' + r.kind + (r.slots ? r.slots : '')).join() === '물:목표6,요가:목표,일기:목표,독서:기록' && t1.skipped.length === 3, [t1.added, t1.skipped]);
 ok('빈 틀 안내 글: 이 컴퓨터에만, 인터넷으로 안 보냄', /이 컴퓨터에만/.test(t0.text) && /인터넷으로 보내지 않습니다/.test(t0.text));
+// 잠 기록 (2026-10-08 구간 여러 개 + 선잠): 빈 틀엔 ## 수면이 없고, 처음 쓸 때 버킷리스트 앞에 생김. 자세한 시험은 tests/test_sleep.js
+const LL = require('../js/life_log.js');
+const z1 = LL.setSleepWindow(t1.text, { from: '2026-10-02 18:00', segments: [{ a: 330, b: 670 }, { a: 670, b: 780, light: true }] });
+ok('빈 틀에 잠 칠하기: ## 수면(종류 칸) 새로, 안전 검사 통과, 다시 읽으면 구간 둘', z1.created && z1.text.indexOf('## 수면') < z1.text.indexOf('## 버킷리스트') && LL.onlySleepWindowChanged(t1.text, z1.text, '2026-10-02 18:00', 24) && LL.sleepWindow(z1.text, '2026-10-02 18:00').merged.map((s) => s.light).join() === 'false,true');
+const z2 = LL.setSleep(z1.text, { date: '2026-10-03', bed: '23:00', wake: '07:00' });
+ok('빈 틀: 칠한 뒤 대화창 잠 쓰기 = 그날 대표 줄만 고침', LL.onlyLogChanged(z1.text, z2.text, 'sleep', '2026-10-03') && LL.dayOf(LL.parse(z2.text), '2026-10-03').sleeps.length === 2 && LL.dayOf(LL.parse(z2.text), '2026-10-03').sleep.bed === '23:00');
 
 // 묶음 고르기 (electron/profile_main.js): 임시 사용자 폴더
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pixel-house-profile-'));
