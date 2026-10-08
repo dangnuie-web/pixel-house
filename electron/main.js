@@ -240,6 +240,10 @@ function createWindow() {
   }
   if (SHOTS) {
     win.once('ready-to-show', () => win.showInactive()); // 포커스를 뺏지 않고 띄움 (그려야 캡처됨)
+    // 새로고침·다시 열기 뒤에는 backgroundThrottling: false가 풀릴 때가 있어, 시험 창이 다른 창 뒤에 있으면 requestAnimationFrame이 안 돎
+    //   -> 입장 연출이 문(제작자 계단 걷기 glide)에서 멈춤 (2026-10-08 test_app 18~19개·test_furnish_app 흔들림). 페이지를 읽을 때마다 다시 끔. 시험에서만
+    const keepFrames = () => { if (!win.isDestroyed()) win.webContents.setBackgroundThrottling(false); };
+    win.webContents.on('did-start-loading', keepFrames); win.webContents.on('dom-ready', keepFrames);
     // 시험 창은 사람 마우스·키를 받지 않음 (2026-10-03: 시험 중 화면에 뜬 창을 누르면 그림 세트가 바뀌거나 키가 눌린 채로 남아 시험이 흔들림).
     // 시험 입력은 webContents.sendInputEvent로 화면에 직접 넣으므로 그대로 들어감
     win.setIgnoreMouseEvents(true); win.setFocusable(false);

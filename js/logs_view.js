@@ -91,6 +91,7 @@
     let h = `<div class="lg-panel" data-kind="${kind}"><div class="lg-bar"><p class="lg-count">${v.y}년 ${v.m0 + 1}월 ${esc(K.label)} 기록 <b>${monthN}</b>번</p>` +
       (canWrite() ? `<button type="button" class="lg-add" data-focus="lg-add">기록하기</button>` : '') + '</div>';
     if (P.error) h += `<p class="fmt">${esc(P.error)}</p>`;
+    if (V.undo && V.undo.kind === kind && root.PHUndoBar) root.PHUndoBar.sync('logs', V.undo, () => { V.undo = null; root.PHUndoBar.removeEls('.lg-undo'); }); // 5초 뒤·탭 옮기기 때 사라짐 (js/undo_bar.js)
     if (V.undo && V.undo.kind === kind) h += `<div class="lg-undo" role="status"><span>${esc(V.undo.text)}</span><button type="button" class="lg-restore" data-focus="lg-restore">되돌리기</button></div>`;
     h += `<section class="cal lg-cal" data-month="${month}" aria-label="${esc(K.label)} 달력"><div class="cal-head"><h3>${v.y}년 ${v.m0 + 1}월</h3>
       <span class="cal-nav" role="group" aria-label="달 넘기기"><button type="button" class="cal-prev lg-prev" aria-label="지난달" data-focus="lg-prev">◀</button><button type="button" class="cal-now lg-now" ${isNow ? 'disabled' : ''} data-focus="lg-now">이번 달</button><button type="button" class="cal-next lg-next" aria-label="다음 달" data-focus="lg-next">▶</button></span></div>`;

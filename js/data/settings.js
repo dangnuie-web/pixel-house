@@ -104,6 +104,8 @@
     // 말풍선이 떠 있는 시간(ms), 대화창 글자 나오는 간격(ms)
     BUBBLE_MS: 3200,
     TYPE_MS: 35,
+    // 되돌리기 띠("… 지웠어요 [되돌리기]")가 떠 있는 시간(ms). 지나면 저절로 사라짐. 창 닫기·탭 옮기기 때도 사라짐 (2026-10-08 제작자, js/undo_bar.js)
+    UNDO_MS: 5000,
   };
   const PF = (root.PHProfile || (typeof module !== 'undefined' && typeof require === 'function' ? require('../profile.js') : null)); // 설정 묶음 (js/profile.js)
   if (PF) PF.patch('PH_SETTINGS', PH_SETTINGS);

@@ -113,6 +113,10 @@
       <span class="st-am" role="group" aria-label="공부 추가·수정"><button type="button" class="st-add">${esc(SPL.add || '추가')}</button><button type="button" class="st-mod" ${rows.length ? '' : 'disabled'}>${esc(SPL.edit || '수정')}</button></span></div></div>`;
     if (st.target) h += `<p class="kind-desc">기준: <b>${esc(st.target)}</b></p>`;
     // 이름 바꾼 뒤 되돌리기 한 번 (지난 기록 "이름 n시간"도 원래대로, 2026-10-04)
+    if (root.PHUndoBar) { // 되돌리기 띠: 5초 뒤·탭 옮기기 때 사라짐 (js/undo_bar.js)
+      root.PHUndoBar.sync('studyRename', St.renamed, () => { St.renamed = null; root.PHUndoBar.removeEls('.st-undo-rename'); });
+      root.PHUndoBar.sync('studyRemove', St.removed, () => { St.removed = null; root.PHUndoBar.removeEls('.st-undo:not(.st-undo-rename)'); });
+    }
     if (St.renamed) h += `<div class="st-undo st-undo-rename" role="status"><span>${esc((EP().studyRenamedNote || '{old} → {name} 이름 바꿨어요').replace('{old}', St.renamed.old).replace('{name}', St.renamed.name))}</span><button type="button" class="st-unrename">${esc(EP().undo || '되돌리기')}</button></div>`;
     if (St.removed) h += `<div class="st-undo" role="status"><span>${esc((EP().studyRemovedNote || '{name} 완전히 지웠어요').replace('{name}', St.removed.row.name))}</span><button type="button" class="st-unremove">${esc(EP().undo || '되돌리기')}</button></div>`;
     if (St.err && !St.sel) h += `<p class="st-err" role="alert">${esc(St.err)}</p>`;

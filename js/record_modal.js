@@ -79,6 +79,7 @@
     if (BS() && BS().busy) return; // 저장 중에는 안 닫음 (끝나면 닫을 수 있음)
     st.open = false; el.hidden = true;
     if (BS()) BS().reset();
+    if (root.PHUndoBar) root.PHUndoBar.clearAll(['record']); // 창 닫기 = 되돌리기 띠도 사라짐 (js/undo_bar.js)
     q('.bm-body').innerHTML = ''; // 탭 쪽은 탭을 열 때 새 글로 다시 그림
     const stage = $('stage'); if (stage) stage.focus({ preventScroll: true });
   }

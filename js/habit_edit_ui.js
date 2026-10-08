@@ -72,13 +72,15 @@
         (k.custom ? `<button type="button" class="he-del he-rk-del" data-rk="${nm}" data-focus="he-rk-del:${nm}">${esc(p.del)}</button>` : `<span class="he-lock he-rk-lock">${esc(p.rkFixed)}</span>`) + '</span></li>';
     });
     h += '</ul>';
-    if (St.undo && St.undo.kind === kind) h += `<div class="he-undo" role="status"><span>${esc(undoNote(St.undo))}</span><button type="button" class="he-undo-b" data-focus="he-undo">${esc(p.undo)}</button></div>`;
+    if (St.undo && St.undo.kind === kind) { if (root.PHUndoBar) root.PHUndoBar.sync('habit', St.undo, dropUndo); h += `<div class="he-undo" data-undo="habit" role="status"><span>${esc(undoNote(St.undo))}</span><button type="button" class="he-undo-b" data-focus="he-undo">${esc(p.undo)}</button></div>`; }
     h += f && f.mode === 'add' ? form(kind, f) : `<button type="button" class="he-add" data-focus="he-add:${esc(kind)}">${esc(p.add)}</button>`;
     const off = kind === HE.KIND.log && canWrite() ? fnOff() : [];
     if (off.length) h += `<div class="he-fn-picks" role="group" aria-label="${esc(FP().fnPick)}"><span class="he-lab">${esc(FP().fnPick)}</span>` +
       off.map((x) => `<button type="button" class="he-fn-add" data-fn="${esc(x.id)}" data-focus="he-fn-add:${esc(x.id)}">+ ${esc(x.label)}</button>`).join('') + '</div>';
     return h + '</div>';
   }
+  // 되돌리기 띠: 5초(settings.UNDO_MS) 뒤·탭 옮기기 때 사라짐 (js/undo_bar.js, 2026-10-08 제작자)
+  function dropUndo() { St.undo = null; if (root.PHUndoBar) root.PHUndoBar.removeEls('[data-undo="habit"]'); }
   const RW = () => root.PHRecordWrite, RD = () => root.PHRecordDesktop;
   const undoNote = (u) => { const p = P(); if (u.rk) return Life.fill(p.rkRemovedNote, { name: u.rk.name }); return u.update ? Life.fill(u.prev.name !== u.name ? p.renamedNote : p.updatedNote, { old: u.prev.name, name: u.name }) : Life.fill(p.removedNote, { name: u.removed.name }); };
   // 추가·고치기 칸

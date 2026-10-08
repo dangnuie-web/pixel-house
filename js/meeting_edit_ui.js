@@ -65,7 +65,8 @@
       b.querySelector('.he-del').addEventListener('click', () => op(el, 'remove', { key: { sig: m.sig }, date }, 'mte-undo'));
     });
     const box = document.createElement('div');
-    if (St.undo && St.undo.date === date) box.insertAdjacentHTML('beforeend', `<div class="he-undo" role="status"><span>${esc(undoNote(St.undo))}</span><button type="button" class="he-undo-b" data-focus="mte-undo">${esc(p.undo)}</button></div>`);
+    if (St.undo && St.undo.date === date && root.PHUndoBar) root.PHUndoBar.sync('meeting', St.undo, () => { St.undo = null; root.PHUndoBar.removeEls('[data-undo="meeting"]'); }); // 5초 뒤·탭 옮기기 때 사라짐 (js/undo_bar.js)
+    if (St.undo && St.undo.date === date) box.insertAdjacentHTML('beforeend', `<div class="he-undo" data-undo="meeting" role="status"><span>${esc(undoNote(St.undo))}</span><button type="button" class="he-undo-b" data-focus="mte-undo">${esc(p.undo)}</button></div>`);
     box.insertAdjacentHTML('beforeend', St.form && St.form.mode === 'add' ? form(St.form) : `<button type="button" class="he-add" data-focus="mte-add">${esc(p.add)}</button>`);
     while (box.firstChild) list.appendChild(box.firstChild);
     const ub = list.querySelector('.he-undo-b'); if (ub) ub.addEventListener('click', () => op(el, 'undo', { date }, 'mte-add'));

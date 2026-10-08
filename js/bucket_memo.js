@@ -5,7 +5,7 @@
 //   완료 탭 = 끝낸 날 최신 먼저 + 오른쪽 끝 날짜. 체크 풀면 버킷으로 (파일 줄 자리는 그대로)
 //   글씨 누르기(또는 포커스 + Enter) -> 그 줄 오른쪽에 [고치기][지우기] + 형광펜 띠. 다시 누르거나 다른 곳 누르면 숨김. 지우면 아래 막대에 "… 지웠어요 [되돌리기]"
 //     (3-1단계 피드백 3 제작자 2026-10-08: "체크박스 누르면 완료. 글씨 누르면 우측에 삭제 버튼" + 같은 날 "[고치기][지우기]". 버튼 글 = uiPlain.bucket.edit·del)
-//   고치기 = 그 줄 글 자리에 입력칸 (원래 글 전체 선택). Enter·[저장] = 고침 (안전 쓰기, 체크·끝낸 날 그대로), Esc·[그만두기] = 그만. 고치면 "… 고쳤어요 [되돌리기]"
+//   고치기 = 그 줄 글 자리에 입력칸 (원래 글 전체 선택). Enter·[저장] = 고침 (안전 쓰기, 체크·끝낸 날 그대로), Esc·[그만두기]·바깥 누르기 = 그만(글 버림). 고치면 "… 고쳤어요 [되돌리기]" (5초 뒤 사라짐)
 //     디자인 = 무늬 디자인/20261008_pixel-house_버킷줄선택_v01.md (메모지: 띠 40%, 줄 안 버튼 없음, [저장]은 아래 막대 / 카드: 띠 숨김, 입력칸 옆 [그만두기][저장])
 //   아래 막대: "붙일 자리 바꾸기"(js/memo_wall.js) + "Esc 닫기". 뒤를 어둡게 덮지 않음 (냉장고 메모지와 같음)
 // 그리는 곳: 집 위 창(#bkm, 벽 메모지 누르기 = 메모지) / 생활 습관 탭·사이드바 "버킷리스트" 탭 (카드 모양, 2026-10-08 피드백 2). 상태는 하나
@@ -72,7 +72,9 @@
     return `<div class="bkm-body${card ? ' bkc-body' : ''}">${h}</div>`;
   }
   const undoNote = (u) => (u.kind === 'edit' ? (PL().editedNote || '{text} 고쳤어요') : (PL().removedNote || '{text} 지웠어요')).replace('{text}', u.text);
-  function undoHtml() { return B.undoItem ? `<span class="bkm-undo" role="status"><span>${esc(undoNote(B.undoItem))}</span><button type="button" class="bkm-restore" data-focus="bkm-restore">${esc(PL().undo || '되돌리기')}</button></span>` : ''; }
+  // 되돌리기 띠: 5초(settings.UNDO_MS) 뒤·창 닫기·탭 옮기기 때 사라짐 (js/undo_bar.js, 2026-10-08 제작자)
+  function dropUndo() { B.undoItem = null; if (root.PHUndoBar) root.PHUndoBar.removeEls('.bkm-undo'); }
+  function undoHtml() { if (root.PHUndoBar) root.PHUndoBar.sync('bucket', B.undoItem, dropUndo); return B.undoItem ? `<span class="bkm-undo" role="status"><span>${esc(undoNote(B.undoItem))}</span><button type="button" class="bkm-restore" data-focus="bkm-restore">${esc(PL().undo || '되돌리기')}</button></span>` : ''; }
   function barHtml() {
     // 적는 중·고치는 중: Esc는 창을 닫지 않고 그 칸만 그만두므로 "Esc 그만두기" (무늬 버킷줄선택 v01 3-3), [저장]은 바로 옆
     const typing = (B.adding && B.tab === 'todo') || (B.editing && B.pick);
@@ -148,16 +150,32 @@
     const box = B.isOn ? el : (TABPAINT && TABPAINT.wrap), i = box && box.querySelector('.bkm-in-edit'); if (i) i.select();
   }
   function cancelEdit() { const s = B.pick; B.editing = false; B.pick = null; B.err = ''; repaint(s ? `[data-focus="bkm-t:${cssq(s)}"]` : null); }
-  // 다른 곳 누르기 = 버튼 숨김. 다시 그리지 않고 버튼만 떼어 냄 (누른 그 버튼의 click이 사라지지 않게). 고치는 중에는 적던 글이 날아가지 않게 그대로 (Esc·그만두기로)
+  // 다른 곳 누르기 = 버튼 숨김. 다시 그리지 않고 버튼만 떼어 냄 (누른 그 버튼의 click이 사라지지 않게)
   function unpickDom() {
     B.pick = null;
     document.querySelectorAll('.bkm-it.picked').forEach((li) => { li.classList.remove('picked'); const d = li.querySelector('.bkm-acts'); if (d) d.remove(); const t = li.querySelector('.bkm-t'); if (t) t.setAttribute('aria-expanded', 'false'); });
   }
+  // 고치는 중·적는 중 바깥 누르기 = 그냥 그만두기, 적던 글 버림 (2026-10-08 제작자). 입력칸 줄 안([그만두기][저장])·아래 막대 [저장]은 바깥 아님
+  //   상태는 누르는 순간 바꾸고, 다시 그리기는 click이 끝난 뒤 (누른 버튼 = 다른 줄 글씨·체크·탭 등이 그대로 눌리게). 그 버튼이 이미 다시 그렸으면 그대로
+  let dropLater = false;
   document.addEventListener('pointerdown', (e) => {
-    if (!B.pick || B.editing) return;
     const t = e.target && e.target.closest ? e.target : null;
+    if (B.editing || B.adding) {
+      if (t && (t.closest('.bkm-it.editing') || t.closest('.bkm-it.adding') || t.closest('.bkm-barsave'))) return;
+      const was = B.editing ? B.pick : null;
+      B.editing = false; B.adding = false; B.err = ''; if (was) B.pick = null;
+      dropLater = true;
+      return;
+    }
+    if (!B.pick) return;
     if (t && (t.closest('.bkm-acts') || (t.closest('.bkm-it.picked .bkm-t')))) return;
     unpickDom();
+  }, true);
+  const typingLeft = () => !!document.querySelector('#bkm:not([hidden]) .bkm-in, .bkm-cardwrap .bkm-in');
+  document.addEventListener('pointerup', () => {
+    if (!dropLater) return;
+    dropLater = false;
+    setTimeout(() => { if (!B.editing && !B.adding && typingLeft()) repaint(); }, 0); // click 뒤
   }, true);
 
   // ---- 저장 ----
@@ -270,7 +288,7 @@
   }
   function close() {
     if (!B.isOn || B.busy) return;
-    B.isOn = false; el.hidden = true; B.adding = false; B.pick = null; B.editing = false; B.err = '';
+    B.isOn = false; el.hidden = true; B.adding = false; B.pick = null; B.editing = false; B.err = ''; B.undoItem = null; // 창 닫기 = 되돌리기 띠도 사라짐
     PAINT = TABPAINT && document.contains(TABPAINT.wrap) ? TABPAINT : null; if (PAINT) PAINT();
     const st = $('stage'); if (st) st.focus({ preventScroll: true });
   }

@@ -188,6 +188,8 @@
       <button type="button" class="inv-del" aria-label="${n} 목록에서 빼기" title="빼기" data-focus="${pre}del:${n}">✕</button>`;
   }
   function paintUndo() {
+    // 되돌리기 띠: 5초(settings.UNDO_MS) 뒤·창 닫기 때 사라짐 (js/undo_bar.js, 2026-10-08 제작자). 칸 보기는 수정 줄을 다시 그림
+    if (root.PHUndoBar) root.PHUndoBar.sync('inventory', st.undo, () => { st.undo = null; if (!el || !st.open) return; const f = el.contains(document.activeElement) && document.activeElement.classList.contains('inv-undo-b'); paintUndo(); if (G()) paintEdit(); if (f) { const b = q('.inv-box') || el; if (b.focus) b.focus({ preventScroll: true }); } });
     const u = q('.inv-undo');
     u.hidden = !st.undo || G(); // 칸 보기에선 수정 줄 안에
     if (st.undo) q('.inv-undo-t').textContent = `${st.undo.item.name} 뺐어요`;

@@ -38,7 +38,21 @@
   }
   // 탭 바꾸기 (pixel-office selectTab과 같은 방식). 우리집 = 입장 전이면 입장 화면, 입장 뒤면 집.
   // 집 상태(두부 자리·연출·대사 기록)는 탭을 바꿔도 그대로 두고, 우리집이 아닐 때만 사이드바에 두부가 앉아 있음
+  // 우리집에서 다른 탭으로 가면 집 위에 열려 있던 창을 모두 닫음 (저장 안 한 글은 버림. 2026-10-08 제작자, 로드맵 3-1단계 피드백 3)
+  //   메모지(버킷)·냉장고 메모지·물컵·옷장·살림·책꽂이·TV 기록·메모지 자리 고르기·두부 대화창·식사·대변 일지(집에서 연 것만). 저장 중인 창은 각 창이 닫기를 거절함
+  const HOUSE_WINDOWS = ['PHBucketMemo', 'PHFridgeMemo', 'PHWaterModal', 'PHWardrobe', 'PHInventory', 'PHBookModal', 'PHRecordModal'];
+  function closeHouseWindows() {
+    HOUSE_WINDOWS.forEach((k) => { const m = root[k]; if (m && m.isOpen && m.isOpen()) m.close(); });
+    const W = root.PHMemoWall; if (W && W.isOpen && W.isOpen()) W.finish();
+    const LM = root.PHLogModal; if (LM && LM.isOpen() && !['habits', 'journal'].includes(LM.state().from)) LM.close();
+    if (root.PHDialog && root.PHDialog.isOpen()) root.PHDialog.close();
+  }
   async function selectTab(tab) {
+    const prev = App.tab;
+    if (prev !== tab) {
+      if (prev === 'home') closeHouseWindows();
+      if (root.PHUndoBar) root.PHUndoBar.clearAll(); // 탭 옮기기 = 되돌리기 띠 사라짐 (js/undo_bar.js)
+    }
     App.tab = tab;
     document.querySelectorAll('#tabs [role=tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     const home = tab === 'home';

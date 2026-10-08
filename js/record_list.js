@@ -38,6 +38,7 @@
     let h = `<div class="records" data-kind="${esc(R.kind)}"><div class="rc-bar">${pills(P)}${R.group.length < 2 ? `<b class="rc-title">${esc(R.kind)} <small>${list.length}</small></b>` : ''}` +
       (canWrite() ? `<button type="button" class="rc-add" data-focus="rc-add">${esc(PL().add || '+ 기록하기')}</button>` : '') + '</div>';
     if (P.error) h += `<p class="fmt">${esc(P.error)}</p>`;
+    if (R.undoItem && R.undoItem.kind === R.kind && root.PHUndoBar) root.PHUndoBar.sync('record', R.undoItem, () => { R.undoItem = null; root.PHUndoBar.removeEls('.rc-undo'); }); // 5초 뒤·창 닫기·탭 옮기기 때 사라짐 (js/undo_bar.js)
     if (R.undoItem && R.undoItem.kind === R.kind) h += `<div class="rc-undo" role="status"><span>${esc((PL().removedNote || '{title} 지웠어요').replace('{title}', R.undoItem.title))}</span><button type="button" class="rc-restore" data-focus="rc-restore">${esc(PL().undo || '되돌리기')}</button></div>`;
     if (!list.length) {
       const e = L().empty || {}, t = Life.fill(e[kindKey(R.kind)] || e.any || '아직 기록이 없어요냥~', { kind: R.kind });
