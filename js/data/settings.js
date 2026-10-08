@@ -52,6 +52,9 @@
     //   2026-10-08: 공용 기본 = 기록 폴더 맨 위 파일 하나 (온보딩이 빈 틀로 만듦). 제작자 판 경로는 profiles/player
     LIFE_FILE: 'PixelHouse_생활기록.md',
     BRAND: 'Pixel House', TITLE: 'Pixel House', // 사이드바 맨 위 이름·창 제목 (설정 묶음이 바꿈)
+    // 설정 화면 (공용판 피드백 1, 2026-10-08 무늬 설정화면 v01): 사이드바 맨 아래 설정 버튼 + 펫·하우스 이름·내 모습·사이드바 탭. 제작자 판은 false (profiles/player)
+    //   TABS_HIDDEN = 숨긴 사이드바 탭 (사용자 값, js/profile.js userSettings). 우리집(home)은 늘 보임
+    SETTINGS_SCREEN: true, TABS_HIDDEN: [],
     // 사이드바 탭 이름. archive 탭 = 생활일지 (제작자 2026-10-03: 기록 보관 -> 생활일지. 안쪽 키 archive는 그대로)
     TAB_NAMES: { home: '우리집', habits: '생활 습관', meetings: '약속', bucket: '버킷리스트', archive: '생활일지' },
     // 생활일지 안 탭 (js/journal.js). habit = 습관 기록의 습관 이름(그 습관이 있는 날만 한 줄씩), books = 독서 책꽂이, all = 옛 기록 보관 화면(잠·식사·한마디 포함)
@@ -74,8 +77,8 @@
     BUCKET_TAB: 'auto',
     STUDY_VIEW: 'month', // 공부 간트 처음 보기: 'month' 그달 / 'week' 월~일 (2026-10-08, js/study_gantt.js)
     // 벽 버킷리스트 메모지 붙일 자리 (그림 세트마다, 메모지 그림 왼쪽 위 집 px). 무늬 기록기능디자인 v01 2-1. 목록 첫 자리 = 처음 값. 자리가 없는 세트는 메모지 안 그림
-    MEMO_WALL_MOVE: false, // 벽 메모지 "붙일 자리 바꾸기" 버튼·가구 연동 모드에서 메모지 누르기 (2026-10-08 제작자: 선택지가 적어 일단 끔. 코드는 js/memo_wall.js 그대로, true면 다시 켜짐)
-    MEMO_WALL_SLOTS: {}, // 세트마다 자리 (설정 묶음이 채움). 없으면 배치표 wall_slots (공용 원룸)
+    // 벽 메모지 자리 (세트마다, 설정 묶음이 채움). 2026-10-08 제작자: 자리 고르기 없앰, 메모지 = 가구 하나 (js/house_slots.js addMemo). 공용 집은 배치표 memo_bucket 물건 그대로
+    MEMO_WALL_SLOTS: {},
     // 쓰기 (첫 판): 생활 습관 "오늘" 카드에서 이 습관의 칸만 눌러 체크 (LIFE_FILE ## 습관 기록 표 오늘 줄). 다른 것은 읽기 전용
     WATER_HABIT: '물',
     // 두부 대화창 (2026-10-03). 기록 날짜의 하루 경계 = DAY_START_HOUR시: 01~06시에 적은 식사·한마디·잠은 전날 날짜 (토리 결정)

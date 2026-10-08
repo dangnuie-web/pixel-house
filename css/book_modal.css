@@ -15,6 +15,7 @@ html.night .bm { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25;
   background: var(--dlg-bg); border: var(--dlg-line-w) solid var(--dlg-line); border-radius: var(--dlg-r);
   box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-inner); filter: drop-shadow(0 calc(2 * var(--du)) 0 var(--dlg-shadow)); }
 .bm-head { display: flex; align-items: center; justify-content: space-between; }
+.bm-head[hidden] { display: none; } /* 칸 하나짜리 기록 창 (js/record_modal.js, 무늬 확인모음 v01 ①) */
 .bm-title { font-size: max(13px, calc(8 * var(--du))); }
 .bm-body { flex: 1; min-height: 0; overflow: auto; max-width: none; }
 .bm-body .bk-case { max-width: none; }

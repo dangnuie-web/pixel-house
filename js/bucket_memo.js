@@ -7,7 +7,7 @@
 //     (3-1단계 피드백 3 제작자 2026-10-08: "체크박스 누르면 완료. 글씨 누르면 우측에 삭제 버튼" + 같은 날 "[고치기][지우기]". 버튼 글 = uiPlain.bucket.edit·del)
 //   고치기 = 그 줄 글 자리에 입력칸 (원래 글 전체 선택). Enter·[저장] = 고침 (안전 쓰기, 체크·끝낸 날 그대로), Esc·[그만두기]·바깥 누르기 = 그만(글 버림). 고치면 "… 고쳤어요 [되돌리기]" (5초 뒤 사라짐)
 //     디자인 = 무늬 디자인/20261008_pixel-house_버킷줄선택_v01.md (메모지: 띠 40%, 줄 안 버튼 없음, [저장]은 아래 막대 / 카드: 띠 숨김, 입력칸 옆 [그만두기][저장])
-//   아래 막대: "붙일 자리 바꾸기"(js/memo_wall.js) + "Esc 닫기". 뒤를 어둡게 덮지 않음 (냉장고 메모지와 같음)
+//   아래 막대: "Esc 닫기" (2026-10-08 붙일 자리 바꾸기 없앰: 벽 메모지 = 가구, js/house_slots.js). 뒤를 어둡게 덮지 않음 (냉장고 메모지와 같음)
 // 그리는 곳: 집 위 창(#bkm, 벽 메모지 누르기 = 메모지) / 생활 습관 탭·사이드바 "버킷리스트" 탭 (카드 모양, 2026-10-08 피드백 2). 상태는 하나
 //   적기 칸: 카드 = 입력칸 + [그만두기][저장] (피드백 2). 집 메모지 창 = 입력칸만, [저장]은 아래 막대 "Esc 닫기" 옆 (피드백 3). Enter = 저장, Esc = 그만두기 그대로
 // 쓰기는 모두 메인 (electron/record_ipc.js, window.PHBucketDesktop). 파일 모양은 기존 ## 버킷리스트 그대로 (js/bucket_write.js)
@@ -79,7 +79,6 @@
     // 적는 중·고치는 중: Esc는 창을 닫지 않고 그 칸만 그만두므로 "Esc 그만두기" (무늬 버킷줄선택 v01 3-3), [저장]은 바로 옆
     const typing = (B.adding && B.tab === 'todo') || (B.editing && B.pick);
     return undoHtml() +
-      (root.PHMemoWall && root.PHMemoWall.on() && root.PH_SETTINGS && root.PH_SETTINGS.MEMO_WALL_MOVE ? `<button type="button" class="bkm-move">${esc(PL().move || '붙일 자리 바꾸기')}</button>` : '') +
       `<span class="bkm-esc" aria-hidden="true">${esc(typing ? (PL().keysTyping || 'Esc 그만두기') : (PL().keys || 'Esc 닫기'))}</span>` +
       (typing && canWrite() ? `<button type="button" class="bkm-save bkm-barsave">${esc(PL().save || '저장')}</button>` : ''); // 피드백 3: 메모지 적기·고치기 저장 = 아래 막대 Esc 옆
   }
@@ -124,11 +123,6 @@
     }
     if (bar) {
       const rs = bar.querySelector('.bkm-restore'); if (rs) rs.addEventListener('click', undo);
-      const mv = bar.querySelector('.bkm-move'); if (mv) mv.addEventListener('click', async () => { // 사이드바 탭에서 누르면 집 화면으로 먼저
-        if (!root.PHMemoWall) return;
-        if (root.PHApp && root.PHApp.tab !== 'home' && root.PHApp.selectTab) { await root.PHApp.selectTab('home'); await new Promise((r) => setTimeout(r, 120)); }
-        root.PHMemoWall.start();
-      });
     }
   }
   const cssq = (s) => String(s).replace(/["\\]/g, '\\$&');
@@ -272,7 +266,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) ||
-      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHLogModal', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHRecordModal', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   async function open(from) {
     if (B.isOn || blockedNow()) return false;
@@ -283,7 +277,7 @@
     B.isOn = true; B.from = from || null; B.opened++; B.adding = false; B.pick = null; B.editing = false; B.err = ''; B.tab = 'todo';
     PAINT = paintModal; el.hidden = false; fit(); paintModal('[data-focus="bkm-tab:todo"]');
     el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
-    const o = LN().open || []; say(root.PHMemoWall && root.PHMemoWall.on() ? o : o.slice(1), 'open'); // open[0] "벽에 붙은 메모지"는 벽에 붙어 있을 때만 (부기 원고 주석)
+    const o = LN().open || []; say(from === 'wall' ? o : o.slice(1), 'open'); // open[0] "벽에 붙은 메모지"는 벽 메모지(가구)를 눌러 열었을 때만 (부기 원고 주석)
     return true;
   }
   function close() {

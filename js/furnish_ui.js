@@ -260,15 +260,41 @@
     return allKeys().filter((k) => !m[k] || FS().state(m[k]) === 'off').map((key) => ({ key, name: FX.nameOf(key) }))
       .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }
+  // 기록 편집 + 추가 가구 연동 칸 (무늬 확인모음 v01 ①, 2026-10-08): 모든 가구를 공간별로. 켜진 기능이 붙은 가구는 fn = 그 기능 짧은 이름 ("TV장 (영화)")
+  //   고르면 저장 때 가구 기능 연동 목록과 같은 바꾸기 규칙 (그 가구의 원래 기능은 빠짐, linkTo replace)
+  //   -> [{ room, roomName, items: [{ key, name, fn }] }] 공간 순서 = 배치표 rooms 순서, 공간 안은 이름 순. 공간을 못 찾은 가구는 맨 뒤 room null
+  function roomOfKey(key) {
+    const base = FX.baseKey(key), i = root.PHInteractLogic.linkKeys(L, TB).keys.indexOf(base), o = (L.objects || [])[i];
+    if (!o || o.px == null || !o.size || !root.PHWorld) return null;
+    const T = L.T || 16, cx = Math.floor((o.px + o.size[0] / 2) / T), by = Math.floor((o.py + o.size[1] - 1) / T);
+    for (const y of [by, by + 1, Math.floor((o.py + o.size[1] / 2) / T), by - 1]) { const r = root.PHWorld.roomAt(L, cx, y); if (r) return r; }
+    return null;
+  }
+  function recordFurniture() {
+    if (!L || !TB || !root.PHInteractLogic || !FS()) return [];
+    const m = map(), rooms = L.rooms || [], groups = new Map();
+    rooms.forEach((r) => groups.set(r.id, { room: r.id, roomName: r.name || r.id, items: [] }));
+    const rest = { room: null, roomName: '', items: [] };
+    allKeys().forEach((key) => {
+      const f = m[key] && FS().state(m[key]) !== 'off' ? FX.get(m[key]) : null;
+      const g = groups.get(roomOfKey(key)) || rest;
+      g.items.push({ key, name: FX.nameOf(key), fn: f ? (f.short || f.label) : '' });
+    });
+    const out = [...groups.values(), rest].filter((g) => g.items.length);
+    out.forEach((g) => g.items.sort((a, b) => a.name.localeCompare(b.name, 'ko')));
+    return out;
+  }
   // 기능이 붙은 가구 key (없으면 null)
   function linkedTo(fid) { if (!L || !TB || !root.PHInteractLogic || !FS()) return null; return FX.keysWith(map(), fid)[0] || null; }
   // 가구 하나에 기능 붙이기 (목록 없이). 쓰는 곳: 기록 편집 + 추가. 이미 다른 켜진 기능이 붙은 가구면 안 붙임 (taken)
-  async function linkTo(key, fid) {
+  //   opt.replace = 이미 켜진 기능이 붙은 가구도 바꿈 (기록 편집 + 추가: 고르는 칸에 붙은 기능을 미리 보여 줌, 무늬 확인모음 v01 ①). 바뀐 기능은 replaced
+  async function linkTo(key, fid, opt) {
     if (!FX.get(fid) || !allKeys().includes(key)) return { ok: false, code: 'bad' };
-    const m = map(); if (m[key] && m[key] !== fid && FS().state(m[key]) !== 'off') return { ok: false, code: 'taken', fid: m[key] };
+    const m = map(), had = m[key] && m[key] !== fid && FS().state(m[key]) !== 'off' ? m[key] : null;
+    if (had && !(opt && opt.replace)) return { ok: false, code: 'taken', fid: m[key] };
     await FS().setLinks(FX.setLink(allKeys(), FS().links, key, fid));
-    U.last = { key, fid, from: 'linkTo' };
-    return { ok: true, key, fid, furn: FX.nameOf(key) };
+    U.last = { key, fid, from: 'linkTo', replaced: had };
+    return { ok: true, key, fid, furn: FX.nameOf(key), replaced: had };
   }
   async function reset() {
     if (U.busy) return;
@@ -319,7 +345,7 @@
       const k = v.fn && (LN().swappedFn || []).length ? 'swappedFn' : 'swapped', text = line(k, { furn: v.furn, fn: v.fn }); U.swapSaid = text; say(text); }, 100);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', saySwapped); else setTimeout(saySwapped, 0);
-  root.PHFurnishUI = Object.assign(U, { setMode, toggle, onClick, openMenu, closeMenu, choose, swap, reset, drawTags, freeFurniture, linkTo, linkedTo,
+  root.PHFurnishUI = Object.assign(U, { setMode, toggle, onClick, openMenu, closeMenu, choose, swap, reset, drawTags, freeFurniture, recordFurniture, linkTo, linkedTo,
     state: () => ({ on: U.on, menu: U.menu ? Object.assign({}, U.menu) : null, busy: U.busy, last: U.last, log: U.log.slice(), map: map(),
       tags: U.els ? [...U.els.tags.querySelectorAll('.fn-tag')].map((t) => ({ key: t.dataset.key, fn: t.dataset.fn, text: t.textContent })) : [] }) });
 })(window);

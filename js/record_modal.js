@@ -56,7 +56,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) ||
-      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHBucketMemo', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHBookModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   // interact.js가 부름 (책꽂이). from = 누른 물건 type, line = 두부 한 줄(사이드바)
   //   kind = 처음 고를 탭 ('영화' | '연극'). line이 없으면 그 탭의 여는 말 (부기 record.open)
@@ -72,6 +72,8 @@
     BS().set(grp, kind || BS().kind || grp[0]); BS().reset();
     const title = grp.join('·'); // 영화·연극 = 그대로, 칸 하나 = 그 이름
     q('.bm-title').textContent = grp.join() === '영화,연극' ? (PL().windowTitle || '영화·연극') : title; el.setAttribute('aria-label', title + ' 기록');
+    // 칸 하나뿐이면 창 머리 숨김: 목록 제목 "공연 0"과 같은 말을 두 번 안 함 (무늬 확인모음 v01 ①). 창 aria-label은 그대로. 0개일 때 창 높이 = 내용만큼 (.rm.one)
+    q('.bm-head').hidden = grp.length < 2; el.classList.toggle('one', grp.length < 2);
     el.hidden = false; fit(); paint(BS().canWrite() ? 'rc-add' : null);
     el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
     if (!el.contains(document.activeElement)) q('.bm-box').focus({ preventScroll: true });

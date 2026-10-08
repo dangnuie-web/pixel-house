@@ -54,7 +54,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await js(`(() => { const i = document.getElementById('ob-name'); i.value = '민지'; i.dispatchEvent(new Event('input')); })()`);
     await clickSel('#ob-next'); await sleep(250);
     let o = await ob();
-    ok('이름 "민지" -> 고양이 이름 단계 (3-1단계), 두부가 {user}님으로 부르고 기본 이름 두부로 소개', o.step === 'cat' && o.name === '민지' && o.line.includes('민지님') && o.line.includes('두부예요') && !/\{user\}|\{cat/.test(o.line) && o.cat === '두부', o);
+    ok('이름 "민지" -> 고양이 이름 단계 (3-1단계), 두부가 {user}님으로 부르고 이름 묻기 (부기 1-1 cat.ask 둘 중 하나)', o.step === 'cat' && o.name === '민지' && o.line.includes('민지님') && (o.line.includes('두부예요') || o.line.includes('이번엔 제 차례예요')) && !/\{user\}|\{cat/.test(o.line) && o.cat === '두부', o);
     ok('고양이 단계: 이름 칸(빈칸 = 기본 두부) + 안내, 단계 표시 6칸', (await js(`!!document.getElementById('ob-cat') && document.getElementById('ob-cat').value === '' && document.querySelectorAll('.ob-steps li').length === 6 && document.querySelector('.ob-steps li.on').textContent === '2고양이'`))); // 단계 = 번호 원 + 글 (무늬 3-1 #2)
     await shot('public_01b_onboard_cat');
     await js(`(() => { const i = document.getElementById('ob-cat'); i.value = '콩|이'; i.dispatchEvent(new Event('input')); })()`);
@@ -63,7 +63,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await js(`(() => { const i = document.getElementById('ob-cat'); i.value = '콩이'; i.dispatchEvent(new Event('input')); })()`);
     await clickSel('#ob-next'); await sleep(250);
     o = await ob();
-    ok('고양이 이름 "콩이" -> 모습 단계, 두부가 새 이름으로 (cat.ok)', o.step === 'avatar' && o.cat === '콩이' && /^콩이(, 좋아요. 오늘부터 저는 콩이예요|! 마음에 들어요)/.test(o.line) && !o.line.includes('{cat'), o);
+    ok('고양이 이름 "콩이" -> 모습 단계, 두부가 새 이름으로 (cat.ok)', o.step === 'avatar' && o.cat === '콩이' && /^(콩이, 좋아요. 오늘부터 저는 콩이예요|제 이름이 생겼어요. 콩이, 마음에 쏙|콩이. 부르시면 바로 갈게요)/.test(o.line) && !o.line.includes('{cat'), o);
     const av = await js(`[...document.querySelectorAll('.ob-av')].map((b) => ({ av: b.dataset.av, w: b.querySelector('canvas').width, name: b.textContent.trim() }))`);
     ok('아바타 3명 그림(32x36 x3)·임시 이름', av.length === 3 && av.every((a) => a.w === 96) && av.map((a) => a.name).join() === '보리,도토리,모래', av);
     await shot('public_02_onboard_avatar');
@@ -112,8 +112,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     ok('기록 파일 생김 (빈 틀 + 고른 습관: 물·요가·일기 목표, 독서 기록)', fs.existsSync(LIFE) && (() => { const d = Md.parse(fs.readFileSync(LIFE, 'utf8')); return d.habits.rows.map((r) => r.name + ':' + r.kind).join() === '물:목표,요가:목표,일기:목표,독서:기록' && !!d.meetingsSection; })(), fs.existsSync(LIFE) && fs.readFileSync(LIFE, 'utf8').slice(0, 600));
     st = await js(`({ onboard: PHProfile.isOnboard(), start: !document.getElementById('screen-start').hidden, user: PHProfile.userName(), char: PH_CHARS.player.sprite, tabs: getComputedStyle(document.querySelector('#tabs [data-tab=habits]')).visibility })`);
     ok('다시 열림: 입장 화면, 이름 민지, 내 캐릭터 = avatar2, 탭 보임', !st.onboard && st.start && st.user === '민지' && st.char === 'avatar2' && st.tabs === 'visible', st);
-    const dn0 = await js('PH_SETTINGS.DAY_NIGHT');
-    await js(`PHGame.setDayNight('day'); PHApp.redrawCover(); 0`); await sleep(300); // 낮 입장 그림 (시험 시각과 상관없이)
+        await js(`PHGame.setDayNight('day'); PHApp.redrawCover(); 0`); await sleep(300); // 낮 입장 그림 (시험 시각과 상관없이)
     await shot('public_06_cover');
     const cat = await js(`({ name: PHProfile.catName(), tag: PH_DIALOG_LINES.name, click: PH_LINES.click.filter((t) => /여기 있어요/.test(t)), intro: PH_LINES.intro.map((x) => x.say || '').join(' '), win: PH_LINES.entrance.idle.window, left: JSON.stringify([PH_LINES, PH_DIALOG_LINES]).includes('{cat') })`);
     ok('켠 뒤 고양이 이름 = 콩이: 대화창 이름표·클릭 대사·입장 대사·입장 화면 글 ({cat} 남은 곳 없음)', cat.name === '콩이' && cat.tag === '콩이' && cat.click.some((t) => t.includes('콩이 여기 있어요')) && cat.intro.includes('집사 콩이예요') && cat.win.includes('콩이가 기다린다') && !cat.left, cat);
@@ -124,7 +123,9 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     ok('입장 그림 = entrance_room1_v01 (384x256, 입장하기 = button_zone 자리, door_zone·밤 팔레트 있음)', cov.file === '20261008_pixel-house_entrance_room1_v01.json' && cov.w === 384 && cov.h === 256 && cov.by === cov.want && !!cov.door && cov.night, cov);
     await js(`PHGame.setDayNight('night'); PHApp.redrawCover(); 0`); await sleep(300);
     await shot('public_06b_cover_night');
-    await js(`PHGame.setDayNight(${JSON.stringify(dn0)}); PHApp.redrawCover(); 0`); await sleep(300);
+    // 집 안 캡처는 늘 낮으로 (시험 시각과 상관없이). 전에는 'auto'로 되돌려서 18시 넘어 돌리면 낮 캡처(public_08 등)도 밤으로 찍혀
+    //   밤 캡처 public_night_01과 픽셀이 같았음 (무늬 확인모음 v01 ②. 집 밤 그리기는 정상, 시험 쪽 문제)
+    await js(`PHGame.setDayNight('day'); PHApp.redrawCover(); 0`); await sleep(300);
     // ---- 2. 입장: 원룸, 현관문 칸에서 시작, 첫 인사 = intro.afterOnboard ----
     // 현관문(door_zone)을 눌러도 입장 (무늬 2절). 진짜 누르기로
     { const dp = await js(`(() => { const z = PH_ASSETS.entrance.door_zone, r = document.getElementById('cover-cv').getBoundingClientRect(), k = r.width / 384; return { x: Math.round(r.left + (z.px + z.w / 2) * k), y: Math.round(r.top + (z.py + z.h / 2) * k) }; })()`);
@@ -163,12 +164,19 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 0`); await sleep(300);
     if (await js('!!(window.PHRecordModal && PHRecordModal.isOpen && PHRecordModal.isOpen())')) await js('PHRecordModal.close && PHRecordModal.close(); 0');
     await sleep(300);
-    const wall = await js('({ slots: (PH_LAYOUT.wallSlots || []).map((s) => s.id), drawn: !PH_LAYOUT.objects.some((o) => o.type === "memo_bucket") })');
-    ok('벽 메모지 자리 3곳(무늬 wall_slots), 배치표 메모지 물건은 메모지 모듈이 그림', wall.slots.join() === 'room_north,genkan_wall,lamp_wall' && wall.drawn, wall);
+    const wall = await js('(() => { const o = PH_LAYOUT.objects.find((x) => x.type === "memo_bucket"), s = PHInteract.spots().find((x) => x.key === "memo_bucket"); return { slot: o && o.wall_slot, go: s && PHInteract.activeGo(s), name: PHFeatures.nameOf("memo_bucket") }; })()');
+    ok('벽 메모지 = 배치표 물건 그대로 (첫 자리 room_north), 가구 이름 벽 메모지, 기능 = 버킷리스트 (2026-10-08 메모지를 가구처럼)', wall.slot === 'room_north' && wall.go === 'bucketMemo' && wall.name === '벽 메모지', wall);
 
     // ---- 밤 화면 캡처 (무늬 밤 색 확인용, public_night_*) ----
+    // 집 캔버스도 밤으로 그려졌는지 (무늬 확인모음 v01 ②: 전에는 public_night_01 = 낮 public_08과 픽셀이 같았음). 캔버스 픽셀 요약을 낮·밤 비교
+    const cvSum = `(() => { const c = document.getElementById('cv'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 0; for (let i = 0; i < d.length; i += 4) h = (h * 31 + d[i] * 7 + d[i + 1] * 3 + d[i + 2]) >>> 0; const bg = PHArt.sprite('background'), cnt = (hex) => { const v = parseInt(hex.slice(1), 16), r = v >> 16, g = (v >> 8) & 255, b = v & 255; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] === r && d[i + 1] === g && d[i + 2] === b) n++; return n; };
+      const dayN = bg ? Object.values(bg.palette).filter((x) => /^#[0-9A-Fa-f]{6}$/.test(x)).reduce((s, x) => s + cnt(x), 0) : -1, nightN = bg && bg.palette_night ? Object.values(bg.palette_night).reduce((s, x) => s + cnt(x), 0) : -1;
+      return { h, dayN, nightN, night: PHArt.night, gn: PHGame.G.night, mode: PHGame.G.mode }; })()`;
+    const daySum = await js(cvSum);
     await js(`PHGame.setDayNight('night'); 0`); await sleep(500);
     ok('밤으로 바꿈 (html.night)', await js(`document.documentElement.classList.contains('night')`), null);
+    const nightSum = await js(cvSum);
+    ok('낮 캡처 = 집 배경 낮 색 / 밤 캡처 = 밤 색 (배경 팔레트 픽셀 수로)', daySum.night === false && daySum.dayN > daySum.nightN && nightSum.night === true && nightSum.nightN > nightSum.dayN, { daySum, nightSum });
     await shot('public_night_01_room');
     await js('PHInteract.activateType("tv_cabinet"); 0'); await sleep(700);
     await shot('public_night_02_tv_record');

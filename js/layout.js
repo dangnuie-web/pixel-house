@@ -50,7 +50,7 @@
 
   root.PH_LAYOUT = {
     T, rows: D.rows, legend: D.legend, rooms, roomGrid, outside: D.outside, objects, WALKABLE,
-    wallSlots: D.wall_slots || null, slots: D.slots || null, // 공용 집: 벽 메모지 자리(js/memo_wall.js), 가구 자리(js/house_slots.js)
+    wallSlots: D.wall_slots || null, slots: D.slots || null, // 공용 집: 벽 메모지 자리 후보(배치표 기록, 2026-10-08부터 고르기 없음), 가구 자리(js/house_slots.js)
     w: D.rows[0].length, h: D.rows.length, W: D.rows[0].length * T, H: D.rows.length * T, // 캔버스 크기는 여기 한 곳
     roam: D.roam, spawn: D.spawn, lights: D.lights, entryPath: D.entry_path, blockedCheck: D.blocked_check, source: D._file,
     start: 'genkan',

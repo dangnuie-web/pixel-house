@@ -12,6 +12,7 @@
     roundtable: '둥근 탁자', coffeetable_m: '타원 탁자', tea_tray: '찻상', rug_round_big: '큰 타원 러그', rug_round: '둥근 카펫',
     coffeetable: '낮은 책상', drawer: '서랍장', toilet: '변기', washbasin: '세면대', floorlamp: '스탠드', floorlamp_round: '둥근 스탠드',
     plant_snake: '산세베리아', plant_monstera: '몬스테라', plant_cactus: '선인장', plant_fern: '고사리',
+    memo_bucket_wall: '벽 메모지',
     kitchen_wood: '원목 주방장', fridge_retro: '분홍 냉장고', bookshelf_open: '낮은 책장', // 2026-10-08 무늬 공용판후속 v01 1-1 (배치표 v02 name과 같음)
   };
   // 배치표 기능 이름 -> js/features.js 기능 id (무늬 제안 이름 * 표시). TV = 영화 기록(record)
@@ -34,8 +35,8 @@
     const out = { links: {}, slots: [] };
     if (!D || !Array.isArray(D.slots)) return out;
     const ch = choice && typeof choice === 'object' ? choice : {};
-    // 벽 메모지는 js/memo_wall.js 가 고른 자리에 그림 (배치표 물건으로 또 그리지 않음)
-    D.objects = (D.objects || []).filter((o) => !o.wall_slot);
+    // 벽 메모지 = 가구 하나 (2026-10-08 제작자 피드백 4: 자리 고르기 없앰). 배치표 물건 그대로(첫 벽 자리), 기본 기능 = 버킷리스트
+    if ((D.objects || []).some((o) => o.type === 'memo_bucket')) out.links.memo_bucket = 'bucket';
     D.slots.forEach((sl) => {
       const cands = (sl.candidates || []).filter((c) => !A || A[c.sprite]);
       if (!cands.length) return;
@@ -52,13 +53,28 @@
     return out;
   }
 
-  const HS = { NAMES, FEATURE_ID, place, apply, slots: [], links: null };
+  // 제작자 집(배치표에 메모지 물건 없음): settings.MEMO_WALL_SLOTS[세트] 자리에 벽 메모지 물건을 끼워 넣음 (2026-10-08 메모지를 가구처럼)
+  //   자리 = 예전에 자리 고르기로 고른 곳(앱 설정 localStorage pixel-house.bucketSlot)이 목록에 있으면 그곳, 아니면 첫 자리. 자리 고르기 기능은 없앰
+  const MEMO = { type: 'memo_bucket', sprite: 'memo_bucket_wall', KEY: 'pixel-house.bucketSlot' };
+  function addMemo(D, A, S, set) {
+    if (!D || (D.objects || []).some((o) => o.type === MEMO.type)) return null;
+    const list = ((S && S.MEMO_WALL_SLOTS) || {})[set] || [], a = A && A[MEMO.sprite]; if (!list.length || !a) return null;
+    let id = null; try { id = typeof localStorage !== 'undefined' ? localStorage.getItem(MEMO.KEY) : null; } catch (e) { id = null; }
+    const sl = list.find((x) => x.id === id) || list[0], fr = a.frames[0];
+    const o = { type: MEMO.type, sprite: MEMO.sprite, file: a.file, px: sl.px, py: sl.py, size: [fr[0].length, fr.length], layer: 'wall', wall: true, block: false, wall_slot: sl.id };
+    D.objects = (D.objects || []).concat(o);
+    return o;
+  }
+
+  const HS = { NAMES, FEATURE_ID, place, apply, addMemo, slots: [], links: null };
   const D = root.PH_LAYOUT_DATA;
+  HS.memo = addMemo(D, root.PH_ASSETS, root.PH_SETTINGS, root.PH_ART_SET);
   if (D && Array.isArray(D.slots)) {
     const P = root.PHProfile, r = apply(D, root.PH_ASSETS, P && P.user && P.user.furniture);
     HS.slots = r.slots; HS.links = r.links;
     root.PH_HOUSE_LINKS = r.links; // js/features.js 가 기본 연결표로 씀
     root.PH_HOUSE_NAMES = {}; r.slots.forEach((s) => { root.PH_HOUSE_NAMES[s.type] = NAMES[s.sprite] || s.sprite; });
+    if (r.links.memo_bucket) root.PH_HOUSE_NAMES.memo_bucket = NAMES.memo_bucket_wall;
   }
   root.PHHouseSlots = HS;
   if (typeof module !== 'undefined' && module.exports) module.exports = HS;

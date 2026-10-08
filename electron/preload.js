@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('PHOnboardDesktop', {
   pickFolder: () => ipcRenderer.invoke('ph:onboardPickFolder'),
   finish: (req) => ipcRenderer.invoke('ph:onboardFinish', req), // req = { name, cat(고양이 이름, 2026-10-08), avatar, house, dir, habits }
   setFurniture: (slot, sprite) => ipcRenderer.invoke('ph:furnitureSet', { slot, sprite }),
+  setProfile: (key, value) => ipcRenderer.invoke('ph:profileSet', { key, value }), // 설정 화면 (공용판): pet·cat·brand·avatar·house·tabsHidden 하나씩
 });
 contextBridge.exposeInMainWorld('PHDesktop', {
   read: (rel) => ipcRenderer.invoke('ph:read', rel), // 하우스 폴더 안 .md -> { text, lastModified }

@@ -49,9 +49,10 @@
     edit: '편집', editDone: '편집 끝', add: '+ 추가', save: '저장', cancel: '그만두기', fix: '고치기', del: '지우기', up: '위로', down: '아래로', undo: '되돌리기',
     name: '이름', target: '기준', unit: '단위', cycle: '주기',
     // 기록 카드 + 추가: 기록 방식 고르기 (2026-10-08 제작자 3-1단계, 비트 임시 글). record = ## 기록 항목 (영화·연극처럼 제목·날짜·요약 폼)
-    type: '기록 방식', types: { amount: '횟수·양 기록', record: '제목·날짜·요약 기록' }, recordType: '제목·날짜·요약', rkFixed: '기본', rkHolder: '예: 전시, 공연',
+    type: '기록 방식', types: { amount: '횟수로 세기', record: '한 줄씩 적기' }, recordType: '한 줄씩 기록', rkFixed: '기본', rkHolder: '예: 전시, 여행', // 부기 문구_공용판2 v01 1-3
+    typeNote: { amount: '주 3회처럼 몇 번 했는지 칸을 채워요 (예: 요가, 산책)', record: '할 때마다 제목·날짜·요약을 한 줄씩 남겨요 (예: 전시, 여행)' },
     // 2026-10-08 피드백 4 (비트 임시 글): 제목·날짜·요약 기록 + 추가 때 가구 연동 고르기. rkFixed('기본' 잠금)는 이제 안 씀
-    furn: '가구 연동', furnNone: '연동 안 함',
+    furn: '가구 연동', furnNone: '연동 안 함', furnNote: '고른 가구를 누르면 이 기록이 열려요',
     rkBad: '이름은 글자로만 12자까지 적을 수 있어요 (기호나 숫자 빼고).', rkDup: '같은 이름의 기록 칸이 있어요.', rkRemovedNote: '{name} 칸 뺐어요 (적은 기록은 남아요)',
     per: { day: '매일', week: '주', month: '월' }, times: '회',
     lockWater: '순서만 바꿀 수 있어요', lockWhy: '물은 정수기·물컵과 이어져 있어서 이름·기준·주기·지우기는 막아 두었어요',

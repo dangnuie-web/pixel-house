@@ -56,7 +56,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) ||
-      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHRecordModal', 'PHBucketMemo', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      ['PHWardrobe', 'PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHRecordModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   // interact.js가 부름 (책꽂이). from = 누른 물건 type, line = 두부 한 줄(사이드바)
   async function open(from, line) {

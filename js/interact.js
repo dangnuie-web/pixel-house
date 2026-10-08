@@ -40,7 +40,7 @@
   // 반응하지 않는 때 (대화창·입장 연출·밝아지기·다른 탭·기능 입구 진행 중)
   function blocked() { const g = G(); return !g || g.mode !== 'play' || !g.active || !!g.dialog || g.fadeT != null || dlgOpen() || IX.busy || modalOpen() || !!IX.connect; }
   // 집 위 창 (물·인벤토리·메모지·옷장)이 열려 있으면 집 물건은 반응 안 함 (창 뒤 판이 덮지만 Space·표시도 막음)
-  function modalOpen() { return ['PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHWardrobe', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHMemoWall', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen()); }
+  function modalOpen() { return ['PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHWardrobe', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen()); }
 
   // ---- 대사 ----
   // 공용 집 가구 대사 (부기 공용판 v01 3절): 배치표에 자리(slots)가 있는 집이면 objRoom[지금 그림] -> objRoom[type] -> obj[type]
@@ -125,6 +125,7 @@
     if (go === 'yoga') return rugYoga(s);
     if (go === 'meetings' || go === 'archive' || go === 'study' || go === 'reading') return openTab(s, go);
     if (go === 'inventory' && root.PHInventory) { root.PHInventory.open(s.conf.cat, s.type, s.conf.pill, s.conf.say).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 인벤토리 창 (js/inventory.js)
+    if (go === 'bucketMemo' && root.PHBucketMemo) { root.PHBucketMemo.open('wall').then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 벽 메모지 = 버킷리스트 메모지 창 (js/bucket_memo.js, 2026-10-08 메모지를 가구처럼)
     if (go === 'fridgeMemo' && root.PHFridgeMemo) { root.PHFridgeMemo.open(s.type).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 냉장고 메모지 창 (js/fridge_memo.js)
     if ((go === 'poopLog' || go === 'mealLog') && root.PHLogModal) { root.PHLogModal.open(go === 'poopLog' ? 'poop' : 'meal', { from: s.type, line: goLine(s) }).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 대변·식사 일지 창 (js/log_modal.js, logs 2026-10-04)
     if (go === 'waterModal' && root.PHWaterModal) { root.PHWaterModal.open(s.type).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 정수기 물 기록 창 (js/water_modal.js)

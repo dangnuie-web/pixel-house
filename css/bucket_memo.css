@@ -68,7 +68,6 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 /* 아래 막대 = 냉장고 메모지 막대 틀 (css/fridge_memo.css .memo-bar) */
 .bkm-bar { display: flex; align-items: center; gap: calc(6 * var(--du)); padding: calc(4 * var(--du)); background: #F7F0E1; border: max(2px, var(--du)) solid #29262F; border-radius: calc(5 * var(--du)); filter: drop-shadow(0 calc(2 * var(--du)) 0 #5C3E2B); }
 .bkm-bar:empty { display: none; }
-.bkm-move { height: calc(13 * var(--du)); min-width: calc(56 * var(--du)); padding: 0 calc(4 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: #86593A; color: #F7F0E1; font: 600 max(11px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
 .bkm-esc { font-size: max(10px, calc(6 * var(--du))); font-weight: 500; color: #86593A; }
 .bkm-undo { display: inline-flex; align-items: center; gap: calc(4 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); }
 .bkm-restore { height: calc(13 * var(--du)); padding: 0 calc(4 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: #86593A; color: #F7F0E1; font: 600 max(11px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
@@ -76,15 +75,7 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-bar button:focus-visible { outline: 2px solid #29262F; outline-offset: 2px; }
 .bkm-say { margin: 0; display: flex; gap: 6px; align-items: center; font-size: max(12px, calc(7 * var(--du))); }
 /* 벽 자리 고르기 (가구 기능 연동 .fn-hover 값 그대로) */
-#mw { position: absolute; inset: 0; z-index: 6; }
-#mw[hidden] { display: none; }
-.mw-slot { position: absolute; padding: 0; cursor: pointer; box-sizing: border-box; }
-.mw-slot img { position: absolute; opacity: .45; image-rendering: pixelated; pointer-events: none; }
-.mw-slot:hover:not(.sel) { border-style: solid; }
 /* 지금 자리: 노란 바탕을 그림 둘레에만 (무늬 캡처확인 v01 7번). 구멍 칸의 바깥 그림자를 상자 안으로 잘라 씀 */
-.mw-slot.sel { background: none; overflow: hidden; }
-.mw-hole { position: absolute; box-shadow: 0 0 0 999px rgba(243, 207, 107, .3); pointer-events: none; }
-.mw-slot:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
 /* 생활 습관 탭 버킷리스트 = 다른 카드와 같은 모양 (2026-10-08 제작자 3-1단계, js/bucket_memo.js html(d, { card })). 메모지(집·사이드바 탭)는 위 그대로
    탭 = 기록 창 알약(.rc-pill)과 같은 결, 줄 = 습관 카드 줄(1px 윗선), 체크 칸 = 네모, 버튼 = 습관 편집 버튼 결 */
 .bkm-cardwrap { font-family: var(--font); }

@@ -270,7 +270,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) || (root.PHWardrobe && root.PHWardrobe.isOpen()) ||
-      (root.PHWaterModal && root.PHWaterModal.isOpen()) || (root.PHFridgeMemo && root.PHFridgeMemo.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      (root.PHWaterModal && root.PHWaterModal.isOpen()) || (root.PHFridgeMemo && root.PHFridgeMemo.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   // interact.js·메모지가 부름. cat = 처음 탭 id, from = 누른 물건 type. 말: inv.open.<탭>
   async function open(cat, from, pill, sayKey) { // sayKey = 대사 inv.open.<키> (주방장 = kitchen, 없으면 탭 id)

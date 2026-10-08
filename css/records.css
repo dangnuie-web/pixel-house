@@ -50,6 +50,7 @@
 .bm .rc-month { background: var(--dlg-bg); }
 /* TV 창은 높이를 고정 (목록이 짧아도 폼이 잘리지 않게), 안에서 스크롤 */
 .bm.rm .bm-box { height: min(calc(330 * var(--du)), calc(100% - 24px)); }
+.bm.rm.one .bm-box { height: auto; min-height: min(240px, calc(100% - 24px)); } /* 칸 하나짜리 창 = 내용만큼 (무늬 확인모음 v01 ① 선택) */
 /* 생활일지 > 공부 잔디 (js/study_grass.js, 무늬 기록기능디자인 v01 5-3) */
 .grass { max-width: 760px; }
 .gr-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
@@ -96,3 +97,7 @@
 .gr-month button:focus-visible, .gr-month select:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
 .grass .gr-board { grid-template-rows: auto; }
 .grass .gr-wd, .grass .gr-cells { grid-row: 1; }
+/* 무늬 확인모음 v01 ③ (2026-10-08): 독서 폼 오류 글도 영화·연극 폼처럼 제목 칸 바로 아래, 제목 칸 테 = 오류 색 (js/bookshelf.js formHtml) */
+.bk-form .rc-err { margin: -6px 0 12px 96px; min-height: 0; color: var(--ui-danger); font-size: 13px; font-weight: 500; }
+.bk-form .rc-err:empty { display: none; }
+.bk-form .bk-in-title.bad { border-color: var(--ui-danger); }

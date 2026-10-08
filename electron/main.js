@@ -20,6 +20,8 @@ let shotData = null;
 // 폴더 이름에 시험 표시(PH_SHOTS_TAG, 시험 프로세스마다 다름)를 넣어, 시험이 끝난 뒤 자기 폴더만 지우게 함 (tests/cleanup_tmp.js)
 const SHOTS_TAG = /^[A-Za-z0-9]{1,24}$/.test(process.env.PH_SHOTS_TAG || '') ? process.env.PH_SHOTS_TAG : 'x';
 if (SHOTS) { shotData = fs.mkdtempSync(path.join(os.tmpdir(), 'pixel-house-shots-' + SHOTS_TAG + '-')); app.setPath('userData', shotData); }
+// 시험: 이미 온보딩을 마친 공용판 사용자로 시작 (PH_SHOTS_PROFILE = profile.json 내용, 시험 임시 사용자 폴더에만 씀. tests/test_settings_app.js)
+if (SHOTS && process.env.PH_SHOTS_PROFILE) { try { fs.writeFileSync(path.join(shotData, 'profile.json'), process.env.PH_SHOTS_PROFILE); } catch (e) { /* 없으면 온보딩부터 */ } }
 else if (process.env.PH_USERDATA) app.setPath('userData', path.resolve(process.env.PH_USERDATA)); // 시험(test_instance)용: 실제 사용자 폴더를 안 건드림
 
 // ---- 설정 묶음 고르기 (js/*.js 를 require 하기 전에: js/profile.js 가 PH_PROFILE 을 읽음) ----
@@ -27,14 +29,14 @@ const Prof = require(path.join(__dirname, 'profile_main.js'))({ app, ROOT, env: 
 let PROFILE = Prof.choose();
 function setProfileEnv() {
   process.env.PH_PROFILE = PROFILE.id;
-  if (PROFILE.id === 'default' && PROFILE.user && PROFILE.user.name) process.env.PH_PROFILE_USER = JSON.stringify({ name: PROFILE.user.name, cat: PROFILE.user.cat, avatar: PROFILE.user.avatar, house: PROFILE.user.house });
+  if (PROFILE.id === 'default' && PROFILE.user && PROFILE.user.name) process.env.PH_PROFILE_USER = JSON.stringify({ name: PROFILE.user.name, cat: PROFILE.user.cat, avatar: PROFILE.user.avatar, house: PROFILE.user.house, pet: PROFILE.user.pet, brand: PROFILE.user.brand, tabsHidden: PROFILE.user.tabsHidden });
 }
 setProfileEnv();
 // 화면이 처음 읽는 값 (preload가 동기로 받아 window.PHProfileBoot). 묶음 대사·설정 + 사용자 값. 기록 폴더 경로는 넘기지 않음
 function bootData() {
   const u = PROFILE.user || {};
   return { id: PROFILE.id, bundle: PROFILE.bundle || {}, onboard: !!PROFILE.onboard,
-    user: PROFILE.id === 'default' ? { name: u.name || '', cat: u.cat || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {} } : {} };
+    user: PROFILE.id === 'default' ? { name: u.name || '', cat: u.cat || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {}, pet: u.pet || '', brand: u.brand || '', tabsHidden: u.tabsHidden || [] } : {} };
 }
 ipcMain.on('ph:profileSync', (e) => { e.returnValue = bootData(); });
 
@@ -172,7 +174,8 @@ function cleanResume(r) { // 화면이 보낸 이어 보기 값: 정해진 꼴�
   if (!r || typeof r !== 'object') return null;
   const n = (v) => (typeof v === 'number' && isFinite(v) ? Math.min(1, Math.max(0, v)) : undefined);
   return { entered: r.entered === true, zone: typeof r.zone === 'string' && /^[a-z_]{1,20}$/.test(r.zone) ? r.zone : undefined,
-    fx: n(r.fx), fy: n(r.fy), face: DIRS.includes(r.face) ? r.face : undefined, tab: TABS.includes(r.tab) ? r.tab : undefined };
+    fx: n(r.fx), fy: n(r.fy), face: DIRS.includes(r.face) ? r.face : undefined, tab: TABS.includes(r.tab) ? r.tab : undefined,
+    settings: ['pet', 'house', 'avatar', 'side'].includes(r.settings) ? r.settings : undefined }; // 설정 화면에서 펫·이름을 바꿔 다시 연 뒤 설정 창 그 탭 다시 열기 (js/settings_ui.js)
 }
 function openPage(win, set, resume) {
   const query = { pb: '1' }; if (set) query.set = set; if (resume) query.resume = JSON.stringify(resume); // pb = 설정 묶음을 넘겨 줄 수 있는 메인 (electron/preload.js)
@@ -308,6 +311,7 @@ if (!gotLock) {
   if (!PROFILE.onboard) startHouse();
   else Prof.registerOnboard({ ipcMain, dialog, getWin: () => mainWin, S, onDone: houseReady });
   Prof.registerFurniture({ ipcMain, onChange: (u) => { if (u && PROFILE.id === 'default') PROFILE.user = u; } }); // 집 꾸미기 (공용판만)
+  Prof.registerSettings({ ipcMain, onChange: (u) => { if (u && PROFILE.id === 'default') { PROFILE.user = u; setProfileEnv(); } } }); // 설정 화면 (공용판만, 2026-10-08)
   app.whenReady().then(createWindow);
 }
 app.on('window-all-closed', () => app.quit());

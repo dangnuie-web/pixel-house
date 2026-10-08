@@ -94,7 +94,7 @@
 
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
-    return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) || (root.PHWardrobe && root.PHWardrobe.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+    return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) || (root.PHWardrobe && root.PHWardrobe.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   // interact.js가 부름 (정수기). from = 누른 물건 type
   async function open(from) {

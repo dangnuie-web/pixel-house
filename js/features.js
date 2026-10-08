@@ -27,6 +27,7 @@
     { id: 'inv_cosmetic', label: '살림: 화장품', short: '화장품', go: 'inventory', cat: 'cosmetic' },
     { id: 'wardrobe', label: '옷 갈아입기', short: '옷', go: 'wardrobe' },
     { id: 'close', label: '하루 마감 (잠자리)', short: '마감', go: 'close' },
+    { id: 'bucket', label: '버킷리스트 (벽 메모지)', short: '버킷', go: 'bucketMemo' }, // 2026-10-08 제작자 피드백 4: 벽 메모지 = 가구 하나, 기본 기능 = 버킷리스트 메모지 창 (js/bucket_memo.js)
     { id: 'calendar', label: '약속 달력', short: '달력', go: 'meetings', houseOnly: true }, // 2026-10-08 공용 원룸 벽 달력 (무늬 공용판원룸 v01 3절): 약속 탭 달력 열기. houseOnly = 가구 자리가 있는 집(공용)의 연동 목록에만 (제작자 집 목록은 그대로)
   ];
   const BY_ID = {}; FEATURES.forEach((f) => { BY_ID[f.id] = f; });
@@ -44,7 +45,7 @@
     toilet: 'poop', table_two: 'meal', table_long: 'study', bookshelf: 'reading',
     purifier: 'water', sink_v: 'water_cup', rug_round: 'yoga', fridge: 'memo', bed: 'close',
     kitchen_cabinet: 'inv_kitchen', 'shelf_unit.part': 'inv_living', 'tv_cabinet.part': 'inv_misc', 'mirror_oval.part': 'inv_cosmetic',
-    wardrobe_side: 'wardrobe', tv_cabinet: 'record', // 옷 갈아입기 = 오른쪽 벽 세로 옷장 하나 (2026-10-04 임시 기본, 제작자 답 오면 바꿈). 긴 거울·위쪽 옷장은 일반 반응
+    wardrobe_side: 'wardrobe', tv_cabinet: 'record', memo_bucket: 'bucket', // memo_bucket = 벽 메모지 (js/house_slots.js addMemo가 MEMO_WALL_SLOTS 자리에 넣음) // 옷 갈아입기 = 오른쪽 벽 세로 옷장 하나 (2026-10-04 임시 기본, 제작자 답 오면 바꿈). 긴 거울·위쪽 옷장은 일반 반응
   };
   // 연결 모드 목록에 보일 가구 이름 (없으면 type 그대로). 아래 칸 = "OO 아래 칸"
   const NAMES = {
@@ -53,7 +54,7 @@
     rug_persian: '페르시안 러그', shelf_unit: '거실 수납선반', fridge: '냉장고', floorlamp_round: '둥근 스탠드', chair_brown: '갈색 의자',
     table_two: '거실 2인 테이블', shoe_cabinet_ivory: '아이보리 신발장', shoes: '신발', shoe_cabinet_wood: '나무 신발장', gate: '현관문',
     rug_round: '둥근 카펫', mirror_oval: '긴 거울', wardrobe_top: '위쪽 옷장', wardrobe_side: '벽쪽 옷장', floorlamp: '스탠드', frame_cat: '고양이 액자',
-    bookshelf: '책꽂이', plant_bird: '극락조 화분', tv_cabinet: 'TV장', bed: '침대', chair_side: '침실 의자', table_long: '침실 긴 테이블',
+    bookshelf: '책꽂이', plant_bird: '극락조 화분', tv_cabinet: 'TV장', bed: '침대', chair_side: '침실 의자', table_long: '침실 긴 테이블', memo_bucket: '벽 메모지',
   };
   const PART_NAMES = { shelf_unit: '하단장', tv_cabinet: 'TV장 아래 장', mirror_oval: '거울 아래 서랍' };
   function nameOf(key) {

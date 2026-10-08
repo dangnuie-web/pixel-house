@@ -77,7 +77,7 @@ const D1 = JSON.parse(JSON.stringify(D)), r1 = HS.apply(D1, A, { bed: 'sofa', wa
 const at = (t) => D1.objects.find((q) => q.type === t);
 ok('후보 바꾸기: 기준점대로 자리 (소파 왼쪽 아래 195,72 / 타원 탁자 가운데 아래 129,136 / 둥근 카펫 가운데 129,120), 모르는 후보 = 기본', at('bed').sprite === 'sofa' && at('bed').px === 195 && at('bed').py === 72 && at('table_low').px === 129 && at('table_low').py === 136 && at('rug').px === 129 && at('rug').py === 120 && at('plant').sprite === 'plant_monstera', [at('bed'), at('table_low'), at('rug')].map((x) => [x.sprite, x.px, x.py]));
 ok('물컵 자리에 정수기 = 물 기록 창 (무늬 3절)', r1.links.cup_water === 'water', r1.links);
-ok('벽 메모지 물건은 배치표에서 빠짐 (js/memo_wall.js가 고른 자리에 그림)', !D1.objects.some((q) => q.wall_slot));
+ok('벽 메모지 = 배치표 물건 그대로 (2026-10-08 메모지를 가구처럼), 기본 기능 = 버킷리스트', D1.objects.filter((q) => q.type === 'memo_bucket').length === 1 && r1.links.memo_bucket === 'bucket', r1.links);
 ok('아바타 3명 x 5동작 그림 (32x36, 발바닥 줄 35), 밤 팔레트 없음(캐릭터 규칙)', [1, 2, 3].every((n) => ['idle', 'walk_down', 'walk_up', 'walk_left', 'walk_right'].every((k) => { const a = A['avatar' + n + '_' + k]; return a && a.frames[0].length === 36 && a.frames[0][0].length === 32 && a.foot_row === 35 && !a.palette_night; })));
 // 입장 그림은 공용 집 것(entrance_roomN, 무늬 2026-10-08)만 들어감. 제작자 집 입장·이웃(entrance_guest)는 없음
 ok('공용 그림 묶음 입장 그림 = 공용 원룸 것 (entrance_room1_v01)', !A.entrance || /^20261008_pixel-house_entrance_room\d+_v\d+\.json$/.test(A.entrance.file), A.entrance && A.entrance.file);

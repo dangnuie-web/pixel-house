@@ -48,7 +48,8 @@
   }
   // 버킷리스트를 탭으로 꺼낼지 (settings.BUCKET_TAB)
   function bucketItems(d) { return d && d.bucket ? d.bucket.filter((b) => !b.placeholder) : []; }
-  function bucketAsTab(d) { return S.BUCKET_TAB === 'tab' || (S.BUCKET_TAB !== 'inline' && bucketItems(d).length > 0); }
+  // 설정 화면에서 버킷리스트 탭을 껐으면(TABS_HIDDEN) 생활 습관 탭 아래 카드로 (부기 문구_공용판2 v01 4-1)
+  function bucketAsTab(d) { if ((S.TABS_HIDDEN || []).includes('bucket')) return false; return S.BUCKET_TAB === 'tab' || (S.BUCKET_TAB !== 'inline' && bucketItems(d).length > 0); }
 
   function dubuNote(text, cls) { return `<div class="life-dubu ${cls || ''}"><canvas class="dubu-mini" width="16" height="20" aria-hidden="true"></canvas><p>${esc(text)}</p></div>`; }
   function head(title, sub, badge) {
@@ -164,7 +165,7 @@
     let h = `<section class="card study" data-card="공부"><h3>공부 ${st ? `<small>${st.rows.length}</small>` : ''}</h3>`;
     if (!st) return h + dubuNote(UI.sectionMissing) + '</section>';
     if (st.target) h += `<p class="kind-desc">기준: <b>${esc(st.target)}</b></p>`;
-    if (!st.rows.length) return h + dubuNote(UI.studyEmpty) + `<p class="fmt">${esc(UI.studyFormat)}</p></section>`;
+    if (!st.rows.length) return h + dubuNote(UI.studyEmpty) + (root.PHStudyModal && root.PHStudyModal.canWrite() ? `<p class="fmt">${esc(UI.studyFormat)}</p>` : '') + '</section>'; // [추가]가 없는 화면(쓰기 안 됨)엔 안내 숨김 (부기 2-2)
     const G = S.GANTT_WEEKS || {}, range = Md.ganttRange(st.rows, Life.now(), G.min, G.max);
     const pct = (i) => (i / range.days * 100).toFixed(3) + '%';
     const todayIdx = Math.round((range.today - range.start) / 86400000);
@@ -179,7 +180,7 @@
       h += `<div class="g-label" data-line="${r.line}"><b>${esc(r.name)}</b><small>${md(r.startDay)} ~ ${r.open ? '진행 중' : md(r.endDay)}${r.memo ? ' · ' + esc(r.memo) : ''}</small></div><div class="g-track g-row" data-line="${r.line}">${bar}</div>`;
     });
     h += `<div class="g-today" style="left:calc(var(--gl) + (100% - var(--gl)) * ${(todayIdx + 0.5) / range.days})" title="오늘"></div></div>`;
-    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
+    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 읽지 못한 공부가 있어요: {names}. [수정]에서 시작일·끝일을 다시 골라 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
     return h + '</section>';
   }
 
@@ -228,7 +229,7 @@
 
   // ---- 기록 보관: 습관 기록 표 (날짜별). 데이터는 entries(한 칸 = 한 날짜·한 습관) -> byDate / byHabit (나중의 분석·그래프) ----
   function archiveView(d) {
-    let h = head(TAB('archive'), '습관 기록을 모아 둔 곳이에요');
+    let h = head(TAB('archive'), (UI.journalHead && UI.journalHead.sub) || '지나온 기록을 탭마다 모아 뒀어요'); // 부기 문구_공용판2 v01 2-1
     const days = Md.byDate(d.entries);
     const log = root.PHLifeLogView ? root.PHLifeLogView.html(d.lines, { dayLabel, esc }) : ''; // 잠·식사·한마디 (두부 대화창, js/life_log_view.js)
     if (!days.length) return h + (log || dubuNote(UI.recordsEmpty));
@@ -431,8 +432,19 @@
   function sayNow(text) { clearTimeout(laterTimer); say(text); } // 새 반응이면 기다리던 다음 줄(later)은 버림
   function say(text) { if (text && root.PHApp && root.PHApp.sideSay) root.PHApp.sideSay(text); }
 
+  // 사이드바·안내 작은 두부. 공용판(설정 화면이 있는 판)은 고른 펫의 {앞부분}_sit(20x22)을 캔버스 크기 안 가장 큰 정수 배율로 아래 맞춤 (무늬 설정화면 v01 7절: 48x60 칸 = 2배)
+  //   제작자 판은 그대로 dubu_sit (16x20) 1장
   function drawDubu(c) {
-    const Art = root.PHArt; if (!Art || !Art.has('dubu_sit')) return;
+    const Art = root.PHArt; if (!Art) return;
+    const pet = S.SETTINGS_SCREEN && root.PH_CHARS && root.PH_CHARS.dubu ? root.PH_CHARS.dubu.sprite + '_sit' : null;
+    if (pet && Art.has(pet)) {
+      const cs = getComputedStyle(c), W = Math.round(parseFloat(cs.width)) || 48, H = Math.round(parseFloat(cs.height)) || 60, z = Art.size(pet), k = Math.max(1, Math.floor(Math.min(W / z.w, H / z.h)));
+      if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(Art.frameCanvas(pet, 0), Math.floor((W - z.w * k) / 2), H - z.h * k, z.w * k, z.h * k);
+      c.dataset.pet = pet; return;
+    }
+    if (!Art.has('dubu_sit')) return;
     const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); ctx.drawImage(Art.frameCanvas('dubu_sit', 0), 0, 0);
   }
 

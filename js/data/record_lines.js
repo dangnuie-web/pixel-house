@@ -1,5 +1,5 @@
 // 기록 넓히기 두부 대사·화면 글 (2026-10-08). 출처: (제작 문서) (부기(시나리오))
-//   쓰는 곳: ui.record (js/record_list.js 영화·연극·새 항목), ui.bucket (js/bucket_memo.js), ui.memoWall (js/memo_wall.js), ui.book 덮어쓰기 (js/bookshelf.js)
+//   쓰는 곳: ui.record (js/record_list.js 영화·연극·새 항목), ui.bucket (js/bucket_memo.js), ui.book 덮어쓰기 (js/bookshelf.js)
 //   배열 = 무작위 하나 (바로 앞 줄은 다시 안 고름). 버튼·안내 글(uiPlain)에는 냥~ 없음
 //   journal_lines.js 다음에 읽음 (ui.book·ui.meeting을 부기 원고로 덮음)
 (function (root) {
@@ -70,7 +70,7 @@
     removedNote: '{title} 지웠어요', updatedNote: '{title} 고쳤어요', badTitle: '제목을 적어 주세요',
   };
   // 생활 습관 탭 기록 카드 줄 + "기록하기" (2026-10-08 3-1단계, 비트 임시 글)
-  P.uiPlain.recordQuick = { open: '기록하기', target: '제목·날짜·요약', none: '아직 기록 없음', count: '{n}개', last: '마지막 {date}', books: '꽂힌 책 {n}권' };
+  P.uiPlain.recordQuick = { open: '기록하기', target: '한 줄씩 기록', none: '아직 기록 없음', count: '{n}번', last: '최근 {date}', books: '꽂힌 책 {n}권' }; // 부기 문구_공용판2 v01 1-4 (예: 3번 · 최근 10/3)
   P.uiPlain.recordKind = { add: '+ 기록 항목 추가', name: '항목 이름', nameHolder: '예: 전시, 공연', note: '제목·날짜·요약으로 적는 기록 칸이 하나 생겨요', title: '기록 항목', save: '만들기', cancel: '그만두기', del: '지우기', undo: '되돌리기', removedNote: '{kind} 칸 지웠어요 (적은 기록은 남아요)', fixed: '기본' };
   // 버킷리스트 메모지 (원고 2-4). {text} = 버킷 한 줄
   P.ui.bucket = {
@@ -87,17 +87,7 @@
     fail: ['이번 건 적지 못했어요. 죄송해요냥~'],
   };
   P.uiPlain.bucket = { tabs: { todo: '버킷', done: '완료' }, add: '+ 적기', holder: '예: 바다 보며 아침 먹기', save: '저장', cancel: '그만두기', edit: '고치기', del: '지우기', undo: '되돌리기',
-    emptyTodo: '하고 싶은 걸 한 줄 적어 보세요.', emptyDone: '아직 끝낸 게 없어요.', emptyDoneSub: '버킷에서 체크하면 여기로 와요.', move: '붙일 자리 바꾸기', keys: 'Esc 닫기', keysTyping: 'Esc 그만두기', removedNote: '{text} 지웠어요', editedNote: '{text} 고쳤어요',
+    emptyTodo: '하고 싶은 걸 한 줄 적어 보세요.', emptyDone: '아직 끝낸 게 없어요.', emptyDoneSub: '버킷에서 체크하면 여기로 와요.', keys: 'Esc 닫기', keysTyping: 'Esc 그만두기', removedNote: '{text} 지웠어요', editedNote: '{text} 고쳤어요',
     badText: '내용이 비었거나 못 쓰는 글자가 있어요.', emptyEdit: '내용이 비었어요. 지우려면 "지우기"를 눌러 주세요.' };
-  // 메모지 벽에 붙이기 (원고 2-5). {memo} = 메모지 이름
-  P.ui.memoWall = {
-    start: ['붙일 자리를 골라 주세요. 벽이면 어디든 좋아요냥~', '메모지 들고 있을게요. 어디 붙일까요냥~?', '눈에 잘 띄는 벽이 좋겠어요. 골라 주세요냥~'],
-    placed: ['{memo} 메모지, 여기 붙여 뒀어요냥~', '꾹 눌러 붙였어요. 이제 지나갈 때마다 보여요냥~', '딱 맞는 자리예요. 붙여 뒀어요냥~'],
-    moved: ['자리 옮겼어요. 여기도 잘 보여요냥~', '{memo} 메모지, 새 자리로 옮겨 뒀어요냥~', '살짝 떼서 다시 붙였어요냥~'],
-    done: ['붙이기 끝났어요. 메모지를 누르면 열려요냥~', '다 붙였어요. 벽이 조금 북적해졌어요냥~'],
-    cancel: ['네, 그대로 둘게요냥~'],
-    fail: ['이번 건 붙이지 못했어요. 죄송해요냥~'],
-  };
-  P.uiPlain.memoWall = { mode: '메모지 붙일 자리', hint: '점선 칸을 눌러 옮겨요 · ←→ 고르기', done: '다 했어요' };
   if (typeof module !== 'undefined' && module.exports) module.exports = P;
 })(typeof window !== 'undefined' ? window : globalThis);

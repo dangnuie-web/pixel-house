@@ -126,7 +126,7 @@
       sectionMissing: '자료 파일에 이 부분이 안 보여요. 파일을 한번 봐 주세요냥~',
       fileMissing: '생활 자료 파일을 찾지 못했어요. 파일 자리가 바뀌었는지 봐 주세요냥~',
       browserOnly: '이 화면은 데스크톱 앱에서만 자료를 읽을 수 있어요냥~',
-      studyEmpty: '공부 계획이 아직 없어요. 과목을 더하면 막대로 보여 드릴게요냥~', // 2026-10-08 부기 기록기능 v01 2-6
+      studyEmpty: '공부 계획이 아직 없어요. 하나 더하면 막대로 보여 드릴게요냥~', // 2026-10-08 부기 기록기능 v01 2-6 -> 문구_공용판2 v01 2-2
       // 옷 갈아입기 창 (js/wardrobe.js). 비트 임시 대사, 부기가 다듬을 예정. 배열 = 무작위 하나(바로 앞 줄 제외)
       wardrobe: {
         open: ['오늘은 뭘 입어 볼까요냥~?', '옷장 문 열었어요. 천천히 골라 보세요냥~'],
@@ -190,8 +190,11 @@
       checkWeek: '이번 주 확인', checkGood: '잘 챙겼어', checkMissed: '놓쳤어', checkClose: '닫기', // 잘 챙겼어·놓쳤어 = 원고 safety.btn.ok / missed
       amountOpen: '+ 적기', amountSave: '적기', amountAdd: '더하기', amountSet: '바꾸기', amountCancel: '그만두기',
       promotedNote: '2주 같이 챙기기 · {until}까지',
-      studyBadDate: '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요', // 무늬 캡처확인 v01 10번 임시 문구 (부기 확인 전)
-      studyFormat: '적는 법: 생활기록 파일 ## 공부 표에 | 공부 이름 | 2026-10-05 | 2026-10-30 | 메모 | 한 줄씩',
+      // 부기 문구_공용판2 v01 2-2 (날짜 깨진 공부도 [수정]의 고칠 공부 목록에 나옴 = 비트 확인). studyFormat은 쓸 수 있는 화면에서만 (js/life.js)
+      studyBadDate: '날짜를 읽지 못한 공부가 있어요: {names}. [수정]에서 시작일·끝일을 다시 골라 주세요',
+      studyFormat: '[추가]에서 공부 이름과 기간을 정하면 여기 막대가 생겨요',
+      // 생활일지 머리 글 (부기 2-1, js/journal.js·life.js archiveView)
+      journalHead: { sub: '지나온 기록을 탭마다 모아 뒀어요', badgeBook: '책 적기 가능', badgeRecord: '기록 적기 가능' },
     },
 
     // 입장 화면 v02. 출처: 기획/20261003_pixel-house_입장화면_대사_v01.md (부기) + 제작자 결정(이웃 말은 한 줄만)

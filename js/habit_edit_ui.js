@@ -94,15 +94,18 @@
     const bad = (k) => (St.err && errInfo().field === k ? ' err" aria-invalid="true' : '');
     const rec = log && f.mode === 'add' && v.type === 'record' && !!RD();
     if (log && f.mode === 'add' && RD()) h += `<span class="he-f-type" role="radiogroup" aria-label="${esc(p.type)}"><span class="he-lab">${esc(p.type)}</span>` +
-      ['amount', 'record'].map((t) => `<label class="he-type${(v.type || 'amount') === t ? ' on' : ''}"><input type="radio" name="he-type" value="${t}" ${(v.type || 'amount') === t ? 'checked' : ''} data-focus="he-type:${t}"><span>${esc(p.types[t])}</span></label>`).join('') + '</span>';
+      ['amount', 'record'].map((t) => `<label class="he-type${(v.type || 'amount') === t ? ' on' : ''}"><input type="radio" name="he-type" value="${t}" ${(v.type || 'amount') === t ? 'checked' : ''} data-focus="he-type:${t}"><span>${esc(p.types[t])}</span></label>`).join('') +
+      (p.typeNote ? `<small class="he-type-note">${esc(p.typeNote[v.type || 'amount'] || '')}</small>` : '') + '</span>'; // 고른 방식 아래 작은 글 (부기 1-3 typeNote)
     h += `<label class="he-f-name">${esc(p.name)} <input class="he-in-name${bad('name')}" maxlength="${rec ? RW().KIND_MAX : HE.NAME_MAX}" value="${esc(v.name || '')}" placeholder="예: ${rec ? p.rkHolder.replace(/^예: /, '') : log ? '필사' : kind === HE.KIND.house ? '이불 빨래' : '명상'}" data-focus="he-in-name"></label>`;
     // 기록 카드는 단위(쪽·장) 칸 없음 (2026-10-08 제작자 피드백 4). 횟수·양 기록 = 기준 "회"로 저장 (js/habit_edit.js LOG_UNIT), 고치기는 지금 단위 그대로
     if (!log) h += `<label class="he-f-target">${esc(p.target)} <input class="he-in-target${bad('target')}" maxlength="${HE.TARGET_MAX}" value="${esc(v.target == null || v.target === '-' ? '' : v.target)}" placeholder="예: 10분"></label>`;
     // 제목·날짜·요약 기록: 가구 연동 고르기 (어느 가구를 누르면 이 기록이 열리는지, 피드백 4). 켜진 기능이 없는 가구만 (js/furnish_ui.js freeFurniture)
+    //   무늬 확인모음 v01 ①: 공간별 optgroup(집 공간 이름표와 같은 이름), 기능이 붙은 가구는 "TV장 (영화)" (골라도 됨 = 저장 때 그 가구 기능을 바꿈), 칸 너비 180px
     if (rec && FU()) {
-      const fs = FU().freeFurniture();
+      const gs = FU().recordFurniture ? FU().recordFurniture() : [{ room: null, items: FU().freeFurniture() }];
+      const opt = (x) => `<option value="${esc(x.key)}"${x.fn ? ` data-fn="${esc(x.fn)}"` : ''} ${v.furn === x.key ? 'selected' : ''}>${esc(x.name)}${x.fn ? ` (${esc(x.fn)})` : ''}</option>`;
       h += `<label class="he-f-furn">${esc(p.furn || '가구 연동')} <select class="he-in-furn" data-focus="he-in-furn"><option value="">${esc(p.furnNone || '연동 안 함')}</option>` +
-        fs.map((x) => `<option value="${esc(x.key)}" ${v.furn === x.key ? 'selected' : ''}>${esc(x.name)}</option>`).join('') + '</select></label>';
+        gs.map((g) => (g.room ? `<optgroup label="${esc(g.roomName)}">${g.items.map(opt).join('')}</optgroup>` : g.items.map(opt).join(''))).join('') + '</select></label>';
     }
     if (!log) {
       const pers = safe ? ['day', 'week'] : ['day', 'week', 'month'];
@@ -115,6 +118,7 @@
     h += '<div class="he-f-foot"><div class="he-f-msg">';
     if (err) h += `<p class="he-err" role="alert"><b>${esc(err.main)}</b>${err.sub ? `<span>${esc(err.sub)}</span>` : ''}</p>`;
     else if (f.mode === 'edit') h += `<p class="he-note">${esc(p.renameNote)}</p>`;
+    else if (rec && FU() && p.furnNote) h += `<p class="he-note he-furn-note">${esc(p.furnNote)}</p>`; // 가구 연동 칸 안내 = 안내·오류 자리 (부기 1-3 furnNote)
     h += `</div><span class="he-f-btns"><button type="submit" class="he-save"${err ? ' disabled' : ''}>${esc(p.save)}</button><button type="button" class="he-cancel">${esc(p.cancel)}</button></span></div>`;
     return h + '</form>';
   }
@@ -291,7 +295,7 @@
       const k = res.kind || name;
       St.form = null; St.undo = null; refreshJournal(); Life.paint(tab, el, 'he-rk-del:' + k); rkSay('kindAdded', { kind: k });
       if (!furn || !FU() || !FS()) return;
-      let r = null; try { r = await FU().linkTo(furn, FS().kindFeature(k)); } catch (e) { r = { ok: false, code: 'fail', error: String(e && e.message || e) }; } // 칸은 이미 생김. 연동만 못 하면 알림
+      let r = null; try { r = await FU().linkTo(furn, FS().kindFeature(k), { replace: true }); } catch (e) { r = { ok: false, code: 'fail', error: String(e && e.message || e) }; } // 칸은 이미 생김. 연동만 못 하면 알림
       St.last = Object.assign({}, St.last, { furn: r });
       if (r && r.ok) { Life.paint(tab, el, 'he-rk-del:' + k); say(fnLine('linked', { furn: r.furn, fn: (FX().get(r.fid) || {}).label || k })); }
       else say(fnLine('fail'));

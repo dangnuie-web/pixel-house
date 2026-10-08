@@ -164,7 +164,7 @@
   function blockedNow() {
     const g = root.PHGame && root.PHGame.G;
     return !g || g.mode !== 'play' || !g.active || !!g.dialog || (root.PHDialog && root.PHDialog.isOpen()) || (root.PHWardrobe && root.PHWardrobe.isOpen()) ||
-      (root.PHWaterModal && root.PHWaterModal.isOpen()) || (root.PHInventory && root.PHInventory.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo', 'PHMemoWall'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
+      (root.PHWaterModal && root.PHWaterModal.isOpen()) || (root.PHInventory && root.PHInventory.isOpen()) || (root.PHBookModal && root.PHBookModal.isOpen()) || ['PHRecordModal', 'PHBucketMemo'].some((k) => root[k] && root[k].isOpen && root[k].isOpen());
   }
   // interact.js가 부름 (냉장고). 늘 1장부터
   async function open(from) {

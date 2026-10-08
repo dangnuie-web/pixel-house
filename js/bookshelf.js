@@ -81,11 +81,11 @@
     return `<div class="bk-overlay" data-kind="form"><form class="bk-dlg bk-form" role="dialog" aria-modal="true" aria-labelledby="bk-form-name" novalidate>
       <div class="bk-name" id="bk-form-name">${edit ? '책 기록 고치기' : '독서 기록하기'}</div>
       <div class="bk-row"><span class="bk-lab" id="bk-color-lab">표지색</span><span class="bk-colors" role="radiogroup" aria-labelledby="bk-color-lab">${chips}</span></div>
-      <label class="bk-row"><span class="bk-lab">제목</span><input class="bk-in-title" maxlength="${BW.TITLE_MAX}" autocomplete="off" placeholder="책 제목 (꼭 적어 주세요)" value="${esc(v.title || '')}" data-focus="bk-title"></label>
+      <label class="bk-row"><span class="bk-lab">제목</span><input class="bk-in-title${B.err && /제목/.test(B.err) ? ' bad' : ''}" maxlength="${BW.TITLE_MAX}" autocomplete="off" placeholder="책 제목 (꼭 적어 주세요)" value="${esc(v.title || '')}" data-focus="bk-title"></label>
+      <p class="bk-err rc-err" role="alert">${esc(B.err)}</p>
       <label class="bk-row"><span class="bk-lab">${esc(BF().date || '다 읽은 날')}</span><input class="bk-in-date" type="date" max="${t}" value="${esc(v.date || '')}" data-focus="bk-date"><small class="bk-hint">${v.date ? '' : '고르지 않으면 오늘로 적어요'}</small></label>
       <label class="bk-row top"><span class="bk-lab">요약·줄거리</span><textarea class="bk-in-sum" rows="5" maxlength="${BW.SUMMARY_MAX}" placeholder="${esc(BF().summaryHolder || '기억하고 싶은 줄거리, 느낌 (비워 둬도 돼요)')}" data-focus="bk-sum">${esc(v.summary || '')}</textarea></label>
       <p class="bk-note">${esc(BF().note || '다 읽은 책만 책꽂이에 꽂혀요')}</p>
-      <p class="bk-err" role="alert">${esc(B.err)}</p>
       <div class="bk-btns"><button type="button" class="bk-cancel">그만두기</button><button type="submit" class="bk-save">${edit ? '고치기' : '저장'}</button></div>
     </form></div>`;
   }
@@ -153,6 +153,7 @@
         const list = [...f.querySelectorAll('.bk-color')], i = list.indexOf(document.activeElement); if (i < 0) return;
         e.preventDefault(); const n = list[(i + (e.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length]; n.click(); n.focus();
       });
+      f.querySelector('.bk-in-title').addEventListener('input', (e) => { if (B.err && /제목/.test(B.err) && e.target.value.trim()) showErr(''); }); // 다시 적으면 오류 풀림 (영화·연극 폼과 같게)
       f.querySelector('.bk-in-date').addEventListener('input', (e) => { const h = f.querySelector('.bk-hint'); if (h) h.textContent = e.target.value ? '' : '고르지 않으면 오늘로 적어요'; });
     }
     const dt = box.querySelector('.bk-detail');
@@ -180,7 +181,8 @@
     if (root.PHApp && root.PHApp.sideSay) root.PHApp.sideSay(text);
   }
   function showErr(msg) {
-    B.err = msg; const p = EL && EL.querySelector('.bk-err'); if (p) p.textContent = msg;
+    B.err = msg; const p = EL && EL.querySelector('.bk-form .bk-err'); if (p) p.textContent = msg;
+    const i = EL && EL.querySelector('.bk-in-title'); if (i) i.classList.toggle('bad', !!msg && /제목/.test(msg)); // 무늬 확인모음 v01 ③: 제목 칸 테 = 오류 색
   }
   // call(lastModified) -> 결과. 충돌이면 새 글로 다시 그리고 (입력 중인 값은 그대로) 두부가 한 번 더 부탁
   async function run(call, onOk) {

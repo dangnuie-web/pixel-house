@@ -68,7 +68,7 @@
 .he-form input.err { border-color: var(--ui-danger); box-shadow: inset 0 1px 0 var(--ui-inner), 0 0 0 2px var(--ui-danger-ring); }
 .he-form select { appearance: none; -webkit-appearance: none; padding-right: 26px; background-image: var(--ic-down); background-repeat: no-repeat; background-position: right 9px center; background-size: 9px 5px; }
 .he-in-name { width: 150px; } .he-in-target { width: 120px; } .he-in-n { width: 56px; }
-.he-in-furn { min-width: 140px; max-width: 220px; } /* 기록 + 추가 가구 연동 고르기 (2026-10-08 피드백 4, 비트 임시 모양 = 주기 고르기와 같은 칸) */
+.he-in-furn { width: 180px; } /* 기록 + 추가 가구 연동 고르기 (주기 고르기와 같은 칸, 무늬 확인모음 v01 ①: 너비 고정 180px) */
 .he-f-foot { flex-basis: 100%; display: flex; align-items: center; gap: 14px; }
 .he-f-msg { flex: 1; min-width: 0; }
 .he-f-btns { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
@@ -102,5 +102,6 @@
 .he-type.on { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 600; }
 .he-type input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
 .he-type:has(input:focus-visible) { outline: 2px solid var(--O); outline-offset: 2px; }
+.he-type-note { flex-basis: 100%; font: 12px var(--font); color: var(--ui-sub); margin-top: 2px; } /* 고른 기록 방식 설명 (부기 문구_공용판2 v01 1-3) */
 .he-row.he-rk .he-rk-lock::before { display: none; }
 .he-row.he-rk .he-order { width: 52px; border-color: transparent; background: none; } /* 순서 버튼 자리만 비워 이름 줄 맞춤 */

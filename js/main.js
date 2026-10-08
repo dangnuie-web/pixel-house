@@ -39,16 +39,18 @@
   // 탭 바꾸기 (pixel-office selectTab과 같은 방식). 우리집 = 입장 전이면 입장 화면, 입장 뒤면 집.
   // 집 상태(두부 자리·연출·대사 기록)는 탭을 바꿔도 그대로 두고, 우리집이 아닐 때만 사이드바에 두부가 앉아 있음
   // 우리집에서 다른 탭으로 가면 집 위에 열려 있던 창을 모두 닫음 (저장 안 한 글은 버림. 2026-10-08 제작자, 로드맵 3-1단계 피드백 3)
-  //   메모지(버킷)·냉장고 메모지·물컵·옷장·살림·책꽂이·TV 기록·메모지 자리 고르기·두부 대화창·식사·대변 일지(집에서 연 것만). 저장 중인 창은 각 창이 닫기를 거절함
+  //   메모지(버킷)·냉장고 메모지·물컵·옷장·살림·책꽂이·TV 기록·두부 대화창·식사·대변 일지(집에서 연 것만). 저장 중인 창은 각 창이 닫기를 거절함
   const HOUSE_WINDOWS = ['PHBucketMemo', 'PHFridgeMemo', 'PHWaterModal', 'PHWardrobe', 'PHInventory', 'PHBookModal', 'PHRecordModal'];
   function closeHouseWindows() {
     HOUSE_WINDOWS.forEach((k) => { const m = root[k]; if (m && m.isOpen && m.isOpen()) m.close(); });
-    const W = root.PHMemoWall; if (W && W.isOpen && W.isOpen()) W.finish();
     const LM = root.PHLogModal; if (LM && LM.isOpen() && !['habits', 'journal'].includes(LM.state().from)) LM.close();
     if (root.PHDialog && root.PHDialog.isOpen()) root.PHDialog.close();
   }
-  async function selectTab(tab) {
+  async function selectTab(tab, opt) {
     const prev = App.tab;
+    if (!(opt && opt.keepSettings) && root.PHSettingsUI && root.PHSettingsUI.isOpen()) {
+      if (root.PHSettingsUI && root.PHSettingsUI.isOpen()) root.PHSettingsUI.close({ keepFocus: true }); // 설정 창이 열린 채 탭을 누르면 닫힘 (무늬 설정화면 v01 5절 4번)
+    }
     if (prev !== tab) {
       if (prev === 'home') closeHouseWindows();
       if (root.PHUndoBar) root.PHUndoBar.clearAll(); // 탭 옮기기 = 되돌리기 띠 사라짐 (js/undo_bar.js)
@@ -221,10 +223,27 @@
     if (r.entered) { App.entered = true; show('house'); root.PHGame.resume(r); }
     selectTab(r.tab || 'home');
   }
+  // 숨긴 사이드바 탭 (설정 화면, settings.TABS_HIDDEN). 버킷리스트는 항목이 있을 때만 + 숨기지 않았을 때. 보던 탭이 숨으면 우리집으로
+  function applyTabs() {
+    const hid = root.PH_SETTINGS.TABS_HIDDEN || [];
+    document.querySelectorAll('#tabs [role=tab]').forEach((b) => {
+      const t = b.dataset.tab; if (t === 'home') return;
+      b.hidden = hid.includes(t) || (t === 'bucket' && !(root.PHLife.data && root.PHLife.bucketAsTab(root.PHLife.data)));
+    });
+    const cur = document.querySelector(`#tabs [data-tab="${App.tab}"]`);
+    if (cur && cur.hidden) selectTab('home', { keepSettings: true }); // 설정에서 보던 탭을 끄면 우리집으로 (설정 창은 그대로)
+  }
+  // 사이드바 맨 위 이름: 20px에 안 들어가면 17px, 그래도 넘치면 말줄임 + title (무늬 설정화면 v01 4-2)
+  function setBrand(text) {
+    const b = document.querySelector('#tabs .brand'); if (!b) return;
+    b.textContent = text; b.classList.remove('small'); b.title = '';
+    if (b.scrollWidth > b.clientWidth + 1) { b.classList.add('small'); if (b.scrollWidth > b.clientWidth + 1) b.title = text; }
+  }
   function init() {
+    if (root.PHProfile && root.PHProfile.applyPet) root.PHProfile.applyPet(root); // 강아지면 대사 말끝·덮기 (js/profile.js, 다른 모듈이 대사를 쓰기 전에)
     // 이름표 (설정 묶음, 2026-10-08): 사이드바 맨 위·창 제목·집 화면 설명 (제작자 판 = Pixel House)
     const S1 = root.PH_SETTINGS;
-    if (S1.BRAND) { document.querySelector('#tabs .brand').textContent = S1.BRAND; $('stage').setAttribute('aria-label', S1.BRAND + '. 방향키나 클릭으로 두부가 걸어요. 두부를 누르거나 Space를 누르면 말해요.'); }
+    if (S1.BRAND) { setBrand(S1.BRAND); $('stage').setAttribute('aria-label', S1.BRAND + '. 방향키나 클릭으로 두부가 걸어요. 두부를 누르거나 Space를 누르면 말해요.'); }
     if (S1.TITLE) document.title = S1.TITLE;
     // 탭 이름은 settings.TAB_NAMES에서 (기록 보관 등 이름을 바꾸기 쉽게)
     document.querySelectorAll('#tabs [role=tab]').forEach((b) => { b.textContent = root.PHLife.TAB(b.dataset.tab); });
@@ -233,7 +252,10 @@
       const show = !!d && root.PHLife.bucketAsTab(d), b = document.querySelector('#tabs [data-tab="bucket"]');
       b.hidden = !show;
       if (!show && App.tab === 'bucket') selectTab('habits');
+      applyTabs();
     };
+    applyTabs();
+    if (root.PHSettingsUI && S1.SETTINGS_SCREEN && !(root.PHProfile && root.PHProfile.isOnboard())) root.PHSettingsUI.mount(); // 설정 버튼 (공용판만)
     if (!(root.PHProfile && root.PHProfile.isOnboard())) root.PHLife.load().then((d) => root.PHLife.onLoad(d)); // 온보딩 중엔 기록 폴더가 아직 없음
     if (root.PHFurnish && !(root.PHProfile && root.PHProfile.isOnboard())) root.PHFurnish.load(); // 가구 연결·일지 기능 표시 (앱 설정 features.json, 2026-10-04). 온보딩 중엔 집이 아직 없음
     root.PHGame.init(); // 낮·밤을 먼저 정함 (입장 화면도 같은 팔레트)
@@ -260,8 +282,9 @@
     show('start');
     $('btn-enter').focus();
     if (root.PH_RESUME) resumeAfterSwitch(root.PH_RESUME);
+    if (root.PH_RESUME && root.PH_RESUME.settings && root.PHSettingsUI && root.PHSettingsUI.mounted()) root.PHSettingsUI.open(root.PH_RESUME.settings, { resumed: true }); // 설정에서 바꿔 다시 연 뒤
   }
-  App.onEnter = onEnter; App.show = show; App.redrawCover = redrawCover; App.selectTab = selectTab; App.sideTalk = sideTalk; App.sideSay = sideSay; App.syncBar = syncBar; App.switchArtSet = switchArtSet; App.entryNudge = entryNudge; App.takeGuestLine = takeGuestLine; App.decideGuest = decideGuest; App.coverHit = coverHit; App.coverSpots = coverSpots; App.guestPlace = guestPlace; App.guestFrame = guestFrame; App.guestTick = guestTick; App.dayKey = dayKey;
+  App.onEnter = onEnter; App.show = show; App.applyTabs = applyTabs; App.setBrand = setBrand; App.redrawCover = redrawCover; App.selectTab = selectTab; App.sideTalk = sideTalk; App.sideSay = sideSay; App.syncBar = syncBar; App.switchArtSet = switchArtSet; App.entryNudge = entryNudge; App.takeGuestLine = takeGuestLine; App.decideGuest = decideGuest; App.coverHit = coverHit; App.coverSpots = coverSpots; App.guestPlace = guestPlace; App.guestFrame = guestFrame; App.guestTick = guestTick; App.dayKey = dayKey;
   root.PHApp = App;
   init();
 })(window);

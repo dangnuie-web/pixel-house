@@ -100,7 +100,8 @@
   function view(d) {
     const t = cur(), BS = root.PHBookshelf;
     const RL = root.PHRecordList, rw = t.books && BS && BS.canWrite(), rrw = t.records && RL && RL.canWrite();
-    let h = head(Life.TAB('archive'), '물·요가·러닝은 한 날씩, 책은 책꽂이에 쌓여요', rw ? '책 기록 가능 · 독서 표에 적혀요' : rrw ? '기록 가능 · 기록 표에 적혀요' : null);
+    const JH = Object.assign({ sub: '지나온 기록을 탭마다 모아 뒀어요', badgeBook: '책 적기 가능', badgeRecord: '기록 적기 가능' }, ((root.PH_LINES || {}).uiPlain || {}).journalHead); // 부기 문구_공용판2 v01 2-1
+    let h = head(Life.TAB('archive'), JH.sub, rw ? JH.badgeBook : rrw ? JH.badgeRecord : null);
     h += `<div class="journal" data-style="${style()}" data-tab="${esc(t.id)}">` + tabBar();
     const lab = style() === 'dropdown' ? `role="region" aria-label="${esc(t.label)}"` : `role="tabpanel" aria-labelledby="jn-tab-${esc(t.id)}"`;
     h += `<div class="jn-panel ${style()}" id="jn-panel" ${lab} data-tab="${esc(t.id)}">`;

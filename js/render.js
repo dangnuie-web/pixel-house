@@ -69,7 +69,6 @@
     if (root.PHObjFx && root.PHObjFx.afterMap) root.PHObjFx.afterMap(ctx, s.t); // (interact) 켜진 스탠드 불빛 웅덩이 (배경 바로 다음, 바닥 물건 전)
     L.objects.filter((o) => o.layer === 'floor').forEach((o) => drawObject(ctx, o, s.t));
     L.objects.filter((o) => o.layer === 'wall').forEach((o) => drawObject(ctx, o, s.t));
-    if (root.PHMemoWall) root.PHMemoWall.drawWall(ctx, s.t); // 2026-10-08 벽에 붙인 버킷리스트 메모지 (js/memo_wall.js, 벽 층 다음)
     sortItems(s).forEach((it) => { if (it.kind === 'obj') drawObject(ctx, it.o, s.t); else drawActor(ctx, it.a, s.t, s.walkMs); });
   }
 

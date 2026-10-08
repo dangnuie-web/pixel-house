@@ -162,7 +162,7 @@
     });
     if (R.todayIdx >= 0) h += `<div class="g-today" style="left:calc(var(--gl) + (100% - var(--gl)) * ${(R.todayIdx + 0.5) / R.days})" title="오늘"></div>`;
     h += '</div>';
-    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 못 읽은 공부가 있어요: {names}. 기록에서 시작일을 고쳐 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
+    if (bad.length) h += `<p class="fmt st-bad">${esc((UI.studyBadDate || '날짜를 읽지 못한 공부가 있어요: {names}. [수정]에서 시작일·끝일을 다시 골라 주세요').replace('{names}', bad.map((r) => r.name).join(', ')))}</p>`;
     h += `<div class="st-info" aria-live="polite">${info(d)}</div>`;
     return h + archiveList(d) + '</section>';
   }
