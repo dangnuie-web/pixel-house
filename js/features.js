@@ -15,7 +15,7 @@
     { id: 'poop', label: '대변 일지', short: '대변', go: 'poopLog', habit: '대변', fnHabit: true, target: '변기에서 기록', lines: ['obj', 'toilet', 'go'] },
     { id: 'meal', label: '식사 일지', short: '식사', go: 'mealLog', habit: '식사', fnHabit: true, target: '식탁에서 기록', lines: ['obj', 'table_two', 'go'] },
     { id: 'study', label: '공부', short: '공부', go: 'study', lines: ['obj', 'table_long', 'go'] },
-    { id: 'reading', label: '독서 책꽂이', short: '독서', go: 'bookModal', habit: '독서', fnHabit: true, target: '쪽', lines: ['obj', 'bookshelf', 'go'] }, // 2026-10-04 제작자: 독서 줄을 지우면 책꽂이도 꺼짐 (대변·식사와 같은 규칙)
+    { id: 'reading', label: '독서 책꽂이', short: '독서', go: 'bookModal', habit: '독서', fnHabit: true, target: '책꽂이에 기록', oldTargets: ['쪽'], lines: ['obj', 'bookshelf', 'go'] }, // 2026-10-04 제작자: 독서 줄을 지우면 책꽂이도 꺼짐 (대변·식사와 같은 규칙). 2026-10-08 제작자: 쪽수 완전히 뺌 -> 기준 '쪽' -> '책꽂이에 기록' (옛 줄은 앱이 켤 때 옮김, js/habit_edit.js migrateFnRows)
     { id: 'record', label: '영화·연극 기록', short: '영화', go: 'recordModal' }, // 2026-10-08 제작자: TV 누르면 기록 폼 [영화|연극]
     { id: 'water', label: '물 기록 (정수기 창)', short: '물', go: 'waterModal' },
     { id: 'water_cup', label: '물 한 잔 (바로 +1)', short: '물 +1', go: 'water' },

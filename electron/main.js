@@ -27,14 +27,14 @@ const Prof = require(path.join(__dirname, 'profile_main.js'))({ app, ROOT, env: 
 let PROFILE = Prof.choose();
 function setProfileEnv() {
   process.env.PH_PROFILE = PROFILE.id;
-  if (PROFILE.id === 'default' && PROFILE.user && PROFILE.user.name) process.env.PH_PROFILE_USER = JSON.stringify({ name: PROFILE.user.name, avatar: PROFILE.user.avatar, house: PROFILE.user.house });
+  if (PROFILE.id === 'default' && PROFILE.user && PROFILE.user.name) process.env.PH_PROFILE_USER = JSON.stringify({ name: PROFILE.user.name, cat: PROFILE.user.cat, avatar: PROFILE.user.avatar, house: PROFILE.user.house });
 }
 setProfileEnv();
 // 화면이 처음 읽는 값 (preload가 동기로 받아 window.PHProfileBoot). 묶음 대사·설정 + 사용자 값. 기록 폴더 경로는 넘기지 않음
 function bootData() {
   const u = PROFILE.user || {};
   return { id: PROFILE.id, bundle: PROFILE.bundle || {}, onboard: !!PROFILE.onboard,
-    user: PROFILE.id === 'default' ? { name: u.name || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {} } : {} };
+    user: PROFILE.id === 'default' ? { name: u.name || '', cat: u.cat || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {} } : {} };
 }
 ipcMain.on('ph:profileSync', (e) => { e.returnValue = bootData(); });
 
@@ -117,11 +117,12 @@ function startHouse() {
     guard: () => { if (SHOTS && !process.env.PH_HOUSE) throw new Error('시험 실행 중에는 실제 생활 기록에 쓰지 않음'); },
   });
   // 습관 편집·공부 완전 삭제 (2026-10-04): ## 생활습관 표 줄·## 공부 표 줄·매일 n회 오늘 줄. 규칙은 위와 같음, 코드는 electron/habit_ipc.js
-  require(path.join(__dirname, 'habit_ipc.js'))({
+  const habitIpc = require(path.join(__dirname, 'habit_ipc.js'))({
     ipcMain, file: LIFE_FULL, backup, settings: S, features: FEAT,
     fixedDay: () => (SHOTS && /^\d{4}-\d{2}-\d{2}$/.test(process.env.PH_TODAY || '') ? process.env.PH_TODAY : null),
     guard: () => { if (SHOTS && !process.env.PH_HOUSE) throw new Error('시험 실행 중에는 실제 생활 기록에 쓰지 않음'); },
   });
+  if (!(SHOTS || process.env.PH_USERDATA) || process.env.PH_HOUSE) habitIpc.migrate(); // 시험 실행(임시 사용자 폴더·캡처)이 실제 기록 폴더를 볼 때는 안 씀 (2026-10-08 test_instance가 실제 파일을 옮긴 일 뒤 막음). 2026-10-08 옛 독서 줄 "| 독서 | 기록 | 쪽 | - |" -> "책꽂이에 기록" (쓰기 전 사본, 한 번 옮기면 다음부턴 바뀔 것 없음)
   // 약속 쓰기 (2026-10-07 제작자 결정): ## 약속 표 줄 더하기·고치기·지우기. 규칙은 위와 같음, 코드는 electron/meeting_ipc.js
   require(path.join(__dirname, 'meeting_ipc.js'))({
     ipcMain, file: LIFE_FULL, backup,

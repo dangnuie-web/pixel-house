@@ -22,9 +22,20 @@
     return dst;
   }
   // 모든 글 안 {user} -> 이름 (제자리에서 바꿈: 다른 파일이 이미 잡아 둔 객체도 같이 바뀜)
-  function fillUser(o, name) {
-    if (!name) return o;
-    const f = (s) => s.split('{user}').join(name);
+  //   {cat} = 고양이 이름 (2026-10-08 3-1단계: 공용판은 온보딩에서 사용자가 지음, 기본 두부). {cat|이} {cat|이에요} {cat|은} {cat|으로} = 받침 따라 조사
+  const CAT_DEFAULT = '두부', CAT_RE = /\{cat(?:\|([^}]+))?\}/g;
+  function josa(word, kind) {
+    const c = String(word).slice(-1).charCodeAt(0), han = c >= 0xAC00 && c <= 0xD7A3, jong = han ? (c - 0xAC00) % 28 : 0;
+    if (kind === '으로') return word + (jong && jong !== 8 ? '으로' : '로');
+    if (kind === '이에요') return word + (jong ? '이에요' : '예요');
+    if (kind === '은') return word + (jong ? '은' : '는');
+    if (kind === '이') return word + (jong ? '이' : '가');
+    return word;
+  }
+  const fillCat = (s, cat) => s.replace(CAT_RE, (m, j) => (j ? josa(cat, j) : cat));
+  function fillUser(o, name, cat) {
+    if (!name && !cat) return o;
+    const f = (s) => { let t = cat ? fillCat(s, cat) : s; if (name) t = t.split('{user}').join(name); return t; };
     (function walk(x) {
       if (Array.isArray(x)) x.forEach((v, i) => { if (typeof v === 'string') x[i] = f(v); else if (v && typeof v === 'object') walk(v); });
       else if (isObj(x)) Object.keys(x).forEach((k) => { const v = x[k]; if (typeof v === 'string') x[k] = f(v); else if (v && typeof v === 'object') walk(v); });
@@ -34,6 +45,8 @@
   const AVATAR_RE = /^avatar\d{1,2}$/;
   const P = { id: 'default', bundle: {}, user: {}, boot: null, merge, fillUser, AVATAR_RE };
   P.userName = () => (P.user && typeof P.user.name === 'string' && P.user.name) || P.bundle.user || '';
+  P.catName = () => (P.user && typeof P.user.cat === 'string' && P.user.cat.trim()) || P.bundle.cat || CAT_DEFAULT;
+  P.fillCat = fillCat; P.josa = josa; P.CAT_DEFAULT = CAT_DEFAULT;
   P.isOnboard = () => !!(P.boot && P.boot.onboard);
   P.init = function (boot) {
     const b = boot || {};
@@ -53,7 +66,7 @@
     if (!obj) return obj;
     const pt = P.bundle.patch && P.bundle.patch[name];
     if (pt) merge(obj, pt);
-    if (name === 'PH_SETTINGS') userSettings(obj); else fillUser(obj, P.userName());
+    if (name === 'PH_SETTINGS') userSettings(obj); else fillUser(obj, P.userName(), P.catName());
     return obj;
   };
 

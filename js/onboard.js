@@ -9,11 +9,13 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const L = () => root.PH_ONBOARD_LINES || {}, PL = () => root.PH_ONBOARD_PLAIN || {};
   const D = () => root.PHOnboardDesktop;
-  const STEPS = ['name', 'avatar', 'house', 'folder', 'habit'];
-  const OB = { on: false, step: 0, name: '', avatar: 'avatar1', house: 'room1', folder: null, info: null, habits: null, custom: [], line: '', busy: false, done: false, last: {} };
+  const STEPS = ['name', 'cat', 'avatar', 'house', 'folder', 'habit']; // cat = 고양이 이름 짓기 (2026-10-08 제작자 3-1단계)
+  const CAT0 = () => (root.PHProfile && root.PHProfile.CAT_DEFAULT) || '두부';
+  const OB = { on: false, step: 0, name: '', cat: '', avatar: 'avatar1', house: 'room1', folder: null, info: null, habits: null, custom: [], line: '', busy: false, done: false, last: {} };
 
   const pick = (arr, key) => { const a = Array.isArray(arr) ? arr : [arr]; if (a.length < 2) return a[0] || ''; let i; do { i = Math.floor(Math.random() * a.length); } while (i === OB.last[key] && a.length > 1); OB.last[key] = i; return a[i]; };
-  const fill = (s) => String(s || '').split('{user}').join(OB.name || '');
+  const catOf = () => OB.cat || CAT0();
+  const fill = (s) => { const t = String(s || '').split('{user}').join(OB.name || ''); return root.PHProfile && root.PHProfile.fillCat ? root.PHProfile.fillCat(t, catOf()) : t.replace(/\{cat(\|[^}]+)?\}/g, catOf()); };
   const strip = (s) => (root.PHWorld ? root.PHWorld.parseLine(s).say : String(s).replace(/\([^)]*\)/g, '').trim());
   function say(line) { OB.line = strip(fill(line)); const b = $('ob-say'); if (b) b.textContent = OB.line; }
 
@@ -39,6 +41,9 @@
     if (st === 'name') return `<label class="ob-field"><span class="ob-label">${esc(P.nameLabel)}</span>
       <input id="ob-name" type="text" maxlength="${(OB.info && OB.info.nameMax) || 12}" placeholder="${esc(P.nameHolder)}" value="${esc(OB.name)}" autocomplete="off"></label>
       <p class="ob-note">${esc(P.nameNote)}</p>`;
+    if (st === 'cat') return `<label class="ob-field"><span class="ob-label">${esc(P.catLabel)}</span>
+      <input id="ob-cat" type="text" maxlength="${(OB.info && OB.info.nameMax) || 12}" placeholder="${esc(P.catHolder)}" value="${esc(OB.cat)}" autocomplete="off"></label>
+      <p class="ob-note">${esc(P.catNote)}</p>`;
     if (st === 'avatar') {
       const list = (OB.info && OB.info.avatars) || ['avatar1', 'avatar2', 'avatar3'], nm = P.avatarNames || {};
       return `<h3 class="ob-h">${esc(P.avatarTitle)}</h3><div class="ob-avatars" role="radiogroup">${list.map((a) => `<button type="button" class="ob-av" role="radio" data-av="${esc(a)}" aria-checked="${a === OB.avatar}"><canvas data-cv="${esc(a)}"></canvas><span>${esc(nm[a] || a)}</span></button>`).join('')}</div>`;
@@ -70,7 +75,7 @@
     el.querySelectorAll('canvas[data-cv]').forEach((c) => drawSprite(c, c.dataset.cv + '_idle', 3));
     drawHouseThumb($('ob-house-cv'));
     wire(el);
-    const f = el.querySelector('#ob-name') || el.querySelector('#ob-habit-new') || el.querySelector('[aria-checked="true"]') || el.querySelector('#ob-next');
+    const f = el.querySelector('#ob-name') || el.querySelector('#ob-cat') || el.querySelector('#ob-habit-new') || el.querySelector('[aria-checked="true"]') || el.querySelector('#ob-next');
     if (f) f.focus();
   }
   function wire(el) {
@@ -80,6 +85,8 @@
     on('#ob-skip', 'click', () => { OB.habits = new Set(); OB.custom = []; finish(true); });
     on('#ob-name', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); next(); } });
     on('#ob-name', 'input', (e) => { OB.name = e.target.value; });
+    on('#ob-cat', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); next(); } });
+    on('#ob-cat', 'input', (e) => { OB.cat = e.target.value; });
     el.querySelectorAll('.ob-av').forEach((b) => b.addEventListener('click', () => { OB.avatar = b.dataset.av; say(pick(L().avatar.pick, 'avatar')); el.querySelectorAll('.ob-av').forEach((x) => x.setAttribute('aria-checked', String(x === b))); }));
     el.querySelectorAll('.ob-house').forEach((b) => b.addEventListener('click', () => { OB.house = b.dataset.house; say(pick(L().house.pick, 'house')); b.setAttribute('aria-checked', 'true'); }));
     on('#ob-pick', 'click', pickFolder);
@@ -99,7 +106,14 @@
       const inp = $('ob-name'); OB.name = inp ? inp.value : OB.name;
       const r = D() ? await D().checkName(OB.name) : { ok: !!OB.name.trim(), name: OB.name.trim(), code: 'empty' };
       if (!r.ok) { say(pick(L().name[r.code] || L().name.bad, 'name:' + r.code)); render(); return; }
-      OB.name = r.name; go(1); say(pick(L().name.ok, 'name:ok') + ' ' + strip(fill(askLine('avatar')))); return;
+      OB.name = r.name; go(1); say(pick(L().name.ok, 'name:ok') + ' ' + strip(fill(askLine('cat')))); return;
+    }
+    if (st === 'cat') { // 비우면 기본 두부. 글자 규칙은 사용자 이름과 같음
+      const inp = $('ob-cat'), v = inp ? inp.value : OB.cat, C = L().cat || {};
+      if (!String(v || '').trim()) { OB.cat = ''; go(2); say(pick(C.keep, 'cat:keep') + ' ' + strip(fill(askLine('avatar')))); return; }
+      const r = D() ? await D().checkName(v) : { ok: true, name: String(v).trim() };
+      if (!r.ok) { OB.cat = v; say(pick(C[r.code] || C.bad, 'cat:' + r.code)); render(); return; }
+      OB.cat = r.name; go(2); say(pick(C.ok, 'cat:ok') + ' ' + strip(fill(askLine('avatar')))); return;
     }
     if (st === 'folder' && (!OB.folder || OB.folder.fail)) { say(pick(L().folder.fail, 'folder:fail')); render(); return; }
     if (st === 'habit') { finish(false); return; }
@@ -124,11 +138,12 @@
     await new Promise((r) => setTimeout(r, reduce ? 50 : 900));
     say(pick(L().done, 'done')); render();
     await new Promise((r) => setTimeout(r, reduce ? 50 : 900));
-    const res = D() ? await D().finish({ name: OB.name, avatar: OB.avatar, house: OB.house, dir: OB.folder && OB.folder.dir, habits }) : { ok: false, code: 'browser' };
+    const res = D() ? await D().finish({ name: OB.name, cat: OB.cat || '', avatar: OB.avatar, house: OB.house, dir: OB.folder && OB.folder.dir, habits }) : { ok: false, code: 'browser' };
     OB.result = res;
     if (res && res.ok) { OB.done = true; return; } // 메인이 화면을 집으로 다시 엶
     OB.busy = false;
     if (res && /^name/.test(res.code)) { go(0); return; }
+    if (res && /^cat/.test(res.code)) { go(1); return; }
     if (res && (res.code === 'dir' || res.code === 'folder')) { if (OB.folder) OB.folder.fail = true; go(STEPS.indexOf('folder')); say(pick(L().folder.fail, 'folder:fail')); render(); return; }
     render();
   }
@@ -146,6 +161,6 @@
     if (OB.step === 0 && OB.line === strip(hello[hello.length - 1] || '')) say(askLine('name'));
   }
   // 시험·확인용
-  function state() { return { on: OB.on, step: STEPS[OB.step], name: OB.name, avatar: OB.avatar, house: OB.house, folder: OB.folder, habits: Array.from(OB.habits || []), custom: OB.custom.slice(), line: OB.line, busy: OB.busy, done: OB.done, result: OB.result || null }; }
+  function state() { return { on: OB.on, step: STEPS[OB.step], name: OB.name, cat: catOf(), avatar: OB.avatar, house: OB.house, folder: OB.folder, habits: Array.from(OB.habits || []), custom: OB.custom.slice(), line: OB.line, busy: OB.busy, done: OB.done, result: OB.result || null }; }
   root.PHOnboard = { start, state, next, go, finish, pickFolder, STEPS };
 })(window);

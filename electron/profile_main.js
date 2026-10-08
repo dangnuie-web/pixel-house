@@ -17,6 +17,7 @@ const NAME_MAX = 12;
 const NAME_BAD = /[|｜\\/<>`*#{}\[\]\u0000-\u001f\u007f\u2028\u2029]/;
 const HOUSES = ['room1']; // 집 목록 (목록형, 지금은 원룸 하나. 투룸·쓰리룸은 원룸 확인 뒤)
 const AVATARS = ['avatar1', 'avatar2', 'avatar3'];
+const CAT_DEFAULT = '두부'; // 고양이 이름 기본 (js/profile.js CAT_DEFAULT와 같음)
 const SLOT_RE = /^[a-z][a-z0-9_]{0,30}$/, SPRITE_RE = /^[a-z][a-z0-9_]{0,40}$/;
 
 function cleanName(s) {
@@ -48,7 +49,8 @@ module.exports = function create(o) {
       if (v.bundle !== 'default') return null;
       const n = cleanName(v.name);
       if (!n.ok || !AVATARS.includes(v.avatar) || !HOUSES.includes(v.house) || typeof v.dir !== 'string' || !path.isAbsolute(v.dir)) return null;
-      return { bundle: 'default', name: n.name, avatar: v.avatar, house: v.house, dir: v.dir, furniture: cleanFurniture(v.furniture), createdAt: v.createdAt || null };
+      const c = cleanName(v.cat); // 고양이 이름 (2026-10-08 3-1단계, 없거나 이상하면 기본 두부 = 안 적음)
+      return Object.assign({ bundle: 'default', name: n.name, avatar: v.avatar, house: v.house, dir: v.dir, furniture: cleanFurniture(v.furniture), createdAt: v.createdAt || null }, c.ok ? { cat: c.name } : {});
     } catch (e) { return null; }
   }
   function write(v) {
@@ -122,7 +124,9 @@ module.exports = function create(o) {
         }
         fs.accessSync(file, fs.constants.R_OK | fs.constants.W_OK);
       } catch (err) { return { ok: false, code: 'folder', message: String(err && err.message || err) }; }
-      const user = { bundle: 'default', name: n.name, avatar: r.avatar, house: r.house, dir, furniture: {}, createdAt: new Date().toISOString() };
+      const c = r.cat == null || (typeof r.cat === 'string' && !r.cat.trim()) ? { ok: true, name: CAT_DEFAULT } : cleanName(r.cat); // 고양이 이름: 비우면 기본 두부 (같은 글자 규칙)
+      if (!c.ok) return { ok: false, code: 'cat:' + c.code };
+      const user = { bundle: 'default', name: n.name, cat: c.name, avatar: r.avatar, house: r.house, dir, furniture: {}, createdAt: new Date().toISOString() };
       write(user);
       setTimeout(() => onDone(read()), 30); // 답을 먼저 보내고 화면을 다시 엶
       return { ok: true, made, added, skipped, file: path.basename(file) };

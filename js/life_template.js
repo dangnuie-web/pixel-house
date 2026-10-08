@@ -39,7 +39,7 @@
     { id: 'yoga', name: '요가', kind: '목표', target: '20분', cycle: '주 3회' },
     { id: 'walk', name: '산책', kind: '목표', target: '20분', cycle: '주 3회' },
     { id: 'vitamin', name: '영양제', kind: '안전장치', target: '먹기', cycle: '매일' },
-    { id: 'reading', name: '독서', kind: '기록', target: '쪽', cycle: '-' },
+    { id: 'reading', name: '독서', kind: '기록', target: '책꽂이에 기록', cycle: '-' }, // 2026-10-08 쪽수 뺌 (features.js reading target과 같은 글)
   ];
   const MAX_HABITS = 20;
 

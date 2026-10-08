@@ -7,7 +7,7 @@
   'use strict';
   const PH_DIALOG_LINES = {
     source: '20261003_pixel-house_두부대화창_대사_v01.md',
-    name: '두부',
+    name: '{cat}', // 대화창 이름표 = 고양이 이름 (js/profile.js가 채움, 기본 두부. 2026-10-08)
 
     // 1. 첫 인사 + 선택지 안내 (시간대 = settings.TIME_BANDS). 권하는 선택지를 맨 위에 (dialog_flow.js FIRST)
     greet: {

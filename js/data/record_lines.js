@@ -69,6 +69,8 @@
     save: '저장', cancel: '그만두기', fix: '고치기', del: '지우기', undo: '되돌리기', add: '+ 기록하기', windowTitle: '영화·연극', keys: 'Esc 닫기',
     removedNote: '{title} 지웠어요', updatedNote: '{title} 고쳤어요', badTitle: '제목을 적어 주세요',
   };
+  // 생활 습관 탭 기록 카드 줄 + "기록하기" (2026-10-08 3-1단계, 비트 임시 글)
+  P.uiPlain.recordQuick = { open: '기록하기', target: '제목·날짜·요약', none: '아직 기록 없음', count: '{n}개', last: '마지막 {date}', books: '꽂힌 책 {n}권' };
   P.uiPlain.recordKind = { add: '+ 기록 항목 추가', name: '항목 이름', nameHolder: '예: 전시, 공연', note: '제목·날짜·요약으로 적는 기록 칸이 하나 생겨요', title: '기록 항목', save: '만들기', cancel: '그만두기', del: '지우기', undo: '되돌리기', removedNote: '{kind} 칸 지웠어요 (적은 기록은 남아요)', fixed: '기본' };
   // 버킷리스트 메모지 (원고 2-4). {text} = 버킷 한 줄
   P.ui.bucket = {

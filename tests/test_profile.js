@@ -26,6 +26,16 @@ ok('합치기: 객체는 안쪽까지, 배열은 통째로, "키!"는 통째로'
 const u = { x: ['{user}님 안녕', { y: '잘 자요, {user}님' }] };
 P.fillUser(u, '민지');
 ok('{user} 채우기 (배열·안쪽 객체까지)', u.x[0] === '민지님 안녕' && u.x[1].y === '잘 자요, 민지님', u);
+const cu = { a: '{cat} 여기 있어요', b: ['집사 {cat|이에요}', '{cat|이} 기다린다', '{cat|은} 졸려요', '{cat|으로} 불러요'] };
+P.fillUser(cu, '', '콩');
+ok('{cat} 채우기 + 받침 조사 (콩: 이에요·이·은·으로)', cu.a === '콩 여기 있어요' && cu.b.join() === '집사 콩이에요,콩이 기다린다,콩은 졸려요,콩으로 불러요', cu);
+const cu2 = { b: ['집사 {cat|이에요}', '{cat|이} 기다린다'] }; P.fillUser(cu2, '', '두부');
+ok('{cat} 받침 없음 (두부: 예요·가)', cu2.b.join() === '집사 두부예요,두부가 기다린다', cu2);
+P.init({ id: 'default', bundle: {}, user: { name: '민지' } });
+ok('고양이 이름 없으면 기본 두부, 있으면 그 이름', P.catName() === '두부' && P.init({ id: 'default', bundle: {}, user: { name: '민지', cat: '콩이' } }).catName() === '콩이');
+const LP = { intro: [{ say: '어서 오세요, {user}님. 집사 {cat|이에요}냥~' }] }; P.patch('PH_LINES', LP);
+ok('patch = {user}·{cat} 같이 채움', LP.intro[0].say === '어서 오세요, 민지님. 집사 콩이예요냥~', LP);
+P.init({ id: 'default', bundle: {}, user: {} });
 const S2 = { ART_SET_DEFAULT: 'room1', ART_SETS: { room1: { chars: { player: { sprite: 'avatar1' } } } } };
 P.init({ id: 'default', bundle: {}, user: { name: '민지', avatar: 'avatar3', house: 'room1' } });
 P.patch('PH_SETTINGS', S2);

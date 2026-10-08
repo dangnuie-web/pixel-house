@@ -95,3 +95,11 @@
 .he-fn-picks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 10px 8px 0; padding: 8px 2px 0; border-top: 1px solid var(--ui-inner); }
 .he-fn-picks .he-lab { font-size: 13px; color: var(--ui-sub); }
 .he-panel .he-fn-add { color: var(--ui-sub); }
+/* 기록 카드 + 추가: 기록 방식 고르기 (2026-10-08 3-1단계). 알약 둘 = [횟수·양 기록 | 제목·날짜·요약 기록] */
+.he-f-type { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.he-type { position: relative; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border: 1px solid var(--ui-chip-line); border-radius: 999px; background: var(--ui-field); font: 500 13px var(--font); color: var(--ui-sub); cursor: pointer; }
+.he-type.on { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 600; }
+.he-type input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.he-type:has(input:focus-visible) { outline: 2px solid var(--O); outline-offset: 2px; }
+.he-row.he-rk .he-rk-lock::before { display: none; }
+.he-row.he-rk .he-order { width: 52px; border-color: transparent; background: none; } /* 순서 버튼 자리만 비워 이름 줄 맞춤 */

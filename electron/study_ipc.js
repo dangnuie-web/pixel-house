@@ -15,6 +15,7 @@ module.exports = function register(o) {
   const RR = require(path.join(__dirname, '..', 'js', 'record_rename.js'));
   require(path.join(__dirname, '..', 'js', 'table_section.js'));
   const SP = require(path.join(__dirname, '..', 'js', 'study_parts.js'));
+  const SPL = require(path.join(__dirname, '..', 'js', 'study_plan.js'));
   const { ipcMain, file, backup, settings, fixedDay, guard } = o;
   const day = () => (fixedDay && fixedDay()) || SW.logDay(Date.now(), settings.DAY_START_HOUR);
 
@@ -28,7 +29,7 @@ module.exports = function register(o) {
     if (typeof seen !== 'number' || Math.abs(seen - mtime) > 1) return { ok: false, conflict: true, text: cur, lastModified: mtime };
     const date = day();
     let r;
-    try { r = plan(cur, date); } catch (e) { if (e.code) return { ok: false, code: e.code, message: e.message, text: cur, lastModified: mtime, date, usedName: e.usedName || null, lastDate: e.lastDate || null }; throw e; } // usedName: 막은 이름·마지막 기록 날 (안내용)
+    try { r = plan(cur, date); } catch (e) { if (e.code) return { ok: false, code: e.code, message: e.message, text: cur, lastModified: mtime, date, usedName: e.usedName || null, lastDate: e.lastDate || null, plans: e.plans || null }; throw e; } // plans = 기간 밖 세부 계획 (planOut). usedName: 막은 이름·마지막 기록 날 (안내용)
     if (!r.changed) return { ok: true, unchanged: true, text: cur, lastModified: mtime, date, name: r.name, hours: r.hours };
     // 고치기: 1단계(## 공부 표 한 줄)와 2단계(지난 기록 이름 oldName -> name)를 따로 검사
     const staged = typeof r.mid === 'string';
@@ -61,9 +62,33 @@ module.exports = function register(o) {
     if (!isStr(req.start) || !isStr(req.memo)) throw new Error('값 형식 오류');
     return SW.addStudy(cur, { name: req.name, start: req.start || date, memo: req.memo || '' });
   }));
-  ipcMain.handle('ph:studyUpdate', (e, req) => write('study', 'update', req, (cur) => SW.updateStudy(cur, req.name, cleanPatch(req.patch))));
+  // 고치기 (기간 띠 끌기·키보드). 2026-10-08: 세부 계획이 새 기간 밖으로 나가면 막음 (code planOut)
+  ipcMain.handle('ph:studyUpdate', (e, req) => write('study', 'update', req, (cur) => {
+    const p = cleanPatch(req.patch), r = SW.updateStudy(cur, req.name, p);
+    if (r.changed && (p.start != null || p.end != null)) { const row = SW.parse(r.text).study.find((x) => x.name === r.name); if (row) SPL.checkInside(cur, req.name, row.start, row.end); }
+    return r;
+  }));
   ipcMain.handle('ph:studyArchive', (e, req) => write('study', 'archive', req, (cur, date) => SW.archiveStudy(cur, req.name, { date })));
   ipcMain.handle('ph:studyRestore', (e, req) => write('study', 'restore', req, (cur) => SW.restoreStudy(cur, req.name)));
+  // 공부 [추가 | 수정] 창 한 번 저장 (2026-10-08 3-1단계): ## 공부 줄 + ## 공부 단원(세부 계획) 여러 줄을 쓰기 한 번에. 단계마다 섹션 검사는 js/study_plan.js save
+  ipcMain.handle('ph:studySave', (e, req) => {
+    if (guard) guard();
+    if (!req || typeof req !== 'object') throw new Error('요청 형식 오류');
+    const seen = req.lastModified;
+    const cur = fs.readFileSync(file, 'utf8'), mtime = fs.statSync(file).mtimeMs;
+    if (typeof seen !== 'number' || Math.abs(seen - mtime) > 1) return { ok: false, conflict: true, text: cur, lastModified: mtime };
+    const q = { mode: req.mode, name: typeof req.name === 'string' ? req.name : '', study: cleanStudy(req.study), plans: cleanPlans(req.plans), removed: cleanSigs(req.removed) };
+    let r;
+    try { r = SPL.save(cur, q); } catch (x) { if (x.code) return { ok: false, code: x.code, message: x.message, plans: x.plans || null, part: x.part || null, text: cur, lastModified: mtime, usedName: x.usedName || null, lastDate: x.lastDate || null }; throw x; }
+    if (!r.changed) return { ok: true, unchanged: true, text: cur, lastModified: mtime, name: r.name };
+    const dir = backup(cur);
+    fs.writeFileSync(file, r.text);
+    return { ok: true, text: r.text, lastModified: fs.statSync(file).mtimeMs, name: r.name, oldName: r.oldName, steps: r.steps, backupDir: dir };
+  });
+  const s200 = (v) => typeof v === 'string' && v.length <= 200;
+  function cleanStudy(o) { if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('공부 값 형식 오류'); ['name', 'start', 'end', 'memo'].forEach((k) => { if (o[k] != null && !s200(o[k])) throw new Error('값 형식 오류: ' + k); }); return { name: o.name || '', start: o.start || '', end: o.end || '', memo: o.memo || '' }; }
+  function cleanPlans(a) { if (a == null) return []; if (!Array.isArray(a) || a.length > 30) throw new Error('세부 계획 형식 오류'); return a.map((p) => { if (!p || typeof p !== 'object') throw new Error('세부 계획 형식 오류'); ['sig', 'part', 'from', 'to'].forEach((k) => { if (p[k] != null && !(typeof p[k] === 'string' && p[k].length <= 4000)) throw new Error('값 형식 오류: ' + k); }); return { sig: p.sig || null, part: p.part || '', from: p.from || '', to: p.to || '' }; }); }
+  function cleanSigs(a) { if (a == null) return []; if (!Array.isArray(a) || a.length > 30 || a.some((x) => typeof x !== 'string' || x.length > 4000)) throw new Error('줄 고르기 형식 오류'); return a; }
   ipcMain.handle('ph:studyLog', (e, req) => write('log', 'log', req, (cur, date) => {
     if (req.add !== 1 && req.add !== -1) throw new Error('시간 오류');
     return SW.logStudyToday(cur, req.name, { date, add: req.add });

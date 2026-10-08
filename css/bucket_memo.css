@@ -58,3 +58,34 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .mw-slot.sel { background: none; overflow: hidden; }
 .mw-hole { position: absolute; box-shadow: 0 0 0 999px rgba(243, 207, 107, .3); pointer-events: none; }
 .mw-slot:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+/* 생활 습관 탭 버킷리스트 = 다른 카드와 같은 모양 (2026-10-08 제작자 3-1단계, js/bucket_memo.js html(d, { card })). 메모지(집·사이드바 탭)는 위 그대로
+   탭 = 기록 창 알약(.rc-pill)과 같은 결, 줄 = 습관 카드 줄(1px 윗선), 체크 칸 = 네모, 버튼 = 습관 편집 버튼 결 */
+.bkm-cardwrap { font-family: var(--font); }
+.bkm-cardwrap .bkc-tabs { position: static; display: inline-flex; height: 30px; padding: 0; gap: 0; margin: 2px 0 8px; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.bkm-cardwrap .bkm-tab { position: static; width: auto; height: auto; margin: 0; padding: 0 14px; border: 0; border-left: 2px solid var(--A); border-radius: 0; background: var(--ui-paper); color: var(--ui-sub); font: 500 14px var(--font); z-index: auto; }
+.bkm-cardwrap .bkm-tab:first-child { border-left: 0; }
+.bkm-cardwrap .bkm-tab b { font-size: 12px; font-weight: 500; margin-left: 2px; }
+.bkm-cardwrap .bkm-tab.on { background: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 600; height: auto; }
+.bkm-cardwrap .bkc-lines { list-style: none; margin: 0; padding: 0; }
+.bkm-cardwrap .bkm-it, .bkm-cardwrap .bkm-addline, .bkm-cardwrap .bkm-empty { position: relative; display: flex; align-items: center; gap: 10px; height: auto; min-height: 42px; padding: 8px 0; border-top: 1px solid var(--I); font-size: 15px; box-sizing: border-box; }
+.bkm-cardwrap .bkm-chk { position: static; width: auto; height: auto; max-width: none; padding: 0; border: 0; background: none; cursor: pointer; display: inline-flex; }
+.bkc-box { flex: none; width: 20px; height: 20px; box-sizing: border-box; border: 2px solid var(--A); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; background: var(--ui-field); color: var(--ui-sel-tx); }
+.bkc-box.on { background: var(--ui-sel); border-color: var(--ui-sel); }
+.bkm-cardwrap .bkm-it.edit .bkc-box, .bkm-cardwrap .bkm-it.adding .bkc-box { opacity: .55; }
+.bkm-cardwrap .bkm-t { flex: 1; min-width: 0; cursor: text; }
+.bkm-cardwrap .bkm-date { margin-left: 8px; font-size: 13px; color: var(--ui-sub); }
+.bkm-cardwrap .bkm-add { height: 28px; padding: 0 10px; border: 1px solid var(--ui-chip-line); border-radius: 5px; background: var(--ui-field); font: 500 13px var(--font); color: var(--ui-sub); cursor: pointer; }
+.bkm-cardwrap .bkm-add:hover { background: var(--ui-ring); }
+.bkm-cardwrap .bkm-in { flex: 1; height: 32px; padding: 0 10px; border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); font: 15px var(--font); }
+.bkm-cardwrap .bkm-in.bad { border-color: var(--ui-danger); }
+.bkm-cardwrap .bkm-del { margin-left: 4px; padding: 0 6px; height: 24px; border: 0; border-radius: 5px; background: none; font: 500 13px var(--font); color: var(--ui-danger); cursor: pointer; }
+.bkm-cardwrap .bkm-empty { color: var(--ui-sub); flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
+.bkm-cardwrap .bkm-empty small { font-size: 13px; }
+.bkm-cardwrap .bkm-err { margin: 6px 0 0; font-size: 13px; color: var(--ui-danger); }
+.bkm-cardwrap .bkm-bar { display: flex; margin-top: 6px; padding: 0; background: none; border: 0; border-radius: 0; filter: none; }
+.bkm-cardwrap .bkm-bar:empty { display: none; }
+.bkm-cardwrap .bkm-undo { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px; background: var(--ui-off-bg); border-left: 4px solid var(--ui-sel); font-size: 14px; }
+.bkm-cardwrap .bkm-restore { margin-left: auto; height: 26px; padding: 0 12px; border: 0; border-radius: 5px; background: var(--ui-sel); color: var(--ui-sel-tx); font: 600 13px var(--font); cursor: pointer; }
+.bkm-cardwrap .bkm-it.leaving { animation: bkc-leave 120ms steps(3, end) 880ms forwards; }
+@keyframes bkc-leave { to { transform: translateX(8px); opacity: 0; } }
+.bkm-cardwrap button:focus-visible, .bkm-cardwrap .bkm-t:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }

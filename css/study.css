@@ -89,3 +89,37 @@
 .st-paint-help { margin-top: 8px; }
 /* 오늘 세로선은 클릭을 받지 않음 (오늘 칸 칠하기를 가로채던 것, 2026-10-08) */
 .g-today { pointer-events: none; }
+/* 3-1단계 (2026-10-08): 머리 [추가 | 수정] 한 묶음 (기록 창 알약과 같은 결) */
+.st-am { display: inline-flex; height: 30px; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }
+.st-am button { font: 600 13px var(--font); color: var(--ui-sub); background: var(--ui-paper); border: 0; padding: 0 14px; cursor: pointer; }
+.st-am button + button { border-left: 2px solid var(--A); }
+.st-am button:hover:not(:disabled) { background: var(--ui-ring); }
+.st-am button:disabled { color: var(--ui-off-tx); cursor: default; }
+.st-am button:focus-visible { outline: 2px solid var(--O); outline-offset: -3px; }
+.g-prow { cursor: default; }
+/* 공부 [추가 | 수정] 창 (js/study_modal.js). 틀 = 기록 폼 .bk-overlay / .bk-dlg (css/journal.css) */
+.sm-dlg { width: min(640px, 100%); }
+.sm-dlg select.sm-pick { font: 15px var(--font); height: 34px; padding: 0 8px; border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); }
+.sm-dlg .sm-name, .sm-dlg .sm-memo { flex: 1; min-width: 0; }
+.sm-range { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sm-range i { font-style: normal; color: var(--ui-sub); }
+.sm-dlg input.bad, .sm-plan.bad .sm-p-name { border-color: var(--ui-danger) !important; }
+.sm-plans { margin: 10px 0 4px; padding: 10px 12px 12px; border: 1px solid var(--ui-chip-line); border-radius: 8px; background: var(--ui-paper); }
+.sm-plans-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.sm-plans-head b { font-size: 15px; }
+.sm-plans-head small { font-size: 12px; color: var(--ui-sub); }
+.sm-plan-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.sm-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 0; border-top: 1px solid var(--I); }
+.sm-plan:first-child { border-top: 0; }
+.sm-plan .sm-p-name { flex: 1 1 140px; min-width: 120px; height: 32px; padding: 0 8px; font: 14px var(--font); border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); }
+.sm-plan input[type="date"] { height: 32px; font: 14px var(--font); border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); padding: 0 4px; }
+.sm-plan .sm-p-del { font: 500 13px var(--font); color: var(--ui-danger); background: none; border: 0; border-radius: 5px; height: 26px; padding: 0 6px; cursor: pointer; }
+.sm-plan .sm-p-del:hover { background: var(--ui-hover); }
+.sm-gaps { flex-basis: 100%; font-size: 12px; color: var(--ui-sub); }
+.sm-none { font-size: 13px; color: var(--ui-sub); padding: 4px 0 6px; }
+.sm-p-add { font: 500 13px var(--font); color: var(--ui-sub); background: var(--ui-field); border: 1px solid var(--ui-chip-line); border-radius: 5px; height: 28px; padding: 0 10px; cursor: pointer; }
+.sm-p-add:hover { background: var(--ui-ring); }
+.sm-dlg button:focus-visible, .sm-dlg input:focus-visible, .sm-dlg select:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+.sm-dlg .sm-range input[type="date"] { flex: none; width: 150px; }
+.sm-dlg .sm-plan input[type="date"] { width: 140px; padding: 4px 6px; }
+.sm-dlg .sm-plan .sm-p-name { padding: 4px 8px; }

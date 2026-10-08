@@ -77,6 +77,20 @@ module.exports = function register(o) {
     if (!r || typeof r !== 'object' || Array.isArray(r) || !str(r.name) || !str(r.start) || !optStr(r.end) || !optStr(r.memo) || !optStr(req.before) || !optStr(req.raw)) throw new Error('값 형식 오류');
     return HE.unremoveStudy(cur, { name: r.name, start: r.start, end: r.end || '', memo: r.memo || '' }, req.before, req.raw);
   }));
+  // 켤 때 한 번 (electron/main.js startHouse가 부름): 옛 일지 기능 줄 옮기기 (2026-10-08 독서 기준 '쪽' -> '책꽂이에 기록'). 같은 안전 규칙(쓰기 전 사본, 생활습관 표 줄만 바뀌었는지 검사)
+  //   시험 실행에서 실제 자료면(guard) 안 씀. 실패해도 앱은 그대로 켜짐 (화면은 독서 줄에 양 적기를 그리지 않음)
+  function migrateOnStart() {
+    try {
+      if (guard) guard();
+      const cur = fs.readFileSync(file, 'utf8'), r = HE.migrateFnRows(cur);
+      if (!r.changed) return { ok: true, unchanged: true };
+      if (!HE.onlyHabitsChanged(cur, r.text, 2 * r.moved.length)) throw new Error('생활습관 표 밖이 바뀌려 해서 멈춤 (migrate)');
+      const dir = backup(cur);
+      fs.writeFileSync(file, r.text);
+      console.log('[habit] 옛 일지 기능 줄 옮김:', r.moved.join(', '), '(사본 ' + dir + ')');
+      return { ok: true, moved: r.moved, backupDir: dir };
+    } catch (e) { console.log('[habit] 옛 줄 옮기기 안 함:', e.message); return { ok: false, error: e.message }; }
+  }
   // 매일 n회(n >= 2) 습관: 오늘 k/n (목표 또는 살림 종류, 물은 ph:setWater). 0 <= value <= n
   ipcMain.handle('ph:habitSetDaily', (e, req) => write('records', req, (cur, date) => {
     if (!str(req.habit) || !req.habit || req.habit.length > 40) throw new Error('습관 이름 오류');
@@ -88,4 +102,5 @@ module.exports = function register(o) {
     const r = LW.setSlots(cur, { habit: row.name, value: req.value, of: n, date });
     return Object.assign(r, { habit: row.name, value: req.value, of: n, prev });
   }));
+  return { migrate: migrateOnStart };
 };

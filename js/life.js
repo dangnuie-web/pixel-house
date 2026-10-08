@@ -95,7 +95,7 @@
           extra = `<div class="slot-row ${writable ? 'rw' : ''}" data-slots="${r.slots}" data-filled="${filled}" data-habit="${esc(r.name)}">${writable ? cupButtons(r.slots, filled, r.name) : slotCells(r.slots, filled)}<span class="slot-note">${esc(note)}</span></div>`;
         } else if (k.kind === LC.KIND.goal && r.kind === LC.KIND.goal && HC.slotsOf(r.cycle)) extra = dailyRow(d, r, ctx); // 매일 n회 = 오늘 n칸 (2026-10-04)
         else if (k.kind === LC.KIND.goal && (LC.weeklyOf(r.cycle) || (r.kind === LC.KIND.goal && HC.isToggle(r.cycle)))) extra = weekRow(d, r, ctx); // 주 n회·월 n회·매일 1회
-        else if (k.kind === LC.KIND.log && LC.unitOf(r.target)) extra = amountRow(d, r, ctx);
+        else if (k.kind === LC.KIND.log && LC.unitOf(r.target) && !(root.PHFeatures && root.PHFeatures.byHabit(r.name))) extra = amountRow(d, r, ctx); // 일지 기능 줄(독서 등)은 양 적기 없음 (2026-10-08 독서 쪽수 뺌)
         if (up) extra += `<p class="up-note">${esc(fill(UI.promotedNote, { until: md(Md.dateOf(up.until)) }))}</p>`;
         return `<li data-line="${r.line}" data-habit="${esc(r.name)}"${up ? ' class="up"' : ''}><b>${esc(r.name)}</b><span class="tgt">${esc(r.target)}</span>${r.cycle && r.cycle.trim() !== '-' ? `<span class="cyc">${esc(r.cycle)}</span>` : ''}${extra}</li>`;
       }).join('') + '</ul></section>';

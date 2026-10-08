@@ -303,7 +303,23 @@
     } catch (e) { return false; }
   }
 
-  const HE = { KIND, KINDS, HEAD, NAME_MAX, TARGET_MAX, NO_CYCLE, checkName, checkTarget, checkCycle, habitsTable, addHabit, updateHabit, removeHabit, moveHabit,
+  // 옛 일지 기능 줄 옮기기 (2026-10-08 제작자 "독서 쪽수 완전히 없애기"): | 독서 | 기록 | 쪽 | - | -> | 독서 | 기록 | 책꽂이에 기록 | - |
+  //   features.js oldTargets에 적힌 옛 기준 글자일 때만, 그 줄 기준 칸만 바꿈. ## 독서·## 독서 보관(책꽂이 책)·지난 기록 "독서 20쪽"은 그대로
+  function migrateFnRows(src) {
+    const lines = splitLines(src); let T;
+    try { T = habitsTable(lines); } catch (e) { return { text: src, changed: false, moved: [] }; }
+    const moved = [];
+    T.rows.forEach((r) => {
+      const fn = fnOf(nameOf(r)); if (!fn || !fn.oldTargets || r.cells.length !== 4) return;
+      if (r.cells[1] !== KIND.log || !fn.oldTargets.includes(r.cells[2]) || r.cells[3] !== NO_CYCLE) return;
+      lines[r.line] = rowText(fnRow(fn)); moved.push(fn.habit);
+    });
+    if (!moved.length) return { text: src, changed: false, moved };
+    return { text: lines.join(nlOf(src)), changed: true, op: 'migrate', moved };
+  }
+  const needsMigrate = (src) => migrateFnRows(src).changed;
+
+  const HE = { KIND, KINDS, migrateFnRows, needsMigrate, HEAD, NAME_MAX, TARGET_MAX, NO_CYCLE, checkName, checkTarget, checkCycle, habitsTable, addHabit, updateHabit, removeHabit, moveHabit,
     onlyHabitsChanged, onlyHabitUpdated, okRow, fnOf, removeStudy, unremoveStudy, onlyStudyRemoved, onlyStudyAdded, water };
   root.PHHabitEdit = HE;
   if (typeof module !== 'undefined' && module.exports) module.exports = HE;

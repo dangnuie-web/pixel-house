@@ -21,12 +21,31 @@
     grassEmpty: '아직 칠한 칸이 없어요. 막대를 칠하면 여기 물들어요냥~',
     archived: ['{name} 막대는 보관함에 고이 넣어 둘게요냥~', '{name}, 보관함에 넣어 뒀어요. 칠한 칸도 같이요냥~'],
     restored: ['{name}, 보관함에서 다시 꺼내 놓았어요냥~', '{name}, 간트로 돌아왔어요냥~'],
+    // 3-1단계 (2026-10-08) 비트 임시 (부기가 다듬을 자리). {plan} = 세부 계획 이름표 (PH_STUDY_PLAIN.plan), {name} = 공부 이름
+    saved: ['{name}, 고친 대로 적어 뒀어요냥~', '{name} 계획, 새로 맞춰 뒀어요냥~'],
+    planOut: ['{plan|은} 공부 기간 안에서만 정할 수 있어요. 날짜를 기간 안으로 옮겨 주세요냥~'],
+    needEnd: ['끝일도 정해 주세요. 전체 기간이 있어야 막대를 그려요냥~'],
     conflict: ['그사이 기록이 바뀌어 다시 읽었어요. 한 번 더 부탁해요냥~'],
     fail: ['이번 건 적지 못했어요. 죄송해요냥~'],
   };
   root.PH_STUDY_LINES = PH_STUDY_LINES;
   // 화면 글 (냥~ 없음, 부기 원고 2-6)
-  root.PH_STUDY_PLAIN = { view: { week: '주', month: '월' }, addSubject: '+ 과목', addPart: '+ 쪼개기', partHolder: '예: 1단원, 1단원 복습',
-    start: '시작일', end: '끝일', hint: '칸을 눌러 칠하면 그날 공부한 거예요. 다시 누르면 지워져요', now: { week: '이번 주', month: '이번 달' } };
+  // 3-1단계 (2026-10-08 제작자): 칠하기·쪼개기 없앰 -> [추가 | 수정] 창. plan = 하위 항목 이름표 (토리 제안 "세부 계획", 제작자 확인 대기 — 여기 한 곳만 바꾸면 화면·두부 말 모두 바뀜)
+  root.PH_STUDY_PLAIN = { view: { week: '주', month: '월' }, now: { week: '이번 주', month: '이번 달' },
+    plan: '세부 계획', add: '추가', edit: '수정', addTitle: '공부 추가', editTitle: '공부 수정', pick: '고칠 공부',
+    name: '공부 이름', nameHolder: '예: 클로드 코드 개발 공부', period: '전체 기간', start: '시작일', end: '끝일', memo: '메모', memoHolder: '비워 둬도 돼요',
+    planNote: '{plan|은} 전체 기간 안에서만 정할 수 있어요', planHolder: '예: 1단원, 1단원 복습', planAdd: '+ {plan} 추가', planEmpty: '아직 {plan|이} 없어요. 없으면 전체 기간이 한 막대예요',
+    gapsNote: '띄엄띄엄 칠한 옛 기록이에요. 기간을 바꾸면 한 막대로 이어져요', del: '지우기', cancel: '그만두기', save: '저장',
+    selHelp: '막대나 이름을 누르면 골라져요. 막대를 끌면 옮겨지고, 양끝을 끌면 시작·끝이 바뀌어요. 이름·기간·메모·세부 계획은 [수정]에서 고쳐요.',
+    noEnd: '끝일 없음', noEndLong: '끝일 없음 ([수정]에서 정해 주세요)', noPlans: '없음 (전체 기간이 한 막대)',
+    // 잔디 (생활일지 > 공부): 달마다
+    grassEmptyMonth: '이 달엔 공부 계획이 없어요', grassLegend: '계획', grassMonth: '{m}월 {n}일', monthPick: '연월 고르기',
+    err: {
+      badName: '공부 이름을 적어 주세요 (| , / 같은 기호 없이, 숫자로 시작하지 않게, 30자까지).', dupName: '같은 이름의 공부나 습관이 있어요.',
+      badStart: '시작일을 골라 주세요.', badEnd: '끝일도 골라 주세요. 전체 기간이 있어야 해요.', badOrder: '끝일이 시작일보다 앞이에요.',
+      badPart: '{plan} 이름을 적어 주세요 (| , 없이 20자까지).', planDate: '{plan} 날짜를 다시 골라 주세요 ({names}: 끝이 시작보다 앞이에요).',
+      planOut: '{plan|은} 전체 기간({start} ~ {end}) 안에서만 정할 수 있어요: {names}', dupPart: '같은 이름의 {plan|이} 있어요: {names}',
+      planOutMove: '{plan} {names|이} 기간 밖으로 나가서 옮기지 않았어요. [수정]에서 {plan}부터 고쳐 주세요.', fail: '저장하지 못했어요.',
+    } };
   if (typeof module !== 'undefined' && module.exports) module.exports = PH_STUDY_LINES;
 })(typeof window !== 'undefined' ? window : globalThis);

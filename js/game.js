@@ -537,7 +537,7 @@
     if (G.dialog) { advanceDialog(); return; }
     if (G.mode !== 'play') return;
     const p = toStage(e), hit = actorAt(p.x, p.y);
-    if (root.PHFurnishUI && root.PHFurnishUI.on && !root.PHFurnishUI.menu && root.PHMemoWall && root.PHMemoWall.hit(p)) { root.PHFurnishUI.setMode(false); root.PHMemoWall.start(); return; } // (2026-10-08) 연동 모드에서 벽 메모지 = 붙일 자리 고르기 (무늬 기록기능디자인 v01 2-2)
+    if (S.MEMO_WALL_MOVE && root.PHFurnishUI && root.PHFurnishUI.on && !root.PHFurnishUI.menu && root.PHMemoWall && root.PHMemoWall.hit(p)) { root.PHFurnishUI.setMode(false); root.PHMemoWall.start(); return; } // (2026-10-08) 연동 모드에서 벽 메모지 = 붙일 자리 고르기 (무늬 기록기능디자인 v01 2-2)
     if (root.PHFurnishUI && root.PHFurnishUI.onClick(p)) return; // (2026-10-04) 가구 연결 모드: 클릭은 가구 고르기만 (두부·걷기보다 먼저)
     if (!hit && root.PHMemoWall && root.PHMemoWall.onClick(p)) return; // (2026-10-08) 벽 버킷리스트 메모지 누르기 -> 메모지 창
     if (hit && hit.id === 'dubu') { onDubuClick(hit); return; }

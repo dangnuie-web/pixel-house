@@ -53,7 +53,16 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await js(`(() => { const i = document.getElementById('ob-name'); i.value = '민지'; i.dispatchEvent(new Event('input')); })()`);
     await clickSel('#ob-next'); await sleep(250);
     let o = await ob();
-    ok('이름 "민지" -> 모습 단계, 두부가 {user}님으로 부름', o.step === 'avatar' && o.name === '민지' && o.line.includes('민지님') && !o.line.includes('{user}'), o);
+    ok('이름 "민지" -> 고양이 이름 단계 (3-1단계), 두부가 {user}님으로 부르고 기본 이름 두부로 소개', o.step === 'cat' && o.name === '민지' && o.line.includes('민지님') && o.line.includes('두부예요') && !/\{user\}|\{cat/.test(o.line) && o.cat === '두부', o);
+    ok('고양이 단계: 이름 칸(빈칸 = 기본 두부) + 안내, 단계 표시 6칸', (await js(`!!document.getElementById('ob-cat') && document.getElementById('ob-cat').value === '' && document.querySelectorAll('.ob-steps li').length === 6 && document.querySelector('.ob-steps li.on').textContent === '고양이'`)));
+    await shot('public_01b_onboard_cat');
+    await js(`(() => { const i = document.getElementById('ob-cat'); i.value = '콩|이'; i.dispatchEvent(new Event('input')); })()`);
+    await clickSel('#ob-next'); await sleep(250);
+    ok('고양이 이름에 못 쓰는 글자 -> cat.bad 줄, 그대로', (await ob()).step === 'cat' && (await ob()).line.includes('못 쓰는 글자'), await ob());
+    await js(`(() => { const i = document.getElementById('ob-cat'); i.value = '콩이'; i.dispatchEvent(new Event('input')); })()`);
+    await clickSel('#ob-next'); await sleep(250);
+    o = await ob();
+    ok('고양이 이름 "콩이" -> 모습 단계, 두부가 새 이름으로 (cat.ok)', o.step === 'avatar' && o.cat === '콩이' && /^콩이(, 좋아요. 오늘부터 저는 콩이예요|! 마음에 들어요)/.test(o.line) && !o.line.includes('{cat'), o);
     const av = await js(`[...document.querySelectorAll('.ob-av')].map((b) => ({ av: b.dataset.av, w: b.querySelector('canvas').width, name: b.textContent.trim() }))`);
     ok('아바타 3명 그림(32x36 x3)·임시 이름', av.length === 3 && av.every((a) => a.w === 96) && av.map((a) => a.name).join() === '보리,도토리,모래', av);
     await shot('public_02_onboard_avatar');
@@ -78,11 +87,13 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await clickSel('#ob-next');
     await Promise.race([reloaded, sleep(9000)]); await sleep(600);
     const pf = store();
-    ok('profile.json = 공용 묶음 + 민지·avatar2·room1·시험 폴더', pf && pf.bundle === 'default' && pf.name === '민지' && pf.avatar === 'avatar2' && pf.house === 'room1' && pf.dir === DIR, pf);
+    ok('profile.json = 공용 묶음 + 민지·고양이 콩이·avatar2·room1·시험 폴더', pf && pf.bundle === 'default' && pf.name === '민지' && pf.cat === '콩이' && pf.avatar === 'avatar2' && pf.house === 'room1' && pf.dir === DIR, pf);
     ok('기록 파일 생김 (빈 틀 + 고른 습관: 물·요가·일기 목표, 독서 기록)', fs.existsSync(LIFE) && (() => { const d = Md.parse(fs.readFileSync(LIFE, 'utf8')); return d.habits.rows.map((r) => r.name + ':' + r.kind).join() === '물:목표,요가:목표,일기:목표,독서:기록' && !!d.meetingsSection; })(), fs.existsSync(LIFE) && fs.readFileSync(LIFE, 'utf8').slice(0, 600));
     st = await js(`({ onboard: PHProfile.isOnboard(), start: !document.getElementById('screen-start').hidden, user: PHProfile.userName(), char: PH_CHARS.player.sprite, tabs: getComputedStyle(document.querySelector('#tabs [data-tab=habits]')).visibility })`);
     ok('다시 열림: 입장 화면, 이름 민지, 내 캐릭터 = avatar2, 탭 보임', !st.onboard && st.start && st.user === '민지' && st.char === 'avatar2' && st.tabs === 'visible', st);
     await shot('public_06_cover');
+    const cat = await js(`({ name: PHProfile.catName(), tag: PH_DIALOG_LINES.name, click: PH_LINES.click.filter((t) => /여기 있어요/.test(t)), intro: PH_LINES.intro.map((x) => x.say || '').join(' '), win: PH_LINES.entrance.idle.window, left: JSON.stringify([PH_LINES, PH_DIALOG_LINES]).includes('{cat') })`);
+    ok('켠 뒤 고양이 이름 = 콩이: 대화창 이름표·클릭 대사·입장 대사·입장 화면 글 ({cat} 남은 곳 없음)', cat.name === '콩이' && cat.tag === '콩이' && cat.click.some((t) => t.includes('콩이 여기 있어요')) && cat.intro.includes('집사 콩이예요') && cat.win.includes('콩이가 기다린다') && !cat.left, cat);
 
     // ---- 2. 입장: 원룸, 현관문 칸에서 시작, 첫 인사 = intro.afterOnboard ----
     await js('PHApp.onEnter(); 0');

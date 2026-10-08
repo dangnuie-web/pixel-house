@@ -65,6 +65,12 @@
           `<button type="button" class="he-fix" data-focus="he-fix:${nm}">${esc(p.fix)}</button><button type="button" class="he-del" data-focus="he-del:${nm}">${esc(p.del)}</button>`) +
         '</span>' + (f && f.mode === 'edit' && f.name === r.name ? form(kind, f) : '') + '</li>';
     });
+    // 기록 카드: 제목·날짜·요약으로 적는 기록 칸 (영화·연극 = 기본, 새 항목 = ## 기록 항목. 2026-10-08 제작자: 따로 "기록 항목" 카드 없이 여기서)
+    if (kind === HE.KIND.log && RW()) RW().parse(d.lines || []).kinds.forEach((k) => {
+      const nm = esc(k.name);
+      h += `<li class="he-row he-rk" data-rk="${nm}"><span class="he-order" aria-hidden="true"></span><span class="he-name"><b>${nm}</b><small>${esc(p.recordType)}</small></span><span class="he-btns">` +
+        (k.custom ? `<button type="button" class="he-del he-rk-del" data-rk="${nm}" data-focus="he-rk-del:${nm}">${esc(p.del)}</button>` : `<span class="he-lock he-rk-lock">${esc(p.rkFixed)}</span>`) + '</span></li>';
+    });
     h += '</ul>';
     if (St.undo && St.undo.kind === kind) h += `<div class="he-undo" role="status"><span>${esc(undoNote(St.undo))}</span><button type="button" class="he-undo-b" data-focus="he-undo">${esc(p.undo)}</button></div>`;
     h += f && f.mode === 'add' ? form(kind, f) : `<button type="button" class="he-add" data-focus="he-add:${esc(kind)}">${esc(p.add)}</button>`;
@@ -73,15 +79,19 @@
       off.map((x) => `<button type="button" class="he-fn-add" data-fn="${esc(x.id)}" data-focus="he-fn-add:${esc(x.id)}">+ ${esc(x.label)}</button>`).join('') + '</div>';
     return h + '</div>';
   }
-  const undoNote = (u) => { const p = P(); return u.update ? Life.fill(u.prev.name !== u.name ? p.renamedNote : p.updatedNote, { old: u.prev.name, name: u.name }) : Life.fill(p.removedNote, { name: u.removed.name }); };
+  const RW = () => root.PHRecordWrite, RD = () => root.PHRecordDesktop;
+  const undoNote = (u) => { const p = P(); if (u.rk) return Life.fill(p.rkRemovedNote, { name: u.rk.name }); return u.update ? Life.fill(u.prev.name !== u.name ? p.renamedNote : p.updatedNote, { old: u.prev.name, name: u.name }) : Life.fill(p.removedNote, { name: u.removed.name }); };
   // 추가·고치기 칸
   function form(kind, f) {
     const p = P(), v = f.v || {}, log = kind === HE.KIND.log, safe = kind === HE.KIND.safety;
     const per = v.per || 'day', n = v.n || 1, max = HC.MAX[per];
     let h = `<form class="he-form" data-mode="${f.mode}" data-kind="${esc(kind)}" autocomplete="off">`;
     const bad = (k) => (St.err && errInfo().field === k ? ' err" aria-invalid="true' : '');
-    h += `<label class="he-f-name">${esc(p.name)} <input class="he-in-name${bad('name')}" maxlength="${HE.NAME_MAX}" value="${esc(v.name || '')}" placeholder="예: ${log ? '필사' : kind === HE.KIND.house ? '이불 빨래' : '명상'}" data-focus="he-in-name"></label>`;
-    h += `<label class="he-f-target">${esc(log ? p.unit : p.target)} <input class="he-in-target${bad('target')}" maxlength="${log ? 4 : HE.TARGET_MAX}" value="${esc(v.target == null || v.target === '-' ? '' : v.target)}" placeholder="${log ? '쪽, 장' : '예: 10분'}"></label>`;
+    const rec = log && f.mode === 'add' && v.type === 'record' && !!RD();
+    if (log && f.mode === 'add' && RD()) h += `<span class="he-f-type" role="radiogroup" aria-label="${esc(p.type)}"><span class="he-lab">${esc(p.type)}</span>` +
+      ['amount', 'record'].map((t) => `<label class="he-type${(v.type || 'amount') === t ? ' on' : ''}"><input type="radio" name="he-type" value="${t}" ${(v.type || 'amount') === t ? 'checked' : ''} data-focus="he-type:${t}"><span>${esc(p.types[t])}</span></label>`).join('') + '</span>';
+    h += `<label class="he-f-name">${esc(p.name)} <input class="he-in-name${bad('name')}" maxlength="${rec ? RW().KIND_MAX : HE.NAME_MAX}" value="${esc(v.name || '')}" placeholder="예: ${rec ? p.rkHolder.replace(/^예: /, '') : log ? '필사' : kind === HE.KIND.house ? '이불 빨래' : '명상'}" data-focus="he-in-name"></label>`;
+    if (!rec) h += `<label class="he-f-target">${esc(log ? p.unit : p.target)} <input class="he-in-target${bad('target')}" maxlength="${log ? 4 : HE.TARGET_MAX}" value="${esc(v.target == null || v.target === '-' ? '' : v.target)}" placeholder="${log ? '쪽, 장' : '예: 10분'}"></label>`;
     if (!log) {
       const pers = safe ? ['day', 'week'] : ['day', 'week', 'month'];
       h += `<span class="he-f-cycle" role="group" aria-label="${esc(p.cycle)}"><span class="he-lab">${esc(p.cycle)}</span><select class="he-in-per" aria-label="주기 단위">` + pers.map((x) => `<option value="${x}" ${x === per ? 'selected' : ''}>${esc(p.per[x])}</option>`).join('') + '</select>';
@@ -126,7 +136,8 @@
   }
   function readForm(fm) {
     const q = (s) => fm.querySelector(s);
-    return { name: q('.he-in-name').value, target: q('.he-in-target').value, per: q('.he-in-per') ? q('.he-in-per').value : null, n: q('.he-in-n') ? Number(q('.he-in-n').value) : 1 };
+    const ty = q('input[name="he-type"]:checked');
+    return { type: ty ? ty.value : null, name: q('.he-in-name').value, target: q('.he-in-target') ? q('.he-in-target').value : '', per: q('.he-in-per') ? q('.he-in-per').value : null, n: q('.he-in-n') ? Number(q('.he-in-n').value) : 1 };
   }
   // 오류 표시 (무늬 v01): 글 + 어느 칸 + 2줄 나눔. St.err(글)와 같을 때만 씀 (다른 곳에서 St.err를 바꾸면 자동으로 안 맞음)
   const FIELD = { badName: 'name', dupName: 'name', usedName: 'name', badTarget: 'target', badUnit: 'target', badCycle: 'n' };
@@ -136,7 +147,8 @@
     const on = (sel, fn) => pn.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => fn(b.closest('.he-row') ? b.closest('.he-row').dataset.name : null, b)));
     on('.he-up', (name) => op(tab, el, 'move', { name, dir: -1, kind }, 'he-up:' + name));
     on('.he-down', (name) => op(tab, el, 'move', { name, dir: 1, kind }, 'he-down:' + name));
-    on('.he-del', (name) => {
+    on('.he-rk-del', (x, b) => rkRemove(tab, el, b.dataset.rk));
+    on('.he-del:not(.he-rk-del)', (name) => {
       const r = rowsOf(Life.data, kind).find((x) => x.name === name);
       if (r && r.isVirtual) return hideFn(tab, el, r); // 화면에만 있던 일지 줄 = 꺼짐 표시만
       return op(tab, el, 'remove', { name, kind }, 'he-undo');
@@ -151,6 +163,7 @@
     on('.he-add', () => { St.form = { kind, mode: 'add', v: { per: kind === HE.KIND.safety ? 'week' : 'day', n: 1 } }; St.err = ''; Life.paint(tab, el, 'he-in-name'); });
     on('.he-undo-b', () => op(tab, el, 'undo', { kind }, 'he-add:' + kind));
     const fm = pn.querySelector('.he-form'); if (!fm) return;
+    fm.querySelectorAll('input[name="he-type"]').forEach((r) => r.addEventListener('change', () => { St.form.v = readForm(fm); St.err = ''; Life.paint(tab, el, 'he-type:' + r.value); }));
     const per = fm.querySelector('.he-in-per');
     if (per) per.addEventListener('change', () => { St.form.v = readForm(fm); Life.paint(tab, el, null); const s = el.querySelector('.he-in-per'); if (s) s.focus(); });
     fm.addEventListener('submit', (e) => { e.preventDefault(); submit(tab, el, fm); });
@@ -176,6 +189,7 @@
   function submit(tab, el, fm) {
     const f = St.form; if (!f) return null;
     const v = readForm(fm); f.v = v;
+    if (f.kind === HE.KIND.log && f.mode === 'add' && v.type === 'record' && RD()) return rkAdd(tab, el, v.name);
     const kind = f.kind, codeLine = (e) => { setErr(e.message, e.code); say(line('edit.' + (e.code === 'badTarget' && kind === HE.KIND.log ? 'badUnit' : e.code || 'fail'))); Life.paint(tab, el, 'he-in-name'); return null; };
     let habit;
     try {
@@ -202,6 +216,7 @@
       else if (kind === 'move') res = await Dk.moveHabit(a.name, a.dir, lm);
       else if (kind === 'undo') {
         const u = St.undo; if (!u) { St.busy = false; return null; }
+        if (u.rk) { St.busy = false; return rkUndo(tab, el, u); }
         if (u.update) res = await Dk.updateHabit(u.name, { newName: u.prev.name, target: u.prev.target, cycle: u.prev.cycle }, lm); // 이전 값으로 다시 고치기 (지난 기록 이름도 원래대로)
         else res = await Dk.addHabit({ kind: u.removed.kind, name: u.removed.name, target: u.removed.target, cycle: u.removed.cycle }, lm, u.before, u.raw);
       }
@@ -240,6 +255,34 @@
     return res;
   }
 
+  // ---- 제목·날짜·요약 기록 칸 (## 기록 항목, electron/record_ipc.js ph:recordKind*) ----
+  const RL = () => (root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.record) || {};
+  function rkSay(key, v) { const L = RL()[key]; if (!Array.isArray(L) || !L.length) return; const c = L.length > 1 ? L.filter((x) => x !== lastPick['rk:' + key]) : L, t = c[Math.floor(Math.random() * c.length)]; lastPick['rk:' + key] = t; say(Life.fill(t, v || {})); }
+  const refreshJournal = () => { const J = root.PHJournal; if (J && J.tab && J.tabs && !J.tabs().some((t) => t.id === J.tab)) J.tab = null; };
+  async function rkRun(tab, el, call, onOk, focus) {
+    if (St.busy || !RD()) return null;
+    St.busy = true; let res = null;
+    try { res = await call(Life.lastModified); Life.data = Md.parse(res.text); Life.lastModified = res.lastModified; Life.readAt = Date.now(); }
+    catch (e) { St.busy = false; St.err = String(e && e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''); St.last = { op: 'rk', error: St.err }; Life.paint(tab, el, focus); rkSay('fail'); return null; }
+    St.busy = false;
+    St.last = { op: 'rk', ok: res.ok, code: res.code || null, conflict: !!res.conflict, name: res.kind || null };
+    if (res.conflict) { St.form = null; St.err = ''; await Life.render(tab, el); rkSay('conflict'); return res; }
+    if (res.code) { const p = P(); setErr(res.code === 'kindDup' ? p.rkDup : p.rkBad, 'badName'); Life.paint(tab, el, 'he-in-name'); rkSay(res.code === 'kindDup' ? 'kindDup' : 'kindBad'); return res; }
+    St.err = ''; onOk(res); return res;
+  }
+  function rkAdd(tab, el, raw) {
+    const name = String(raw || '').replace(/\s+/g, ' ').trim(), p = P();
+    try { RW().cleanKind(name); } catch (e) { setErr(p.rkBad, 'badName'); Life.paint(tab, el, 'he-in-name'); rkSay('kindBad'); return null; }
+    if (rowsOf(Life.data, HE.KIND.log).concat((Life.data.habits ? Life.data.habits.rows : [])).some((r) => r.name === name)) { setErr(p.rkDup, 'dupName'); Life.paint(tab, el, 'he-in-name'); rkSay('kindDup'); return null; } // 습관 이름과 같으면 헷갈림
+    return rkRun(tab, el, (lm) => RD().kindAdd(name, lm), (res) => { St.form = null; St.undo = null; refreshJournal(); Life.paint(tab, el, 'he-rk-del:' + (res.kind || name)); rkSay('kindAdded', { kind: res.kind || name }); }, 'he-in-name');
+  }
+  function rkRemove(tab, el, name) {
+    return rkRun(tab, el, (lm) => RD().kindRemove(name, lm), (res) => { St.form = null; St.undo = { kind: HE.KIND.log, rk: { name, raw: res.before, next: res.next } }; refreshJournal(); Life.paint(tab, el, 'he-undo'); rkSay('kindRemoved', { kind: name }); }, 'he-undo');
+  }
+  function rkUndo(tab, el, u) {
+    return rkRun(tab, el, (lm) => RD().kindAdd(null, lm, u.rk.next, u.rk.raw), () => { St.undo = null; refreshJournal(); Life.paint(tab, el, 'he-rk-del:' + u.rk.name); rkSay('kindUndo', { kind: u.rk.name }); }, 'he-undo');
+  }
+
   // 화면에만 보이던 일지 기능 줄(아직 표에 한 번도 없음) 지우기 = 앱 설정에 꺼짐 표시. 되돌리기 = 표에 그 줄을 더함 (다시 켜짐)
   async function hideFn(tab, el, r) {
     if (St.busy || !FS()) return null;
@@ -254,5 +297,5 @@
   }
 
   (Life.renderHooks = Life.renderHooks || []).push(mount);
-  root.PHHabitEditUI = { St, mount, op, state: () => ({ open: Object.assign({}, St.open), form: St.form ? { kind: St.form.kind, mode: St.form.mode, name: St.form.name || null } : null, err: St.err, undo: St.undo ? { kind: St.undo.kind, name: St.undo.update ? St.undo.name : St.undo.removed.name, type: St.undo.update ? 'update' : 'remove', prev: St.undo.update ? St.undo.prev.name : null } : null, last: St.last, log: St.log.slice(), busy: St.busy }) };
+  root.PHHabitEditUI = { St, mount, op, state: () => ({ open: Object.assign({}, St.open), form: St.form ? { kind: St.form.kind, mode: St.form.mode, name: St.form.name || null } : null, err: St.err, undo: St.undo ? { kind: St.undo.kind, name: St.undo.rk ? St.undo.rk.name : St.undo.update ? St.undo.name : St.undo.removed.name, type: St.undo.rk ? 'record' : St.undo.update ? 'update' : 'remove', prev: St.undo.update ? St.undo.prev.name : null } : null, last: St.last, log: St.log.slice(), busy: St.busy }) };
 })(window);

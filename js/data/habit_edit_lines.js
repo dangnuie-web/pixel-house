@@ -48,6 +48,9 @@
   const P = {
     edit: '편집', editDone: '편집 끝', add: '+ 추가', save: '저장', cancel: '그만두기', fix: '고치기', del: '지우기', up: '위로', down: '아래로', undo: '되돌리기',
     name: '이름', target: '기준', unit: '단위', cycle: '주기',
+    // 기록 카드 + 추가: 기록 방식 고르기 (2026-10-08 제작자 3-1단계, 비트 임시 글). record = ## 기록 항목 (영화·연극처럼 제목·날짜·요약 폼)
+    type: '기록 방식', types: { amount: '횟수·양 기록', record: '제목·날짜·요약 기록' }, recordType: '제목·날짜·요약', rkFixed: '기본', rkHolder: '예: 전시, 공연',
+    rkBad: '이름은 글자로만 12자까지 적을 수 있어요 (기호나 숫자 빼고).', rkDup: '같은 이름의 기록 칸이 있어요.', rkRemovedNote: '{name} 칸 뺐어요 (적은 기록은 남아요)',
     per: { day: '매일', week: '주', month: '월' }, times: '회',
     lockWater: '순서만 바꿀 수 있어요', lockWhy: '물은 정수기·물컵과 이어져 있어서 이름·기준·주기·지우기는 막아 두었어요',
     renameNote: '이름을 바꾸면 지난 기록의 이름도 같이 바뀌어요 (바꾼 뒤 바로 되돌릴 수 있어요)',

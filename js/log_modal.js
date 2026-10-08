@@ -166,7 +166,7 @@
     st.open = false; el.hidden = true; q('.lm-box').innerHTML = '';
     const back = st.from === 'habits' ? $('life-habits') : st.from === 'journal' ? $('life-archive') : null;
     const stage = $('stage');
-    if (back) { const b = back.querySelector('.lg-open, .lg-add'); if (b) b.focus({ preventScroll: true }); }
+    if (back) { const b = back.querySelector(`.lg-open[data-kind="${st.kind}"]`) || back.querySelector('.lg-open, .lg-add'); if (b) b.focus({ preventScroll: true }); } // 연 버튼으로 (기록 카드에 독서·영화 기록하기도 있음, 2026-10-08)
     else if (stage && !stage.closest('.screen').hidden) stage.focus({ preventScroll: true });
   }
   function onKey(e) { // 창 밖에 포커스가 있을 때 오는 키

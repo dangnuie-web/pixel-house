@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld('PHOnboardDesktop', {
   info: () => ipcRenderer.invoke('ph:onboardInfo'),
   checkName: (name) => ipcRenderer.invoke('ph:onboardCheckName', name),
   pickFolder: () => ipcRenderer.invoke('ph:onboardPickFolder'),
-  finish: (req) => ipcRenderer.invoke('ph:onboardFinish', req), // req = { name, avatar, house, dir, habits }
+  finish: (req) => ipcRenderer.invoke('ph:onboardFinish', req), // req = { name, cat(고양이 이름, 2026-10-08), avatar, house, dir, habits }
   setFurniture: (slot, sprite) => ipcRenderer.invoke('ph:furnitureSet', { slot, sprite }),
 });
 contextBridge.exposeInMainWorld('PHDesktop', {
@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('PHStudyDesktop', {
   archive: (name, lastModified) => ipcRenderer.invoke('ph:studyArchive', { name, lastModified }),           // ## 공부 보관으로 옮김
   restore: (name, lastModified) => ipcRenderer.invoke('ph:studyRestore', { name, lastModified }),           // 보관에서 되돌리기
   logToday: (name, add, lastModified) => ipcRenderer.invoke('ph:studyLog', { name, add, lastModified }),    // 오늘 add(1 / -1)시간
+  // [추가 | 수정] 창 한 번 저장 (2026-10-08 3-1단계): q = { mode: add|edit, name(edit: 지금 이름), study: { name, start, end, memo }, plans: [{ sig?, part, from, to }], removed: [sig] }
+  save: (q, lastModified) => ipcRenderer.invoke('ph:studySave', Object.assign({}, q, { lastModified })),
 });
 // 옷 갈아입기 차림 (wardrobe 브랜치 2026-10-03, electron/outfit_ipc.js). 파일 = 앱 설정 폴더 outfit.json (메인이 정함). 차림 값만 보냄
 contextBridge.exposeInMainWorld('PHOutfitDesktop', {
