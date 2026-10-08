@@ -123,3 +123,9 @@
 .sm-dlg .sm-range input[type="date"] { flex: none; width: 150px; }
 .sm-dlg .sm-plan input[type="date"] { width: 140px; padding: 4px 6px; }
 .sm-dlg .sm-plan .sm-p-name { padding: 4px 8px; }
+/* 세부 계획 막대 끌기 (2026-10-08 3-1단계 피드백 2): 공부 막대와 같은 손잡이. 상위 기간 밖으로 끄는 중 = 빨간 테 (놓으면 막음) */
+.st-edit .g-pbar.mv { pointer-events: auto; cursor: grab; touch-action: none; user-select: none; z-index: 1; }
+.st-edit .g-pbar.mv.dragging { cursor: grabbing; }
+.st-edit .g-pbar.mv .g-h { top: -3px; bottom: -3px; }
+.st-edit .g-pbar.mv:hover .g-h { background: rgba(41, 38, 47, .25); border-radius: 2px; }
+.st-edit .g-pbar.out { border-color: var(--ui-danger); background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(200, 60, 60, .25) 4px 6px), var(--sc); }

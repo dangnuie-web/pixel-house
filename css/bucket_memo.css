@@ -36,6 +36,12 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-in { flex: 1; min-width: 0; height: calc(12 * var(--du)); padding: 0; border: 0; border-bottom: max(1px, calc(.75 * var(--du))) dashed #3F6340; background: transparent; font: max(12px, calc(8 * var(--du))) var(--font); color: #29262F; outline: none; }
 .bkm-in.bad { border-bottom-color: #94443A; }
 .bkm-del { flex: none; margin-left: calc(3 * var(--du)); padding: 0 4px; border: 0; background: none; font: 500 max(10px, calc(6.5 * var(--du))) var(--font); color: #94443A; cursor: pointer; }
+/* 적기·고치기 칸 [그만두기][저장] (2026-10-08 피드백 2). 메모지 = 글자 버튼(지우기와 같은 결), 저장만 초록 펜 바탕 */
+.bkm-btns { flex: none; display: inline-flex; align-items: center; gap: calc(2 * var(--du)); margin-left: calc(3 * var(--du)); }
+.bkm-cancel, .bkm-save { height: calc(11 * var(--du)); padding: 0 calc(3 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); font: 600 max(10px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
+.bkm-cancel { background: none; color: #86593A; }
+.bkm-save { background: #3F6340; color: #FBFAF6; }
+.bkm-btns button:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
 .bkm-empty { color: #7F7C78; flex-direction: column; align-items: flex-start; justify-content: flex-end; height: auto; min-height: calc(16 * var(--du)); padding-left: calc(16 * var(--du)); }
 .bkm-empty small { font-size: max(10px, calc(6.5 * var(--du))); }
 .bkm-err { margin: calc(3 * var(--du)) 0 0 calc(16 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); color: #94443A; }
@@ -89,3 +95,11 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-cardwrap .bkm-it.leaving { animation: bkc-leave 120ms steps(3, end) 880ms forwards; }
 @keyframes bkc-leave { to { transform: translateX(8px); opacity: 0; } }
 .bkm-cardwrap button:focus-visible, .bkm-cardwrap .bkm-t:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
+/* 카드 모양 적기·고치기 칸 버튼 = 다른 폼 [그만두기][저장] 결 (피드백 2) */
+.bkm-cardwrap .bkm-btns { gap: 6px; margin-left: 4px; }
+.bkm-cardwrap .bkm-cancel, .bkm-cardwrap .bkm-save { height: 30px; padding: 0 14px; border-radius: 6px; font: 600 14px var(--font); }
+.bkm-cardwrap .bkm-cancel { border: 2px solid var(--A); background: var(--ui-paper); color: var(--A); }
+.bkm-cardwrap .bkm-save { border: 2px solid var(--A); background: var(--ui-sel); color: var(--ui-sel-tx); }
+.bkm-cardwrap .bkm-cancel:hover { background: var(--ui-ring); }
+/* 사이드바 "버킷리스트" 탭 카드 (피드백 2): 생활 습관 탭 버킷 카드와 같은 틀, 제목은 탭 머리에 있어 카드 안 제목 없음 */
+.bkc-tabcard { padding-top: 14px; }

@@ -52,6 +52,17 @@
     return Object.assign(TS.updateRow(src, SP.SPEC, p.sig, [TS.encode(p.subject), TS.encode(n), daysText]), { subject: p.subject, part: n });
   }
 
+  // ---- 세부 계획 막대 끌기 (2026-10-08 3-1단계 피드백 2 제작자: "공부 세부 계획도 막대기에서 길이 조정") ----
+  //   sig 줄의 기간만 from~to로. 이름은 그대로. 상위 공부 전체 기간 밖이면 막음 (code planOut, 공부 막대·[수정] 창과 같은 규칙)
+  //   끝 없는 옛 공부(끝일 빈칸)는 시작만 봄 (checkInside와 같음)
+  function movePlan(src, sig, from, to) {
+    const p = SP.parse(src).parts.find((x) => x.sig === String(sig == null ? '' : sig).trim()); if (!p) throw bad('notFound', LABEL() + ' 줄 없음');
+    if (!SW.isDate(from) || !SW.isDate(to) || to < from) throw bad('planDate', LABEL() + ' 날짜 오류', { part: p.part });
+    const row = SW.parse(src).study.find((x) => x.name === p.subject); if (!row || !SW.isDate(row.start)) throw bad('notFound', '공부 줄 없음');
+    if (!inside([from, to], row.start, SW.isDate(row.end) ? row.end : '')) throw bad('planOut', LABEL() + ' 기간이 공부 기간 밖: ' + p.part, { plans: [p.part], start: row.start, end: row.end });
+    return setPlan(src, p.sig, p.part, from, to);
+  }
+
   // ---- 한 번 저장 ----
   //   q = { mode: 'add' | 'edit', name(edit: 지금 이름), study: { name, start, end, memo }, plans: [{ sig?, part, from, to }], removed: [sig] }
   //   -> { text, changed, name, oldName, steps: [op...] }. 값이 틀리면 code 오류 (badStart·badEnd·badOrder·planOut·dupPart·badPart·planDate·usedName …)
@@ -121,7 +132,7 @@
     return Object.keys(dayMap(src, row, records, today)).some((d) => d.slice(0, 7) === ym);
   }
 
-  const SPL = { MAX_PLANS, isPlan, plansOf, span, checkPeriod, inside, checkInside, addPlan, setPlan, save, dayMap, inMonth, LABEL };
+  const SPL = { MAX_PLANS, isPlan, plansOf, span, checkPeriod, inside, checkInside, addPlan, setPlan, movePlan, save, dayMap, inMonth, LABEL };
   root.PHStudyPlan = SPL;
   if (typeof module !== 'undefined' && module.exports) module.exports = SPL;
 })(typeof window !== 'undefined' ? window : globalThis);

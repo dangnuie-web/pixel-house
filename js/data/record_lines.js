@@ -86,7 +86,7 @@
     conflict: ['그사이 기록이 바뀌어 다시 읽었어요. 한 번 더 부탁해요냥~'],
     fail: ['이번 건 적지 못했어요. 죄송해요냥~'],
   };
-  P.uiPlain.bucket = { tabs: { todo: '버킷', done: '완료' }, add: '+ 적기', holder: '예: 바다 보며 아침 먹기', save: '적기', cancel: '그만두기', del: '지우기', undo: '되돌리기',
+  P.uiPlain.bucket = { tabs: { todo: '버킷', done: '완료' }, add: '+ 적기', holder: '예: 바다 보며 아침 먹기', save: '저장', cancel: '그만두기', del: '지우기', undo: '되돌리기',
     emptyTodo: '하고 싶은 걸 한 줄 적어 보세요.', emptyDone: '아직 끝낸 게 없어요.', emptyDoneSub: '버킷에서 체크하면 여기로 와요.', move: '붙일 자리 바꾸기', keys: 'Esc 닫기', removedNote: '{text} 지웠어요' };
   // 메모지 벽에 붙이기 (원고 2-5). {memo} = 메모지 이름
   P.ui.memoWall = {

@@ -5,7 +5,8 @@
 //   완료 탭 = 끝낸 날 최신 먼저 + 오른쪽 끝 날짜. 체크 풀면 버킷으로 (파일 줄 자리는 그대로)
 //   줄 두 번 누르기 또는 포커스 + Enter -> 그 줄이 입력칸 + "지우기". 지우면 아래 막대에 "… 지웠어요 [되돌리기]"
 //   아래 막대: "붙일 자리 바꾸기"(js/memo_wall.js) + "Esc 닫기". 뒤를 어둡게 덮지 않음 (냉장고 메모지와 같음)
-// 그리는 곳 두 군데: 집 위 창(#bkm, 벽 메모지 누르기) / 사이드바 "버킷리스트" 탭 (같은 종이, 같은 상태)
+// 그리는 곳: 집 위 창(#bkm, 벽 메모지 누르기 = 메모지) / 생활 습관 탭·사이드바 "버킷리스트" 탭 (카드 모양, 2026-10-08 피드백 2). 상태는 하나
+//   적기·고치기 칸 = 입력칸 + [그만두기][저장] (피드백 2). Enter = 저장, Esc = 그만두기 그대로
 // 쓰기는 모두 메인 (electron/record_ipc.js, window.PHBucketDesktop). 파일 모양은 기존 ## 버킷리스트 그대로 (js/bucket_write.js)
 (function (root) {
   'use strict';
@@ -34,10 +35,12 @@
   }
   // card = 생활 습관 탭 카드 모양 (2026-10-08 제작자: 메모지 말고 다른 카드들과 같은 모양). 체크 칸 = 그림 대신 네모 칸
   const box = (checked, card, frame) => (card ? `<span class="bkc-box${checked ? ' on' : ''}" aria-hidden="true">${checked ? '✓' : ''}</span>` : img('memo_check', 'bkm-chk-i', '', frame));
+  // 적기·고치기 칸 버튼 (2026-10-08 3-1단계 피드백 2 제작자: "저장 클릭 버튼이 닫기 옆에"). 순서 = 다른 폼과 같이 [그만두기][저장]. Enter·Esc도 그대로
+  const btns = () => `<span class="bkm-btns"><button type="button" class="bkm-cancel">${esc(PL().cancel || '그만두기')}</button><button type="button" class="bkm-save">${esc(PL().save || '저장')}</button></span>`;
   function lineHtml(it, done, card) {
     const leaving = B.leaving && B.leaving.sig === it.sig, checked = done || leaving;
     if (B.edit === it.sig) {
-      return `<li class="bkm-it edit" data-sig="${esc(it.sig)}">${box(checked, card, checked ? 1 : 0)}<input class="bkm-in bkm-in-edit${B.err ? ' bad' : ''}" maxlength="${BK.TEXT_MAX}" value="${esc(B.editDraft)}" aria-label="고칠 내용" autocomplete="off"><button type="button" class="bkm-del">${esc(PL().del || '지우기')}</button></li>`;
+      return `<li class="bkm-it edit" data-sig="${esc(it.sig)}">${box(checked, card, checked ? 1 : 0)}<input class="bkm-in bkm-in-edit${B.err ? ' bad' : ''}" maxlength="${BK.TEXT_MAX}" value="${esc(B.editDraft)}" aria-label="고칠 내용" autocomplete="off"><button type="button" class="bkm-del">${esc(PL().del || '지우기')}</button>${btns()}</li>`;
     }
     return `<li class="bkm-it${leaving ? ' leaving' : ''}" data-sig="${esc(it.sig)}"><button type="button" class="bkm-chk" role="checkbox" aria-checked="${checked}" aria-label="${esc(it.text)} ${checked ? '끝냄' : '체크'}" data-focus="bkm-chk:${esc(it.sig)}">${box(checked, card, checked ? 1 : 0)}</button>` +
       `<span class="bkm-t" tabindex="0" data-focus="bkm-t:${esc(it.sig)}">${esc(it.text)}</span>${done && it.doneDate ? `<small class="bkm-date">${md(it.doneDate)}</small>` : ''}</li>`;
@@ -53,7 +56,7 @@
       h += todo ? `<li class="bkm-empty">${esc(PL().emptyTodo || '하고 싶은 걸 한 줄 적어 보세요.')}</li>` : `<li class="bkm-empty">${esc(PL().emptyDone || '아직 끝낸 게 없어요.')}<small>${esc(PL().emptyDoneSub || '')}</small></li>`;
     }
     if (todo && canWrite()) {
-      h += B.adding ? `<li class="bkm-it adding">${box(false, card, 0)}<input class="bkm-in bkm-in-add${B.err ? ' bad' : ''}" maxlength="${BK.TEXT_MAX}" placeholder="${esc(PL().holder || '')}" value="${esc(B.draft)}" aria-label="하고 싶은 일" autocomplete="off"></li>`
+      h += B.adding ? `<li class="bkm-it adding">${box(false, card, 0)}<input class="bkm-in bkm-in-add${B.err ? ' bad' : ''}" maxlength="${BK.TEXT_MAX}" placeholder="${esc(PL().holder || '')}" value="${esc(B.draft)}" aria-label="하고 싶은 일" autocomplete="off">${btns()}</li>`
         : `<li class="bkm-addline"><button type="button" class="bkm-add" data-focus="bkm-add">${esc(PL().add || '+ 적기')}</button></li>`;
     }
     h += '</ul>' + (B.err ? `<p class="bkm-err" role="alert">${esc(B.err)}</p>` : '') + (card ? '</div></div>' : '</section></div>');
@@ -84,12 +87,19 @@
     if (ai) {
       ai.addEventListener('input', () => { B.draft = ai.value; if (B.err) { B.err = ''; ai.classList.remove('bad'); const p = el.querySelector('.bkm-err'); if (p) p.remove(); } });
       ai.addEventListener('keydown', (e) => { if (e.isComposing || e.keyCode === 229) return; e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); addItem(); } else if (e.key === 'Escape') { e.preventDefault(); B.adding = false; B.err = ''; repaint('.bkm-add'); } });
+      const li = ai.closest('.bkm-it');
+      // 저장 = Enter와 같음 (누르는 순간 글자 확정 뒤 칸 값을 읽음). 그만두기 = Esc와 같음
+      li.querySelector('.bkm-save').addEventListener('click', () => { B.draft = ai.value; addItem(); });
+      li.querySelector('.bkm-cancel').addEventListener('click', () => { B.adding = false; B.err = ''; repaint('.bkm-add'); });
     }
     const ei = el.querySelector('.bkm-in-edit');
     if (ei) {
       ei.addEventListener('input', () => { B.editDraft = ei.value; });
       ei.addEventListener('keydown', (e) => { if (e.isComposing || e.keyCode === 229) return; e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); saveEdit(); } else if (e.key === 'Escape') { e.preventDefault(); const s = B.edit; B.edit = null; B.err = ''; repaint(`[data-focus="bkm-t:${cssq(s)}"]`); } });
       const del = el.querySelector('.bkm-del'); if (del) { del.addEventListener('mousedown', (e) => e.preventDefault()); del.addEventListener('click', () => remove(B.edit)); }
+      const li = ei.closest('.bkm-it');
+      li.querySelector('.bkm-save').addEventListener('click', () => { B.editDraft = ei.value; saveEdit(); });
+      li.querySelector('.bkm-cancel').addEventListener('click', () => { const s = B.edit; B.edit = null; B.err = ''; repaint(`[data-focus="bkm-t:${cssq(s)}"]`); });
     }
     if (bar) {
       const rs = bar.querySelector('.bkm-restore'); if (rs) rs.addEventListener('click', undo);
@@ -221,15 +231,20 @@
     if (tab === 'bucket') host = page.querySelector('ul.bucket') || page.querySelector('.life-dubu');
     if (tab === 'habits') { const c = page.querySelector('.bucket-card'); if (c) host = c.querySelector('ul.bucket') || c.querySelector('.life-dubu'); }
     if (!host) return;
-    const card = tab === 'habits'; // 생활 습관 탭 = 카드 모양 (2026-10-08 제작자). 사이드바 버킷리스트 탭은 메모지 그대로 (제작자 확인 전)
-    const wrap = document.createElement('div'); wrap.className = card ? 'bkm-cardwrap' : 'bkm bkm-inline';
+    // 카드 모양 = 생활 습관 탭 (2026-10-08 제작자) + 사이드바 "버킷리스트" 탭 (피드백 2 제작자: "사이드바에서는 메모지에서 카드 모양으로"). 메모지 = 집 벽 메모지 창(#bkm)만
+    const card = true;
+    const wrap = document.createElement('div'); wrap.className = 'bkm-cardwrap';
     wrap.innerHTML = '<div class="bkm-slot"></div><div class="memo-bar bkm-bar"></div>';
-    host.replaceWith(wrap);
+    if (tab === 'bucket') { // 탭 쪽은 카드 틀이 없어서 생활 습관 탭과 같은 카드(.card.bucket-card)로 감쌈. 제목은 탭 머리에 있어 카드 안 제목은 뺌
+      const sec = document.createElement('section'); sec.className = 'card bucket-card bkc-tabcard'; sec.dataset.card = '버킷리스트'; sec.appendChild(wrap);
+      const cards = document.createElement('div'); cards.className = 'cards'; cards.appendChild(sec);
+      host.replaceWith(cards);
+    } else host.replaceWith(wrap);
     if (tab === 'bucket') { const ro = page.querySelector('.life-src .ro'); if (ro) { ro.textContent = '버킷 적기 가능 · 버킷리스트에 적혀요'; ro.classList.add('rw'); } }
     const paintTab = (focus) => {
       if (B.isOn) { paintModal(focus); return; }
       const slot = wrap.querySelector('.bkm-slot'), bar = wrap.querySelector('.bkm-bar');
-      slot.innerHTML = html(Life.data, { card }); bar.innerHTML = card ? undoHtml() : barHtml().replace(/<span class="bkm-esc"[^]*?<\/span>/, ''); bind(slot, bar);
+      slot.innerHTML = html(Life.data, { card }); bar.innerHTML = undoHtml(); bind(slot, bar);
       if (focus) { const f = wrap.querySelector(focus); if (f) f.focus({ preventScroll: true }); }
     };
     paintTab.wrap = wrap; TABPAINT = paintTab; if (!B.isOn) PAINT = paintTab; paintTab();
@@ -238,7 +253,7 @@
 
   function state() {
     const d = Life.data, T = d ? BK.tabs(BK.parse(d.lines)) : { todo: [], done: [] };
-    const box = B.isOn ? el : document.querySelector('.bkm-inline, .bkm-cardwrap');
+    const box = B.isOn ? el : document.querySelector('.bkm-cardwrap');
     return { open: B.isOn, from: B.from, opened: B.opened, tab: B.tab, adding: B.adding, edit: B.edit, err: B.err, leaving: B.leaving && B.leaving.sig, undo: !!B.undoItem, said: B.said, last: B.last, lastError: B.lastError,
       todo: T.todo.map((x) => x.text), done: T.done.map((x) => x.text + (x.doneDate ? '@' + x.doneDate : '')),
       shown: box ? [...box.querySelectorAll('.bkm-it:not(.adding) .bkm-t')].map((x) => x.textContent) : [], tabs: box ? [...box.querySelectorAll('.bkm-tab')].map((x) => x.textContent) : [] };

@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld('PHStudyDesktop', {
   logToday: (name, add, lastModified) => ipcRenderer.invoke('ph:studyLog', { name, add, lastModified }),    // 오늘 add(1 / -1)시간
   // [추가 | 수정] 창 한 번 저장 (2026-10-08 3-1단계): q = { mode: add|edit, name(edit: 지금 이름), study: { name, start, end, memo }, plans: [{ sig?, part, from, to }], removed: [sig] }
   save: (q, lastModified) => ipcRenderer.invoke('ph:studySave', Object.assign({}, q, { lastModified })),
+  movePlan: (sig, from, to, lastModified) => ipcRenderer.invoke('ph:planMove', { sig, from, to, lastModified }), // 세부 계획 막대 끌기 (피드백 2): 그 줄 기간만
 });
 // 옷 갈아입기 차림 (wardrobe 브랜치 2026-10-03, electron/outfit_ipc.js). 파일 = 앱 설정 폴더 outfit.json (메인이 정함). 차림 값만 보냄
 contextBridge.exposeInMainWorld('PHOutfitDesktop', {

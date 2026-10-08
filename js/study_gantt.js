@@ -13,6 +13,7 @@
 //   (2026-10-08 3-1단계 제작자) 머리 버튼 = [추가 | 수정] -> 창(js/study_modal.js: 이름·시작일·끝일·메모·세부 계획). "진행 중으로"·"메모 고치기"·"쪼개기"·"이름 바꾸기" 버튼 없앰
 //     칸 칠하기(공부함 체크) 없앰: 계획을 쓴 것 = 공부한 것. 과목 아래 줄 = 세부 계획 막대(읽기만, 고치기는 수정 창). 쪼개지 않은 과목은 아래 줄 없음
 //     세부 계획은 과목 전체 기간 안에서만: 기간 띠를 끌어 세부 계획이 밖으로 나가면 메인이 막음(planOut) + 두부 안내
+//   (2026-10-08 피드백 2 제작자) 세부 계획 막대도 끌기: 가운데 = 옮기기, 양끝 = 시작·끝. 상위 기간 밖이면 막음(planOut) + 두부 안내 (electron/study_ipc.js ph:planMove)
 // 쓰기는 모두 메인(electron/study_ipc.js, window.PHStudyDesktop). 화면은 이름·값·읽은 시각만 보냄.
 // 계산 함수(range, bar, dragResult, snapDays, weekDone)는 그림 없이 Node 시험(tests/test_study.js)에서도 씀
 (function (root) {
@@ -79,6 +80,7 @@
   const dayName = (s) => { const [y, m, d] = s.split('-').map(Number); return `${m}월 ${d}일 (${WD[new Date(y, m - 1, d, 12).getDay()]})`; };
   const D = () => root.PHStudyDesktop;
   const canWrite = () => !!(D() && D().update);
+  const canMovePlan = () => !!(D() && D().movePlan); // 세부 계획 막대 끌기 (피드백 2)
   const HD = () => root.PHHabitDesktop, canRemove = () => !!(HD() && HD().removeStudy); // 완전 삭제 (electron/habit_ipc.js)
   const EP = () => root.PH_HABIT_EDIT_PLAIN || {};
   function sayEdit(key, name) { const L = ((root.PH_HABIT_EDIT_LINES || {}).study || {})[key]; if (!L || !L.length || !root.PHApp || !root.PHApp.sideSay) return; St.said = { key, text: L[Math.floor(Math.random() * L.length)].replace(/\{name\}/g, name || '') }; root.PHApp.sideSay(St.said.text); }
@@ -138,12 +140,16 @@
       const barH = b ? `<i class="g-bar ${b.clipStart ? 'clip-s' : ''} ${b.clipEnd ? 'clip-e' : ''} ${b.open ? 'open' : ''}${sel}" data-name="${nm}" tabindex="0" role="button" aria-pressed="${!!sel}" aria-label="${nm}, ${esc(label)}. 눌러서 고르고, 왼쪽 오른쪽 화살표로 하루씩 옮겨요" style="left:${pct(b.from)};width:${pct(b.to - b.from + 1)}" title="${esc(label)}"><b class="g-h s" aria-hidden="true"></b><b class="g-h e" aria-hidden="true"></b></i>`
         : '<span class="g-out">기간 밖</span>';
       h += `<div class="g-label${sel}" data-line="${r.line}" data-name="${nm}" role="button" tabindex="${b ? -1 : 0}" style="--sc:${col.bg}"><b>${nm}</b><small>${md(r.start)} ~ ${r.open ? '진행 중' : md(r.end)}${r.memo ? ' · ' + esc(r.memo) : ''}</small></div><div class="g-track g-row" data-line="${r.line}" data-name="${nm}" style="--sc:${col.bg}">${barH}${cells}</div>`;
-      // 세부 계획 줄 (막대 = 계획 기간, 읽기만. 고치기는 [수정] 창). 쪼개지 않은 과목은 줄 없음 (2026-10-08 3-1단계)
+      // 세부 계획 줄 (막대 = 계획 기간). 쪼개지 않은 과목은 줄 없음 (2026-10-08 3-1단계)
+      //   피드백 2 (제작자): 공부 막대처럼 끌어서 옮기기·양끝 늘리기/줄이기. 상위 공부 전체 기간 밖이면 막음 (planOut). 이름은 [수정] 창
+      //   끊긴 옛 줄(칠하기 때 것)은 막대 아무거나 끌면 처음~끝이 한 막대로 (수정 창에서 기간을 바꿀 때와 같음)
       if (PL) PL.plansOf(src, r.name).forEach((p) => {
         let bars = '';
-        SP.runs(p.days).forEach((run) => {
+        const runs = SP.runs(p.days), mv = canMovePlan() && !p.bad && p.from && p.to;
+        runs.forEach((run, k) => {
           const a = Math.max(0, SW.diffDays(R.start, run.from)), z = Math.min(R.days - 1, SW.diffDays(R.start, run.to)); if (z < 0 || a >= R.days) return;
-          bars += `<i class="g-pbar${p.review ? ' review' : ''}" style="left:${pct(a)};width:${pct(z - a + 1)}" data-from="${run.from}" data-to="${run.to}" title="${esc(p.part)} ${md(run.from)} ~ ${md(run.to)}"></i>`;
+          const hs = mv && k === 0 && run.from >= R.start ? '<b class="g-h s" aria-hidden="true"></b>' : '', he = mv && k === runs.length - 1 && run.to <= R.last ? '<b class="g-h e" aria-hidden="true"></b>' : '';
+          bars += `<i class="g-pbar${p.review ? ' review' : ''}${mv ? ' mv' : ''}" style="left:${pct(a)};width:${pct(z - a + 1)}" data-name="${nm}" data-sig="${esc(p.sig)}" data-part="${esc(p.part)}" data-pfrom="${p.from}" data-pto="${p.to}" data-from="${run.from}" data-to="${run.to}" title="${esc(p.part)} ${md(run.from)} ~ ${md(run.to)}">${hs}${he}</i>`;
         });
         const pn = esc(p.part);
         h += `<div class="g-label g-plabel" data-name="${nm}" data-part="${pn}"><span><i class="g-dot" style="--sc:${col.bg}" aria-hidden="true"></i>${pn}</span></div>` +
@@ -217,6 +223,7 @@
       l.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(l.dataset.name); } });
     });
     c.querySelectorAll('.g-row').forEach((tr) => tr.addEventListener('pointerdown', (e) => { if (!e.target.closest('.g-bar')) select(tr.dataset.name); }));
+    c.querySelectorAll('.g-pbar.mv').forEach((b) => b.addEventListener('pointerdown', (e) => pdragStart(e, b)));
     c.querySelectorAll('.g-bar').forEach((b) => {
       b.addEventListener('pointerdown', (e) => dragStart(e, b));
       b.addEventListener('focus', () => { if (St.sel !== b.dataset.name) select(b.dataset.name); });
@@ -299,6 +306,72 @@
     if (e.type === 'pointercancel' || !g.moved || !g.cur || (g.cur.start === g.orig.start && g.cur.end === g.orig.end)) { paint(true); return; } // 누르기만 = 고르기
     St.preview[g.name] = g.cur; paint(true);
     write('update', g.name, { start: g.cur.start, end: g.cur.end }, 'moved');
+  }
+
+  // ---- 세부 계획 막대 끌기 (2026-10-08 3-1단계 피드백 2) ----
+  //   공부 막대와 같은 손놀림: 가운데 = 옮기기, 양끝 = 시작·끝만. 일 단위. 상위 공부 기간 밖이면 막대가 빨갛게 보이고 놓으면 저장 안 함 + 두부 planOut
+  const planBox = (name) => { const r = findRow(Life.data, name); return r && SW.isDate(r.start) ? { start: r.start, end: r.open || !SW.isDate(r.end) ? '' : r.end } : null; };
+  const planIn = (box, cur) => !!box && cur.start >= box.start && (!box.end || cur.end <= box.end);
+  function pdragStart(e, b) {
+    if (e.button !== 0 || St.busy) return;
+    e.preventDefault(); e.stopPropagation();
+    flushKb();
+    const name = b.dataset.name, track = b.parentElement, w = track.getBoundingClientRect().width;
+    const mode = e.target.closest('.g-h.s') ? 'start' : e.target.closest('.g-h.e') ? 'end' : 'move';
+    St.pdrag = { name, sig: b.dataset.sig, part: b.dataset.part, mode, x0: e.clientX, dayW: w / St.R.days, orig: { start: b.dataset.pfrom, end: b.dataset.pto }, cur: null, moved: false, b, track, id: e.pointerId };
+    select(name);
+    try { b.setPointerCapture(e.pointerId); } catch (x) {}
+    b.classList.add('dragging');
+    b.addEventListener('pointermove', pdragMove);
+    b.addEventListener('pointerup', pdragEnd);
+    b.addEventListener('pointercancel', pdragEnd);
+  }
+  function pdragMove(e) {
+    const g = St.pdrag; if (!g || e.pointerId !== g.id) return;
+    const dx = e.clientX - g.x0; if (Math.abs(dx) > 3) g.moved = true;
+    if (!g.moved) return;
+    g.cur = dragResult(g.orig, g.mode, snapDays(dx, g.dayW), g.orig.end);
+    // 끊긴 옛 줄: 끄는 동안 한 막대로 (다른 조각은 숨김)
+    g.track.querySelectorAll('.g-pbar').forEach((x) => { if (x !== g.b && x.dataset.sig === g.sig) x.hidden = true; });
+    const R = St.R, a = SW.diffDays(R.start, g.cur.start), z = SW.diffDays(R.start, g.cur.end), pct = (i) => (i / R.days * 100).toFixed(3) + '%';
+    const from = Math.max(0, a), to = Math.min(R.days - 1, z);
+    g.b.hidden = to < 0 || from >= R.days;
+    if (!g.b.hidden) { g.b.style.left = pct(from); g.b.style.width = pct(to - from + 1); }
+    g.out = !planIn(planBox(g.name), g.cur);
+    g.b.classList.toggle('out', g.out);
+    g.b.title = `${g.part} ${md(g.cur.start)} ~ ${md(g.cur.end)}`;
+  }
+  function pdragEnd(e) {
+    const g = St.pdrag; if (!g || e.pointerId !== g.id) return;
+    St.pdrag = null;
+    g.b.removeEventListener('pointermove', pdragMove); g.b.removeEventListener('pointerup', pdragEnd); g.b.removeEventListener('pointercancel', pdragEnd);
+    g.b.classList.remove('dragging');
+    if (e.type === 'pointercancel' || !g.moved || !g.cur || (g.cur.start === g.orig.start && g.cur.end === g.orig.end)) { paint(true); return null; } // 누르기만 = 고르기
+    const box = planBox(g.name);
+    if (!planIn(box, g.cur)) { // 막음: 저장 안 함 (메인도 한 번 더 막음)
+      St.last = { op: 'plan:move', name: g.name, res: { ok: false, code: 'planOut' } };
+      St.err = planOutText(g.part, box); paint(true); say('planOut'); return null;
+    }
+    return writePlanMove(g.name, g.sig, g.part, g.cur);
+  }
+  function planOutText(part, box) {
+    const SPL = root.PH_STUDY_PLAIN || {}, E = SPL.err || {}, LB = SPL.plan || '세부 계획';
+    return Life.fill(E.planOut || '{plan|은} 전체 기간({start} ~ {end}) 안에서만 정할 수 있어요: {names}', { plan: LB, start: box ? md(box.start) : '', end: box && box.end ? md(box.end) : '…', names: part });
+  }
+  async function writePlanMove(name, sig, part, cur) {
+    if (St.busy || !canMovePlan()) return null;
+    St.busy = true; St.err = '';
+    let res = null;
+    try {
+      res = await D().movePlan(sig, cur.start, cur.end, Life.lastModified);
+      Life.data = Md.parse(res.text); Life.lastModified = res.lastModified; Life.readAt = Date.now();
+      St.last = { op: 'plan:move', name, res: { ok: res.ok, unchanged: !!res.unchanged, code: res.code || null, conflict: !!res.conflict } };
+      if (res.conflict) { St.busy = false; if (St.sel && !findRow(Life.data, St.sel)) St.sel = null; paint(); say('conflict'); return res; }
+      if (res.code) { St.busy = false; St.err = res.code === 'planOut' ? planOutText(part, planBox(name)) : (((root.PH_STUDY_PLAIN || {}).err || {}).fail || '저장하지 못했어요.'); paint(true); say(res.code === 'planOut' ? 'planOut' : 'fail'); return res; }
+    } catch (e) { St.err = errText(e); Life.lastError = St.err; St.last = { op: 'plan:move', name, error: St.err }; say('fail'); }
+    St.busy = false;
+    paint(true);
+    return res;
   }
 
   // ---- 키보드 ----
@@ -423,5 +496,5 @@
   Life.renderHooks = Life.renderHooks || [];
   Life.renderHooks.push(mount);
   document.addEventListener('keydown', onKey);
-  root.PHStudyGantt = Object.assign({ St, mount, paint, select, unselect, write, writePart, flushKb, today, canPaint }, calc);
+  root.PHStudyGantt = Object.assign({ St, mount, paint, select, unselect, write, writePart, writePlanMove, flushKb, today, canPaint }, calc);
 })(typeof window !== 'undefined' ? window : globalThis);

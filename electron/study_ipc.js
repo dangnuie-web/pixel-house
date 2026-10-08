@@ -85,6 +85,22 @@ module.exports = function register(o) {
     fs.writeFileSync(file, r.text);
     return { ok: true, text: r.text, lastModified: fs.statSync(file).mtimeMs, name: r.name, oldName: r.oldName, steps: r.steps, backupDir: dir };
   });
+  // 세부 계획 막대 끌기 (2026-10-08 3-1단계 피드백 2): ## 공부 단원 한 줄의 기간만. 상위 공부 기간 밖이면 code planOut (안 씀)
+  ipcMain.handle('ph:planMove', (e, req) => {
+    if (guard) guard();
+    if (!req || typeof req !== 'object') throw new Error('요청 형식 오류');
+    if (typeof req.sig !== 'string' || req.sig.length > 4000 || typeof req.from !== 'string' || typeof req.to !== 'string' || req.from.length > 20 || req.to.length > 20) throw new Error('값 형식 오류');
+    const seen = req.lastModified;
+    const cur = fs.readFileSync(file, 'utf8'), mtime = fs.statSync(file).mtimeMs;
+    if (typeof seen !== 'number' || Math.abs(seen - mtime) > 1) return { ok: false, conflict: true, text: cur, lastModified: mtime };
+    let r;
+    try { r = SPL.movePlan(cur, req.sig, req.from, req.to); } catch (x) { if (x.code) return { ok: false, code: x.code, message: x.message, plans: x.plans || null, part: x.part || null, start: x.start || null, end: x.end || null, text: cur, lastModified: mtime }; throw x; }
+    if (!r.changed) return { ok: true, unchanged: true, text: cur, lastModified: mtime, part: r.part };
+    if (!SP.onlyPartsChanged(cur, r.text, 'update')) throw new Error('## 공부 단원 표 밖이 바뀌려 해서 멈춤');
+    const dir = backup(cur);
+    fs.writeFileSync(file, r.text);
+    return { ok: true, text: r.text, lastModified: fs.statSync(file).mtimeMs, part: r.part, subject: r.subject, backupDir: dir };
+  });
   const s200 = (v) => typeof v === 'string' && v.length <= 200;
   function cleanStudy(o) { if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('공부 값 형식 오류'); ['name', 'start', 'end', 'memo'].forEach((k) => { if (o[k] != null && !s200(o[k])) throw new Error('값 형식 오류: ' + k); }); return { name: o.name || '', start: o.start || '', end: o.end || '', memo: o.memo || '' }; }
   function cleanPlans(a) { if (a == null) return []; if (!Array.isArray(a) || a.length > 30) throw new Error('세부 계획 형식 오류'); return a.map((p) => { if (!p || typeof p !== 'object') throw new Error('세부 계획 형식 오류'); ['sig', 'part', 'from', 'to'].forEach((k) => { if (p[k] != null && !(typeof p[k] === 'string' && p[k].length <= 4000)) throw new Error('값 형식 오류: ' + k); }); return { sig: p.sig || null, part: p.part || '', from: p.from || '', to: p.to || '' }; }); }
