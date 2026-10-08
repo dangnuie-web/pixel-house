@@ -35,9 +35,28 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-add { padding: 0; border: 0; background: none; font: 600 max(11px, calc(7.5 * var(--du))) var(--font); color: #3F6340; cursor: pointer; }
 .bkm-in { flex: 1; min-width: 0; height: calc(12 * var(--du)); padding: 0; border: 0; border-bottom: max(1px, calc(.75 * var(--du))) dashed #3F6340; background: transparent; font: max(12px, calc(8 * var(--du))) var(--font); color: #29262F; outline: none; }
 .bkm-in.bad { border-bottom-color: #94443A; }
-.bkm-del { flex: none; margin-left: calc(3 * var(--du)); padding: 0 4px; border: 0; background: none; font: 500 max(10px, calc(6.5 * var(--du))) var(--font); color: #94443A; cursor: pointer; }
-/* 지우기 = 글씨를 누른 줄 오른쪽에만 (피드백 3). 적기 칸 [그만두기][저장] = 카드만 (피드백 2). 메모지 창 저장은 아래 막대 Esc 닫기 옆 (.bkm-barsave, 피드백 3) */
-.bkm-del:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
+/* 고른 줄 = 형광펜 띠 + [고치기][지우기] (피드백 3 제작자 2026-10-08, 디자인 = 무늬 디자인/20261008_pixel-house_버킷줄선택_v01.md 5절 값 그대로)
+   띠: 글자 아래쪽 반만, 끝은 계단 펜촉(clip-path), 고를 때 왼쪽에서 오른쪽으로 90ms 3단계. 적기 칸 [그만두기][저장] = 카드만 (피드백 2). 메모지 창 저장은 아래 막대 Esc 옆 (.bkm-barsave) */
+:root { --bk-hl: rgba(243, 207, 107, .6); --ui-hl: #F3DC98; }
+.bkm-it.picked::before { content: ""; position: absolute; z-index: 0; pointer-events: none; transform-origin: left center;
+  clip-path: polygon(var(--s) 0, 100% 0, 100% 34%, calc(100% - var(--s)) 34%, calc(100% - var(--s)) 67%, calc(100% - 2 * var(--s)) 67%, calc(100% - 2 * var(--s)) 100%, 0 100%, 0 67%, var(--s) 67%);
+  animation: bk-hl-draw 90ms steps(3, end); }
+@keyframes bk-hl-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bkm-it.picked .bkm-t, .bkm-it.picked .bkm-acts, .bkm-it.picked .bkm-in, .bkm-it.picked .bkm-btns { position: relative; z-index: 1; }
+.bkm-it.picked .bkm-date { display: none; }
+@media (prefers-reduced-motion: reduce) { .bkm-it.picked::before { animation: none; } }
+/* 메모지 */
+.bkm-it.picked::before { --s: var(--du); left: calc(13 * var(--du)); right: calc(-3 * var(--du)); bottom: calc(1.5 * var(--du)); height: calc(7 * var(--du)); background: var(--bk-hl); }
+.bkm-it.picked.editing::before { opacity: .4; animation: none; }
+.bkm-acts { flex: none; display: inline-flex; align-items: center; gap: calc(2 * var(--du)); margin-left: calc(4 * var(--du)); }
+.bkm-edit, .bkm-del { height: calc(11 * var(--du)); margin: 0; padding: 0 calc(2 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: none; font: 600 max(10px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
+.bkm-edit { color: #3F6340; }
+.bkm-del { color: #94443A; font-weight: 500; }
+.bkm-edit:hover, .bkm-del:hover { background: rgba(251, 250, 246, .75); }
+.bkm-edit:active, .bkm-del:active { transform: translateY(1px); }
+.bkm-edit:focus-visible, .bkm-del:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
+.bkm-it.editing .bkm-in { caret-color: #3F6340; }
+.bkm-it.editing .bkm-chk { cursor: default; }
 .bkm-btns { flex: none; display: inline-flex; align-items: center; gap: calc(2 * var(--du)); margin-left: calc(3 * var(--du)); }
 .bkm-cancel, .bkm-save { height: calc(11 * var(--du)); padding: 0 calc(3 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); font: 600 max(10px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
 .bkm-cancel { background: none; color: #86593A; }
@@ -86,7 +105,17 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-cardwrap .bkm-add:hover { background: var(--ui-ring); }
 .bkm-cardwrap .bkm-in { flex: 1; height: 32px; padding: 0 10px; border: 2px solid var(--A); border-radius: 6px; background: var(--ui-field); font: 15px var(--font); }
 .bkm-cardwrap .bkm-in.bad { border-color: var(--ui-danger); }
-.bkm-cardwrap .bkm-del { margin-left: 4px; padding: 0 6px; height: 24px; border: 0; border-radius: 5px; background: none; font: 500 13px var(--font); color: var(--ui-danger); cursor: pointer; }
+/* 카드 고른 줄 (무늬 버킷줄선택 v01 4절): 띠 = --ui-hl 불투명, 고치기 = 흰 칩, 지우기 = 글자 버튼. 고치는 중 띠 숨김 (흰 입력칸이 고른 표시) */
+.bkm-cardwrap .bkm-it.picked::before { --s: 2px; left: 24px; right: -6px; bottom: 9px; height: 13px; background: var(--ui-hl); }
+.bkm-cardwrap .bkm-it.picked.editing::before { display: none; }
+.bkm-cardwrap .bkm-acts { gap: 4px; margin-left: 8px; }
+.bkm-cardwrap .bkm-edit { height: 26px; padding: 0 10px; border: 1px solid var(--ui-chip-line); border-radius: 5px; background: var(--ui-field); font: 500 13px var(--font); color: var(--A); }
+.bkm-cardwrap .bkm-edit:hover, .bkm-cardwrap .bkm-edit:active { background: var(--ui-ring); }
+.bkm-cardwrap .bkm-del { height: 26px; padding: 0 8px; border: 0; border-radius: 5px; background: none; font: 500 13px var(--font); color: var(--ui-danger); }
+.bkm-cardwrap .bkm-del:hover { background: var(--ui-hover); }
+.bkm-cardwrap .bkm-it.editing .bkm-in { margin-left: -12px; }
+.bkm-cardwrap .bkm-it.editing .bkm-in:focus { box-shadow: 0 0 0 2px var(--ui-ring); }
+.bkm-cardwrap .bkm-it.editing .bkm-in.bad { box-shadow: 0 0 0 2px var(--ui-danger-ring); }
 .bkm-cardwrap .bkm-empty { color: var(--ui-sub); flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
 .bkm-cardwrap .bkm-empty small { font-size: 13px; }
 .bkm-cardwrap .bkm-err { margin: 6px 0 0; font-size: 13px; color: var(--ui-danger); }
