@@ -10,8 +10,30 @@
 
   function names() { const d = root.PHLife && root.PHLife.data; return new Set(d && d.habits ? d.habits.rows.map((r) => r.name) : []); }
   function syncSeen(n) { FX.seenFrom(n).forEach((id) => { if (!F.seen.includes(id)) F.seen.push(id); }); }
+  // 기록 칸 이름들 (## 기록 항목, js/record_write.js). 생활 기록을 아직 못 읽었으면 null
+  let kcache = { d: null, v: null };
+  function kinds() {
+    const d = root.PHLife && root.PHLife.data, RW = root.PHRecordWrite; if (!d || !d.lines || !RW) return null;
+    if (kcache.d !== d) kcache = { d, v: RW.parse(d.lines).kinds.map((k) => k.name) };
+    return kcache.v.slice();
+  }
+  // TV(record)가 여는 칸: 영화 (2026-10-08 제작자: 한 가구에 한 기능. 연극은 rk:연극으로 따로). 영화 칸을 지웠으면 빈 목록 = 꺼짐
+  function movieKinds() { const RW = root.PHRecordWrite, M = RW ? RW.TV_KINDS : ['영화'], k = kinds(); return k ? M.filter((n) => k.includes(n)) : M.slice(); }
   // 생활 기록을 아직 못 읽었으면(입장 직후 등) 켜짐으로 봄 (전과 같은 반응)
-  function state(fid) { const d = root.PHLife && root.PHLife.data; if (!d || !d.habits) return FX.get(fid) ? 'on' : 'off'; const n = names(); syncSeen(n); return FX.stateOf(fid, n, F.seen); }
+  //   record = 영화 칸이 있으면 켜짐, 기록 칸(rk:) = 그 칸이 있으면 켜짐 (2026-10-08 피드백 4)
+  function state(fid) {
+    const f = FX.get(fid); if (!f) return 'off';
+    if (f.rk || f.id === 'record') { const k = kinds(); if (!k) return 'on'; return (f.rk ? k.includes(f.kind) : movieKinds().length > 0) ? 'on' : 'off'; }
+    const d = root.PHLife && root.PHLife.data; if (!d || !d.habits) return 'on'; const n = names(); syncSeen(n); return FX.stateOf(fid, n, F.seen);
+  }
+  // 가구 기능 연동 목록에 보일 기능: 정해진 것 + 영화 밖 기록 칸마다 하나 (record 바로 뒤. 연극도 여기)
+  function features() {
+    const RW = root.PHRecordWrite, M = RW ? RW.TV_KINDS : [], extra = (kinds() || []).filter((n) => !M.includes(n)).map((n) => FX.get(FX.rkId(n))).filter(Boolean);
+    const at = FX.FEATURES.findIndex((f) => f.id === 'record') + 1;
+    return FX.FEATURES.slice(0, at).concat(extra, FX.FEATURES.slice(at));
+  }
+  // 기록 칸 하나를 여는 기능 id: 영화 = TV(record), 나머지(연극 포함) = rk:이름
+  const kindFeature = (name) => { const RW = root.PHRecordWrite; return RW && RW.TV_KINDS.includes(name) ? 'record' : FX.rkId(name); };
   const isOn = (fid) => state(fid) !== 'off';
   // 생활일지 안 탭: 대변·식사·독서 탭은 그 기능이 꺼지면 숨김 (독서 = 2026-10-04 제작자)
   //   물·요가·러닝처럼 habit 탭은 생활습관 표에 그 줄이 없으면 숨김 (2026-10-04 제작자 "러닝 탭 안 빠짐"). 기록을 아직 못 읽었으면 보임
@@ -42,6 +64,6 @@
     changed(); return F.seen;
   }
 
-  Object.assign(F, { load, setLinks, reset, hide, state, isOn, tabHidden, names, onChange, changed });
+  Object.assign(F, { load, setLinks, reset, hide, state, isOn, tabHidden, names, onChange, changed, kinds, movieKinds, features, kindFeature });
   root.PHFurnish = F;
 })(window);

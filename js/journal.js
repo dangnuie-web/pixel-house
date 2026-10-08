@@ -43,8 +43,15 @@
     const RW = root.PHRecordWrite; if (!RW || !Life.data || !Life.data.lines) return [];
     return RW.parse(Life.data.lines).kinds.filter((k) => k.custom).map((k) => ({ id: 'k:' + k.name, label: k.name, records: [k.name], custom: true }));
   }
+  // 영화·연극 탭 (records): 남은 칸만, 다 지웠으면 탭 숨김 (2026-10-08 피드백 4: 영화·연극도 지울 수 있음). 이름 = 남은 칸 이름을 · 로
+  function movieTab(t) {
+    const RW = root.PHRecordWrite; if (!t.records || t.custom || !RW || !Life.data || !Life.data.lines) return t;
+    const have = RW.parse(Life.data.lines).kinds.map((k) => k.name), rec = t.records.filter((n) => have.includes(n));
+    if (!rec.length) return null;
+    return rec.length === t.records.length ? t : Object.assign({}, t, { records: rec, label: rec.join('·') });
+  }
   const tabs = () => {
-    const base = (Array.isArray(S.JOURNAL_TABS) && S.JOURNAL_TABS.length ? S.JOURNAL_TABS : DEFAULT_TABS).filter((t) => !(root.PHFurnish && root.PHFurnish.tabHidden(t)));
+    const base = (Array.isArray(S.JOURNAL_TABS) && S.JOURNAL_TABS.length ? S.JOURNAL_TABS : DEFAULT_TABS).filter((t) => !(root.PHFurnish && root.PHFurnish.tabHidden(t))).map(movieTab).filter(Boolean);
     const extra = kindTabs(); if (!extra.length) return base;
     let at = base.findIndex((t) => t.id === 'movie'); at = at >= 0 ? at + 1 : Math.max(0, base.findIndex((t) => t.all));
     return base.slice(0, at).concat(extra, base.slice(at));

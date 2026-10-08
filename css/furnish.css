@@ -65,10 +65,16 @@
 .fn-sep { margin: 8px 4px 6px; border: 0; border-top: 1px solid var(--ui-inner); }
 .fn-menu .fn-item.fn-unlink .fn-fn { font-weight: 600; color: var(--ui-sub); }
 
-/* 집 꾸미기 (가) (2026-10-08 로드맵 4단계, js/furnish_ui.js swap): 공용 집 정해진 자리의 가구 후보. 비트 임시 모양 = 아래 기능 목록 줄과 같은 글·색 (무늬 확인 대기) */
-.fn-swap-t { margin: 0 10px 4px; font: 11px var(--font); color: var(--ui-sub, #86593A); }
-.fn-swap { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 8px 8px; }
-.fn-swap-b { font: 12px var(--font); padding: 4px 9px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line, #C8A57C); background: var(--ui-field, #FFFDF8); color: var(--A); cursor: pointer; }
-.fn-swap-b:hover { background: var(--ui-hover, #F1E3C7); }
-.fn-swap-b[aria-pressed="true"] { background: var(--ui-sel, #86593A); border-color: var(--ui-sel, #86593A); color: var(--ui-sel-tx, #F7F0E1); font-weight: 700; }
-.fn-swap-b:focus-visible { outline: 2px solid var(--ui-ring, #E9D2B0); outline-offset: 1px; }
+/* 집 꾸미기 (가) (2026-10-08 로드맵 4단계, js/furnish_ui.js swap): 공용 집 정해진 자리의 가구 후보
+   무늬 공용판후속 v01 3-2 (목업 디자인/20261008_pixel-house_공용판화면다듬기_목업_v01.html E·F): 글 칩 -> 그림 칸, "이 자리 가구" / "붙일 기능" 나눔 */
+.fn-menu .fs-h { display: flex; justify-content: space-between; margin: 0 10px 6px; font: 600 11px var(--font); color: var(--ui-sub, #86593A); }
+.fn-menu .fs-h span { font-weight: 400; }
+.fn-menu .fs { display: grid; gap: 6px; margin: 0 6px; }
+.fn-menu .fs-tile { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; padding: 4px 4px 5px; border: 1.5px solid var(--ui-inner, #DDCFB4); border-radius: 8px; background: var(--ui-field, #FFFDF8); font: 12px var(--font); color: var(--A); cursor: pointer; }
+.fn-menu .fs-pic { display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box; border-radius: 5px; background: repeating-conic-gradient(#F1E3C7 0 25%, #E7D5B2 0 50%) 0 0 / 8px 8px; padding: 4px 0; overflow: hidden; }
+.fn-menu .fs-pic canvas { image-rendering: pixelated; display: block; flex: none; }
+.fn-menu .fs-name { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fn-menu .fs-tile:hover { background: var(--ui-hover, #F1E3C7); }
+.fn-menu .fs-tile[aria-pressed="true"] { border: 2px solid var(--ui-sel, #86593A); padding: 3.5px 3.5px 4.5px; box-shadow: 0 0 0 2px var(--ui-ring, #E9D2B0); font-weight: 700; }
+.fn-menu .fs-tile:focus-visible { outline: 2px solid var(--ui-line); outline-offset: 1px; }
+.fn-menu .fs + .fn-sep { margin: 10px 4px 8px; }

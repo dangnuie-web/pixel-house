@@ -165,6 +165,9 @@
     if (a.id !== G.ctrl) return;
     G.zone = z; renderRoomName();
     const d = actor('dubu'); // 공간 한마디는 두부 목소리 (집사가 안내)
+    // 지나가기만 하는 공간(투룸·쓰리룸 거실 = 다른 방 가는 길)은 말 없음: 걷는 길 끝이 다른 공간이면 건너뜀 (부기 새 방 v01 4절, 2026-10-08)
+    const goal = a.path && a.path.length ? a.path[a.path.length - 1] : null;
+    if (goal && World.roomAt(L, goal.x, goal.y) && World.roomAt(L, goal.x, goal.y) !== z && (S.ROOM_PASS_QUIET || []).includes(z)) return;
     if (G.mode === 'play' && d && d.visible) sayBubble(d, pickLine(['room', z]));
   }
   function walkTo(a, x, y) {
@@ -185,7 +188,7 @@
   // 묶음에서 한 줄 고르기 (바로 앞 대사 제외). 연출(괄호)은 acts에 남기고 글만 돌려준다
   function pickLine(path) {
     const list = group(path), key = path.join('.');
-    const i = World.pick(list, G.lastPick[key], Math.random, (it) => !(it && ((it.needs === 'tori' && !actor('tori')) || (it.needs === 'night' && !G.night))));
+    const i = World.pick(list, G.lastPick[key], Math.random, (it) => !(it && ((it.needs === 'tori' && !actor('tori')) || (it.needs === 'night' && !G.night) || (it.needs === 'day' && G.night))));  // needs 'day' = 낮 화면만 (부기 새 방 v01, 2026-10-08)
     if (i < 0) return '';
     G.lastPick[key] = i;
     const line = World.parseLine(list[i]);

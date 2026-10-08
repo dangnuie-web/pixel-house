@@ -1,48 +1,76 @@
-/* 공용판 첫 실행 온보딩 (js/onboard.js, 2026-10-08). 앱 공통 종이 칸(--ui-*, 무늬 편집연동화면 v01 2장)·습관 편집 칩과 같은 모양.
-   새 디자인이 아니라 있는 칸 모양을 다시 씀 -> 무늬 확인 대기 */
+/* 공용판 첫 실행 온보딩 (js/onboard.js, 2026-10-08). 앱 공통 종이 칸(--ui-*)·습관 편집 칩과 같은 모양.
+   무늬 다듬은 안 반영 (디자인/20261008_pixel-house_공용판후속디자인_v01.md 3-1 표 1~9, 목업 디자인/20261008_pixel-house_공용판화면다듬기_목업_v01.html) */
 body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility: hidden; }
-#screen-onboard { display: flex; align-items: center; justify-content: center; background: var(--D); overflow: auto; padding: 24px; }
+/* 1. 카드 위 맞춤 고정 (단계마다 위아래로 튀지 않게) */
+#screen-onboard { display: flex; align-items: flex-start; justify-content: center; background: var(--D); overflow: auto; padding: clamp(24px, 9vh, 88px) 24px 24px; }
 .ob-card { width: min(560px, 100%); background: var(--ui-paper); color: var(--ui-line); border: 2px solid var(--ui-line); border-radius: 12px;
-  box-shadow: 0 4px 0 var(--ui-shadow); padding: 22px 24px 18px; display: flex; flex-direction: column; gap: 14px; }
-.ob-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
-.ob-steps li { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line); color: var(--ui-sub); background: var(--ui-field); }
-.ob-steps li.past { color: var(--ui-off-tx); border-color: var(--ui-inner); }
-.ob-steps li.on { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 700; }
-.ob-dubu { display: flex; align-items: flex-end; gap: 12px; }
+  box-shadow: 0 4px 0 var(--ui-shadow); padding: 20px 24px 18px; display: flex; flex-direction: column; gap: 14px; }
+/* 2. 단계 표시 = 번호 원 + 글 (누르는 칩처럼 안 보이게). 지난 ✓, 지금 갈색 원 + 굵게, 다음 흐림, 아래 1px 나눔선 */
+.ob-steps { list-style: none; margin: 0; padding: 0 0 12px; display: flex; gap: 4px; border-bottom: 1px solid var(--ui-inner); font-size: 12px; color: var(--ui-off-tx); }
+.ob-steps li { display: flex; align-items: center; gap: 5px; flex: 1; white-space: nowrap; }
+.ob-steps li + li::before { content: ""; flex: 0 0 10px; height: 1px; background: var(--ui-inner); margin-right: 2px; }
+.ob-steps .n { flex: none; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; border: 1.5px solid var(--ui-inner); color: var(--ui-off-tx); background: var(--ui-field); }
+.ob-steps li.past { color: var(--ui-sub); }
+.ob-steps li.past .n { border-color: var(--ui-chip-line); color: var(--ui-sub); }
+.ob-steps li.on { color: var(--ui-line); font-weight: 700; }
+.ob-steps li.on .n { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); }
+.ob-dubu { display: flex; align-items: flex-end; gap: 14px; }
 #ob-dubu-cv { image-rendering: pixelated; flex: none; }
-.ob-say { position: relative; margin: 0 0 8px; flex: 1; min-height: 44px; font-size: 15px; line-height: 1.5; word-break: keep-all;
+/* 3. 말풍선 꼬리 (두부 쪽 왼쪽, 아래에서 10px. 먹선 8px + 안쪽 6px 두 겹) */
+.ob-say { position: relative; margin: 0 0 6px; flex: 1; min-height: 44px; font-size: 15px; line-height: 1.5; word-break: keep-all;
   padding: 9px 12px; background: var(--C); border: 2px solid var(--ui-line); border-radius: 8px; }
+.ob-say::before { content: ""; position: absolute; left: -9px; bottom: 10px; border: 7px solid transparent; border-right: 8px solid var(--ui-line); border-left: 0; }
+.ob-say::after { content: ""; position: absolute; left: -5px; bottom: 12px; border: 5px solid transparent; border-right: 6px solid var(--C); border-left: 0; }
+/* 4. 마지막 어절 줄바꿈 없이 (js/onboard.js say) */
+.ob-say .nw { white-space: nowrap; }
 .ob-body { display: flex; flex-direction: column; gap: 10px; }
 .ob-h { margin: 0; font-size: 15px; }
 .ob-label { display: block; font-size: 13px; color: var(--ui-sub); margin-bottom: 6px; font-weight: 700; }
 .ob-field input, .ob-add input { width: 100%; font: 16px var(--font); padding: 9px 11px; border: 2px solid var(--ui-line); border-radius: 8px; background: var(--ui-field); color: var(--ui-line); }
+.ob-add input { flex: 1; font-size: 15px; padding: 8px 11px; }
 .ob-field input::placeholder, .ob-add input::placeholder { color: var(--ui-ph); }
 .ob-field input:focus, .ob-add input:focus { outline: 3px solid var(--ui-ring); }
 .ob-note { margin: 0; font-size: 12.5px; color: var(--ui-sub); line-height: 1.5; }
 .ob-avatars { display: flex; gap: 12px; }
-.ob-av, .ob-house { font: 14px var(--font); color: var(--ui-line); background: var(--ui-field); border: 2px solid var(--ui-inner); border-radius: 10px; cursor: pointer; }
-.ob-av { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px 8px; }
+.ob-av, .ob-house { position: relative; font: 14px var(--font); color: var(--ui-line); background: var(--ui-field); border: 2px solid var(--ui-inner); border-radius: 10px; cursor: pointer; }
+.ob-av { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px 8px; }
 .ob-av canvas, .ob-house canvas { image-rendering: pixelated; display: block; }
 .ob-av:hover, .ob-house:hover { background: var(--ui-hover); }
 .ob-av[aria-checked="true"], .ob-house[aria-checked="true"] { border-color: var(--ui-sel); box-shadow: 0 0 0 3px var(--ui-ring); font-weight: 700; }
+/* 6. 고른 카드 오른쪽 위 ✓ 원 (색만으로 구별하지 않게) */
+.ob-av[aria-checked="true"]::after, .ob-house[aria-checked="true"]::after { content: "✓"; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--ui-sel); color: var(--ui-sel-tx); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
 .ob-houses { list-style: none; margin: 0; padding: 0; }
-.ob-house { display: flex; align-items: center; gap: 14px; padding: 8px; width: 100%; text-align: left; }
-.ob-house canvas { width: 128px; height: 120px; flex: none; border-radius: 4px; }
-.ob-house-t { display: flex; flex-direction: column; gap: 4px; }
-.ob-house-t small { color: var(--ui-sub); font-weight: 400; }
-.ob-folder { display: flex; gap: 8px; align-items: center; }
-.ob-folder code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; padding: 8px 10px; background: var(--ui-field); border: 2px solid var(--ui-inner); border-radius: 8px; direction: rtl; text-align: left; }
-.ob-file { color: var(--ui-line); font-weight: 700; }
+.ob-house { display: flex; align-items: center; gap: 16px; padding: 8px; width: 100%; text-align: left; }
+/* 집 고르기 (무늬 공용판투룸쓰리룸 v01 6절): 칸 = 평면 아이콘(1칸 3px) + 이름 + 방 구성, 아래 = 고른 집 정수 1배 미리보기 + 콘셉트 한 줄 */
+.ob-houses { display: flex; flex-direction: column; gap: 8px; }
+.ob-house canvas { flex: none; border-radius: 2px; }
+.ob-preview { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ob-preview canvas { image-rendering: pixelated; display: block; max-width: 100%; border-radius: 3px; } /* 5. 정수 배율 1배 (최대 384x320). 카드보다 넓으면 줄어듦 = 512px 미만 창만 */
+.ob-preview figcaption { font-size: 12.5px; color: var(--ui-sub); }
+.ob-house-t { display: flex; flex-direction: column; gap: 6px; font-size: 16px; }
+.ob-house-t small { font-size: 12.5px; color: var(--ui-sub); font-weight: 400; line-height: 1.5; white-space: pre-line; word-break: keep-all; }
+/* 7. 기록 폴더 = 점선 칸 + 폴더 그림 + 보통 글꼴 경로(홈 ~). 파일 이름은 따로 한 줄, 끊기지 않게 */
+.ob-folder { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--ui-field); border: 1.5px dashed var(--ui-chip-line); border-radius: 8px; }
+.ob-folder canvas { image-rendering: pixelated; flex: none; width: 24px; height: 16px; }
+.ob-folder .ob-dir { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob-file-row { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; color: var(--ui-sub); margin: 0; }
+.ob-file-row b { color: var(--ui-line); white-space: nowrap; }
 .ob-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .ob-chip { font: 14px var(--font); display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--ui-chip-line); background: var(--ui-field); color: var(--ui-line); cursor: pointer; }
 .ob-chip small { font-size: 11.5px; color: var(--ui-sub); }
 .ob-chip[aria-pressed="true"] { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); }
+/* 6. 고른 습관 칩 앞 ✓ */
+.ob-chip[aria-pressed="true"]::before { content: "✓"; font-size: 12px; font-weight: 700; }
 .ob-chip[aria-pressed="true"] small { color: var(--ui-ring); }
 .ob-add { display: flex; gap: 8px; }
 .ob-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
 .ob-nav-r { display: flex; gap: 8px; }
+/* 8. "+ 추가"도 다른 보조 버튼과 같은 흰 바탕 (.ob-btn 그대로) */
 .ob-btn { font: 14px var(--font); padding: 8px 16px; border-radius: 8px; border: 2px solid var(--ui-line); background: var(--ui-field); color: var(--ui-line); cursor: pointer; white-space: nowrap; }
 .ob-btn:hover { background: var(--ui-hover); }
 .ob-btn.main { background: var(--ui-sel); border-color: var(--ui-sel); color: var(--ui-sel-tx); font-weight: 700; }
 .ob-btn.main:hover { background: var(--ui-sel-hover); }
+/* 9. 건너뛰기 = 글 버튼 (들어가기가 먼저 보이게) */
+.ob-btn.ghost { border-color: transparent; background: none; color: var(--ui-sub); }
+.ob-btn.ghost:hover { background: var(--ui-hover); }
 .ob-btn:focus-visible, .ob-chip:focus-visible, .ob-av:focus-visible, .ob-house:focus-visible { outline: 3px solid var(--ui-ring); outline-offset: 1px; }

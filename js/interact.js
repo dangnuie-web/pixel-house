@@ -43,7 +43,23 @@
   function modalOpen() { return ['PHWaterModal', 'PHInventory', 'PHFridgeMemo', 'PHWardrobe', 'PHBookModal', 'PHRecordModal', 'PHBucketMemo', 'PHMemoWall', 'PHLogModal'].some((k) => root[k] && root[k].isOpen && root[k].isOpen()); }
 
   // ---- 대사 ----
+  // 공용 집 가구 대사 (부기 공용판 v01 3절): 배치표에 자리(slots)가 있는 집이면 objRoom[지금 그림] -> objRoom[type] -> obj[type]
+  //   지금 그림 = 그 type 물건의 sprite. type이 물건이 아니면(요가 obj.rug_round 등) 그 이름을 후보로 가진 자리의 지금 그림 (러그 자리 = 큰 타원 러그)
+  function roomSprite(T) {
+    const o = ((root.PH_LAYOUT && root.PH_LAYOUT.objects) || []).find((q) => q.type === T); if (o) return o.sprite;
+    const HS = root.PHHouseSlots, sl = HS && HS.slots.find((x) => x.candidates.some((c) => c.sprite === T)); return sl ? sl.sprite : null;
+  }
+  function roomList(path) {
+    const R = LN.objRoom; if (!R || !root.PHHouseSlots || !root.PHHouseSlots.slots.length || path[0] !== 'obj' || path.length < 2) return null;
+    for (const k of [roomSprite(path[1]), path[1]]) {
+      if (!k || !R[k]) continue;
+      let v = path.slice(2).reduce((o, x) => (o && !Array.isArray(o) ? o[x] : null), R[k]);
+      if (path.length === 2 || v != null) { if (v && !Array.isArray(v) && typeof v === 'object') v = v.idle || null; if (v) return Array.isArray(v) ? v : [v]; }
+    }
+    return null;
+  }
   function list(path) {
+    const rv = roomList(path); if (rv) return rv;
     let v = path.reduce((o, k) => (o ? o[k] : null), LN);
     if (v == null) v = path.reduce((o, k) => (o ? o[k] : null), DL);
     if (v && !Array.isArray(v) && typeof v === 'object') v = v.idle || null;
@@ -112,7 +128,11 @@
     if (go === 'fridgeMemo' && root.PHFridgeMemo) { root.PHFridgeMemo.open(s.type).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 냉장고 메모지 창 (js/fridge_memo.js)
     if ((go === 'poopLog' || go === 'mealLog') && root.PHLogModal) { root.PHLogModal.open(go === 'poopLog' ? 'poop' : 'meal', { from: s.type, line: goLine(s) }).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 대변·식사 일지 창 (js/log_modal.js, logs 2026-10-04)
     if (go === 'waterModal' && root.PHWaterModal) { root.PHWaterModal.open(s.type).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 정수기 물 기록 창 (js/water_modal.js)
-    if (go === 'recordModal' && root.PHRecordModal) { IX.tv = true; root.PHRecordModal.open(s.type, null, '영화').then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // TV = 영화·연극 기록 창 (js/record_modal.js, 2026-10-08). TV도 켜짐
+    if (go === 'recordModal' && root.PHRecordModal) { // TV = 영화 기록 창 (js/record_modal.js, 2026-10-08). TV도 켜짐. 한 가구에 한 기능: TV = 영화 / 기록 칸(rk:, 연극 포함)을 붙인 가구 = 그 칸 하나
+      const f = root.PHFeatures.get(s.conf.fid), group = f && f.rk ? [f.kind] : (FS() && FS().movieKinds ? FS().movieKinds() : ['영화']);
+      if (s.conf.fx === 'tv') IX.tv = true;
+      root.PHRecordModal.open(s.type, null, group[0], group).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return;
+    }
     if (go === 'bookModal' && root.PHBookModal) { startFx(s, s.conf.fx); root.PHBookModal.open(s.type, goLine(s)).then((ok) => { if (!ok) IX.cool[s.id] = 0; }); return; } // 책꽂이 = 독서 책꽂이 창 (js/book_modal.js), 두부 한 줄은 사이드바
     if (go === 'wardrobe' && root.PHWardrobe) { if (!root.PHWardrobe.openFrom(s)) IX.cool[s.id] = 0; return; } // 옷 갈아입기 창 (js/wardrobe.js, v10만)
     if (s.conf.fx === 'lamp') return toggleLamp(s);

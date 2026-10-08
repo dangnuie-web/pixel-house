@@ -22,7 +22,8 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
   const js = (code) => wc.executeJavaScript(code);
   const shot = async (name) => { await sleep(150); let img; try { img = await wc.capturePage(); } catch (e) { await sleep(300); img = await wc.capturePage(); } fs.writeFileSync(path.join(OUT, name + '.png'), img.toPNG()); };
   async function click(x, y) { wc.sendInputEvent({ type: 'mouseMove', x, y }); wc.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 }); await sleep(30); wc.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 }); await sleep(120); }
-  const center = (sel) => js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; const r = e.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+  // 누르기 전 화면 안으로 (온보딩 집 단계는 집 세 칸 + 1배 미리보기라 작은 창에선 카드가 길어 스크롤됨)
+  const center = (sel) => js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; e.scrollIntoView({ block: 'nearest' }); const r = e.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
   const clickSel = async (sel) => { const p = await center(sel); if (!p) return false; await click(p.x, p.y); return true; };
   const loaded = () => new Promise((r) => (wc.isLoading() ? wc.once('did-finish-load', r) : r()));
   const waitFor = async (code, ms) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 8000)) { if (await js(code).catch(() => false)) return true; await sleep(80); } return false; };
@@ -54,7 +55,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await clickSel('#ob-next'); await sleep(250);
     let o = await ob();
     ok('이름 "민지" -> 고양이 이름 단계 (3-1단계), 두부가 {user}님으로 부르고 기본 이름 두부로 소개', o.step === 'cat' && o.name === '민지' && o.line.includes('민지님') && o.line.includes('두부예요') && !/\{user\}|\{cat/.test(o.line) && o.cat === '두부', o);
-    ok('고양이 단계: 이름 칸(빈칸 = 기본 두부) + 안내, 단계 표시 6칸', (await js(`!!document.getElementById('ob-cat') && document.getElementById('ob-cat').value === '' && document.querySelectorAll('.ob-steps li').length === 6 && document.querySelector('.ob-steps li.on').textContent === '고양이'`)));
+    ok('고양이 단계: 이름 칸(빈칸 = 기본 두부) + 안내, 단계 표시 6칸', (await js(`!!document.getElementById('ob-cat') && document.getElementById('ob-cat').value === '' && document.querySelectorAll('.ob-steps li').length === 6 && document.querySelector('.ob-steps li.on').textContent === '2고양이'`))); // 단계 = 번호 원 + 글 (무늬 3-1 #2)
     await shot('public_01b_onboard_cat');
     await js(`(() => { const i = document.getElementById('ob-cat'); i.value = '콩|이'; i.dispatchEvent(new Event('input')); })()`);
     await clickSel('#ob-next'); await sleep(250);
@@ -69,16 +70,36 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await clickSel('.ob-av[data-av="avatar2"]'); await sleep(150);
     ok('아바타2 고름 -> avatar.pick 줄', (await ob()).avatar === 'avatar2', await ob());
     await clickSel('#ob-next'); await sleep(250);
-    ok('집 단계: 원룸 하나 (목록형), 그림 256x240', (await ob()).step === 'house' && (await js(`(() => { const c = document.getElementById('ob-house-cv'); return document.querySelectorAll('.ob-house').length === 1 && c.width === 256 && c.height === 240; })()`)), await ob());
+    { const hs = await js(`(() => { const c = document.getElementById('ob-house-cv'); return { n: [...document.querySelectorAll('.ob-house')].map((b) => b.dataset.house + ':' + b.querySelector('b').textContent + ':' + b.getAttribute('aria-checked')).join(), plans: [...document.querySelectorAll('canvas[data-plan]')].map((p) => p.width + 'x' + p.height).join(), w: c.width, h: c.height, cap: document.querySelector('.ob-preview figcaption').textContent }; })()`);
+      // 무늬 공용판투룸쓰리룸 v01 6절: 세 칸(평면 아이콘 1칸 3px) + 고른 집 1배 미리보기
+      ok('집 단계: 원룸·투룸·쓰리룸 세 칸 (평면 아이콘 48x45·63x48·72x60), 원룸 골라짐, 미리보기 256x240 + 콘셉트', (await ob()).step === 'house' && hs.n === 'room1:원룸:true,room2:투룸:false,room3:쓰리룸:false' && hs.plans === '48x45,63x48,72x60' && hs.w === 256 && hs.h === 240 && !!hs.cap, hs); }
+    await clickSel('.ob-house[data-house="room3"]'); await sleep(200);
+    { const h3 = await js(`(() => { const c = document.getElementById('ob-house-cv'); return { w: c.width, h: c.height, on: document.querySelector('.ob-house[aria-checked=true]').dataset.house, px: c.getContext('2d').getImageData(200, 200, 1, 1).data[3] }; })()`);
+      ok('쓰리룸 누르기 -> 고름 + 미리보기 384x320 (그림 있음)', (await ob()).house === 'room3' && h3.w === 384 && h3.h === 320 && h3.on === 'room3' && h3.px === 255, h3); }
+    await shot('public_03b_onboard_house_room3');
+    await clickSel('.ob-house[data-house="room1"]'); await sleep(200);
     await shot('public_03_onboard_house');
     await clickSel('#ob-next'); await sleep(250);
-    ok('기록 폴더 단계: 기본 폴더 경로 + 고르기 버튼', (await ob()).step === 'folder' && (await js(`document.getElementById('ob-dir').textContent`)) === DIR && !!(await center('#ob-pick')), await ob());
+    { const fd = await js(`(() => { const d = document.getElementById('ob-dir'); return { title: d.title, text: d.textContent, tag: d.tagName, file: (document.querySelector('.ob-file-row') || {}).textContent || '', fileWrap: getComputedStyle(document.querySelector('.ob-file-row b')).whiteSpace, dash: getComputedStyle(document.querySelector('.ob-folder')).borderTopStyle, icon: !!document.getElementById('ob-folder-cv') }; })()`);
+      // 무늬 3-1 #7: 경로 = 보통 글(코드 칸 아님), 홈은 ~, 전체 경로는 title / 파일 이름 따로 한 줄 nowrap / 점선 칸 + 폴더 그림
+      ok('기록 폴더 단계: 기본 폴더 경로 + 고르기 버튼 (점선 칸·폴더 그림·보통 글 경로, "만들 파일 PixelHouse_생활기록.md" 한 줄)', (await ob()).step === 'folder' && fd.title === DIR && fd.tag === 'SPAN' && fd.text === DIR.replace(/^\/Users\/[^/]+/, '~') && /^만들 파일 \S+\.md$/.test(fd.file) && fd.fileWrap === 'nowrap' && fd.dash === 'dashed' && fd.icon && !!(await center('#ob-pick')), fd); }
     await shot('public_04_onboard_folder');
     await clickSel('#ob-next'); await sleep(250);
     ok('습관 단계: 추천 6개, 물만 처음부터 골라 둠', (await ob()).step === 'habit' && (await js(`document.querySelectorAll('.ob-chip[data-habit]').length`)) === 6 && (await ob()).habits.join() === 'water', await ob());
     await clickSel('.ob-chip[data-habit="yoga"]'); await clickSel('.ob-chip[data-habit="reading"]');
+    // 부기 공용판 v01 1-1: 직접 더하기 두부 말 (못 쓰는 이름 bad · 이미 있음 dup · 더함 added)
+    const HL = await js('PH_ONBOARD_LINES.habit');
+    await js(`(() => { const i = document.getElementById('ob-habit-new'); i.value = '물'; })()`); await clickSel('#ob-habit-add'); await sleep(150);
+    o = await ob();
+    ok('직접 "물" (추천에 있음) -> 안 더함 + habit.dup', o.custom.length === 0 && HL.dup.some((t) => t.startsWith(o.line.slice(0, 6))), o);
+    await js(`(() => { const i = document.getElementById('ob-habit-new'); i.value = '1일 1그림'; })()`); await clickSel('#ob-habit-add'); await sleep(150);
+    o = await ob();
+    ok('직접 "1일 1그림" (숫자로 시작) -> 안 더함 + habit.bad, 적던 글 그대로', o.custom.length === 0 && HL.bad.some((t) => t.startsWith(o.line.slice(0, 6))) && (await js(`document.getElementById('ob-habit-new').value`)) === '1일 1그림', o);
     await js(`(() => { const i = document.getElementById('ob-habit-new'); i.value = '일기'; })()`); await clickSel('#ob-habit-add'); await sleep(150);
     o = await ob();
+    ok('직접 "일기" -> 더함 + habit.added', HL.added.some((t) => t.startsWith(o.line.slice(0, 6))), o);
+    { const ui = await js(`({ n: [...document.querySelectorAll('.ob-steps .n')].map((x) => x.textContent).join(), cur: (document.querySelector('.ob-steps li[aria-current=step]') || {}).textContent, chipMark: getComputedStyle(document.querySelector('.ob-chip[aria-pressed=true]'), '::before').content, skipBg: getComputedStyle(document.getElementById('ob-skip')).backgroundColor, skipLine: getComputedStyle(document.getElementById('ob-skip')).borderTopColor, nw: !!document.querySelector('#ob-say .nw'), tail: getComputedStyle(document.getElementById('ob-say'), '::before').content })`);
+      ok('무늬 3-1: 단계 = 번호 원(지난 ✓·지금 6) / 고른 칩 앞 ✓ / 건너뛰기 = 글 버튼(바탕·테 없음) / 말풍선 꼬리 + 마지막 어절 묶음', ui.n === '✓,✓,✓,✓,✓,6' && ui.cur === '6습관' && ui.chipMark === '"✓"' && ui.skipBg === 'rgba(0, 0, 0, 0)' && ui.skipLine === 'rgba(0, 0, 0, 0)' && ui.nw && ui.tail === '""', ui); }
     ok('요가·독서 고름 + 직접 "일기" 더함', o.habits.join() === 'water,yoga,reading' && o.custom.join() === '일기', o);
     ok('온보딩 화면에 개인 이름·이웃·토리 글 없음', !PERSONAL.test(await visibleText()), (await visibleText()).match(PERSONAL));
     await shot('public_05_onboard_habit');
@@ -91,12 +112,25 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     ok('기록 파일 생김 (빈 틀 + 고른 습관: 물·요가·일기 목표, 독서 기록)', fs.existsSync(LIFE) && (() => { const d = Md.parse(fs.readFileSync(LIFE, 'utf8')); return d.habits.rows.map((r) => r.name + ':' + r.kind).join() === '물:목표,요가:목표,일기:목표,독서:기록' && !!d.meetingsSection; })(), fs.existsSync(LIFE) && fs.readFileSync(LIFE, 'utf8').slice(0, 600));
     st = await js(`({ onboard: PHProfile.isOnboard(), start: !document.getElementById('screen-start').hidden, user: PHProfile.userName(), char: PH_CHARS.player.sprite, tabs: getComputedStyle(document.querySelector('#tabs [data-tab=habits]')).visibility })`);
     ok('다시 열림: 입장 화면, 이름 민지, 내 캐릭터 = avatar2, 탭 보임', !st.onboard && st.start && st.user === '민지' && st.char === 'avatar2' && st.tabs === 'visible', st);
+    const dn0 = await js('PH_SETTINGS.DAY_NIGHT');
+    await js(`PHGame.setDayNight('day'); PHApp.redrawCover(); 0`); await sleep(300); // 낮 입장 그림 (시험 시각과 상관없이)
     await shot('public_06_cover');
     const cat = await js(`({ name: PHProfile.catName(), tag: PH_DIALOG_LINES.name, click: PH_LINES.click.filter((t) => /여기 있어요/.test(t)), intro: PH_LINES.intro.map((x) => x.say || '').join(' '), win: PH_LINES.entrance.idle.window, left: JSON.stringify([PH_LINES, PH_DIALOG_LINES]).includes('{cat') })`);
     ok('켠 뒤 고양이 이름 = 콩이: 대화창 이름표·클릭 대사·입장 대사·입장 화면 글 ({cat} 남은 곳 없음)', cat.name === '콩이' && cat.tag === '콩이' && cat.click.some((t) => t.includes('콩이 여기 있어요')) && cat.intro.includes('집사 콩이예요') && cat.win.includes('콩이가 기다린다') && !cat.left, cat);
 
+    // 입장 그림 = 무늬 entrance_room1_v01 (임시 표지 대신, 2026-10-08 공용판후속 v01 2절): 384x256, 버튼 = button_zone 세로 가운데, 밤 = palette_night
+    const cov = await js(`(() => { const e = PH_ASSETS.entrance, cv = document.getElementById('cover-cv'), el = document.getElementById('cover'), b = PH_SETTINGS.ENTER_BUTTON;
+      return { file: e && e.file, w: cv.width, h: cv.height, by: Number(el.style.getPropertyValue('--by')), want: e && e.button_zone && (e.button_zone.py + Math.floor((e.button_zone.h - b.h) / 2)), door: e && e.door_zone, night: !!(e && e.palette_night) }; })()`);
+    ok('입장 그림 = entrance_room1_v01 (384x256, 입장하기 = button_zone 자리, door_zone·밤 팔레트 있음)', cov.file === '20261008_pixel-house_entrance_room1_v01.json' && cov.w === 384 && cov.h === 256 && cov.by === cov.want && !!cov.door && cov.night, cov);
+    await js(`PHGame.setDayNight('night'); PHApp.redrawCover(); 0`); await sleep(300);
+    await shot('public_06b_cover_night');
+    await js(`PHGame.setDayNight(${JSON.stringify(dn0)}); PHApp.redrawCover(); 0`); await sleep(300);
     // ---- 2. 입장: 원룸, 현관문 칸에서 시작, 첫 인사 = intro.afterOnboard ----
-    await js('PHApp.onEnter(); 0');
+    // 현관문(door_zone)을 눌러도 입장 (무늬 2절). 진짜 누르기로
+    { const dp = await js(`(() => { const z = PH_ASSETS.entrance.door_zone, r = document.getElementById('cover-cv').getBoundingClientRect(), k = r.width / 384; return { x: Math.round(r.left + (z.px + z.w / 2) * k), y: Math.round(r.top + (z.py + z.h / 2) * k) }; })()`);
+      await click(dp.x, dp.y); await sleep(200);
+      ok('현관문 누르기 -> 입장 (문 열림 장 1)', (await js('PHApp.lastCoverHit')) === 'door' && ((await js('PHApp.entering || PHApp.screen === "house"'))), await js('({ hit: PHApp.lastCoverHit, screen: PHApp.screen, door: PHApp.door })')); }
+    if ((await js('PHApp.screen')) === 'start') await js('PHApp.onEnter(); 0');
     let said = '';
     for (let i = 0; i < 60; i++) { const s = await js('PHGame.snapshot()'); if (s.dialog && s.dialog.text) { said = s.dialog.text; break; } await sleep(100); }
     ok('입장 첫 대화 = "이제 진짜 우리 집이에요. 어서 오세요, 민지님냥~"', said === '이제 진짜 우리 집이에요. 어서 오세요, 민지님냥~', said);
@@ -112,7 +146,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     ok('집 화면에 개인 이름·이웃·토리 글 없음', !PERSONAL.test(await visibleText()), (await visibleText()).match(PERSONAL));
     await shot('public_08_room');
 
-    // ---- 3. 가구 기능 (무늬 자리 표): 물컵 = 물 +1, 달력 = 약속 탭, TV = 영화·연극 기록, 냉장고 = 메모지 ----
+    // ---- 3. 가구 기능 (무늬 자리 표): 물컵 = 물 +1, 달력 = 약속 탭, TV = 영화 기록, 냉장고 = 메모지 ----
     const links = await js('PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, {})');
     ok('기본 연결 = 무늬 자리 표 (침대 마감, 주방 살림, 물컵 물+1, 냉장고 메모, 달력 약속, 책꽂이 독서, TV 기록, 탁자 식사, 러그 요가, 책상 공부, 변기 대변)', links.bed === 'close' && links.kitchen_cabinet === 'inv_kitchen' && links.cup_water === 'water_cup' && links.fridge === 'memo' && links.calendar === 'calendar' && links.bookshelf === 'reading' && links.tv_cabinet === 'record' && links.table_low === 'meal' && links.rug === 'yoga' && links.desk === 'study' && links.toilet === 'poop' && !links['tv_cabinet.part'], links);
     await js('PHInteract.activateType("cup_water"); 0'); await sleep(900);
@@ -123,7 +157,8 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await shot('public_09_calendar_meetings');
     await js('PHApp.selectTab("home"); 0'); await sleep(400);
     await js('PHInteract.activateType("tv_cabinet"); 0'); await sleep(700);
-    ok('TV 누르기 -> 영화·연극 기록 창', await js('!!(window.PHRecordModal && PHRecordModal.isOpen && PHRecordModal.isOpen())'), null);
+    { const tv = await js(`(() => { const o = !!(window.PHRecordModal && PHRecordModal.isOpen && PHRecordModal.isOpen()), s = o ? PHRecordModal.state() : null; return { open: o, group: s && s.list ? s.list.group.join() : '', pills: s ? s.pills.length : -1, title: (document.querySelector('#rm .bm-title') || {}).textContent || '' }; })()`);
+      ok('TV 누르기 -> 영화 기록 창 (공용판 새 파일 = 영화 한 칸, 알약 없음, 제목 영화. 2026-10-08 제작자)', tv.open && tv.group === '영화' && tv.pills === 0 && tv.title === '영화', tv); }
     await shot('public_10_tv_record');
     await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 0`); await sleep(300);
     if (await js('!!(window.PHRecordModal && PHRecordModal.isOpen && PHRecordModal.isOpen())')) await js('PHRecordModal.close && PHRecordModal.close(); 0');
@@ -149,6 +184,11 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     await js('PHFurnishUI.openMenu(PHInteract.spots().find((s) => s.key === "bed")); 0'); await sleep(200);
     const sw = await js(`[...document.querySelectorAll('.fn-swap-b')].map((b) => ({ s: b.dataset.sprite, t: b.textContent, on: b.getAttribute('aria-pressed') }))`);
     ok('침대 자리 목록에 가구 바꾸기 후보 2개 (넓은 침대 = 지금, 소파베드)', sw.length === 2 && sw[0].s === 'bed_wide' && sw[0].on === 'true' && sw[1].t === '소파베드', sw);
+    { const m = await js(`(() => { const M = document.getElementById('fn-menu'), cv = [...M.querySelectorAll('.fs-tile canvas')], sel = M.querySelector('.fs-tile[aria-pressed=true]');
+        return { title: M.querySelector('.fn-menu-furn').textContent, heads: [...M.querySelectorAll('.fs-h')].map((x) => x.textContent), pics: cv.map((c) => [c.width, c.height, c.style.width]), selLine: sel && getComputedStyle(sel).borderTopWidth,
+          sep: !!M.querySelector('.fs ~ .fn-sep'), bubble: document.getElementById('bubble').hidden, bar: document.querySelector('#fn-bar .fn-bar-t').textContent }; })()`);
+      // 무늬 3-2: 제목 = 자리 이름, "이 자리 가구 2개 중 고르기", 그림 칸(넓은 침대 48x64 / 소파베드 1배), 고른 칸 2px 테, 나눔선 + "붙일 기능", 말풍선 숨김, 띠 글 짧게
+      ok('가구 바꾸기 = 그림 칸 (제목 "침대 자리", 이 자리 가구·2개 중 고르기, 1배 그림 2장, 고른 칸 2px 테, 붙일 기능 나눔, 말풍선 숨김, 띠 "가구를 누르면 모양·기능을 바꿔요")', m.title === '침대 자리' && m.heads[0] === '이 자리 가구 2개 중 고르기' && m.heads[1] === '붙일 기능' && m.pics.length === 2 && m.pics[0][0] === 48 && m.pics[0][2] === '48px' && m.selLine === '2px' && m.sep && m.bubble && m.bar === '가구를 누르면 모양·기능을 바꿔요', m); }
     await shot('public_11_furnish_swap');
     const re2 = new Promise((r) => wc.once('did-finish-load', r));
     await clickSel('.fn-swap-b[data-sprite="sofa"]');
@@ -157,6 +197,13 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     const bed = await js('(() => { const o = PH_LAYOUT.objects.find((q) => q.type === "bed"); return { sprite: o.sprite, px: o.px, py: o.py, name: PHFeatures.nameOf("bed") }; })()');
     ok('소파베드로 바뀜: 저장(profile.json furniture.bed = sofa), 자리 기준점 왼쪽 아래 (195, 72), 이름 소파베드', (store().furniture || {}).bed === 'sofa' && bed.sprite === 'sofa' && bed.px === 195 && bed.py === 72 && bed.name === '소파베드', [store(), bed]);
     ok('다시 연 뒤 입장 연출 없이 그 자리에서 이어짐 (play)', g.mode === 'play' && g.me.zone === 'room', g);
+    { let sw2 = ''; for (let i = 0; i < 30 && !sw2; i++) { sw2 = await js('PHFurnishUI.swapSaid || ""'); if (!sw2) await sleep(100); }
+      ok('다시 연 뒤 두부 swapped 한 줄 (부기 1-2, {furn} = 소파베드)', sw2.includes('소파베드') && (await js('PH_FURNISH_LINES.swapped')).some((t) => t.replace('{furn}', '소파베드').replace(/^\(.*?\)\s*/, '') === sw2), sw2); }
+    // 부기 공용판 v01 3절: 공용 집 가구 대사 = objRoom[그림] -> objRoom[type] -> obj[type]. 화분(몬스테라)·현관문(gate)·스탠드 켜기
+    { const said = async (type) => { await js(`PHInteract.activateType(${JSON.stringify(type)}); 0`); await sleep(250); const l = (await js('PHInteract.state().log')); return l[l.length - 1] || ''; };
+      const R = await js('PH_INTERACT_LINES.objRoom');
+      const pl = await said('plant'), gt = await said('gate'), lp = await said('floorlamp');
+      ok('공용 집 가구 대사: 화분 = objRoom.plant_monstera, 현관문 = objRoom.gate(민지님), 스탠드 = objRoom.floorlamp on/off', R.plant_monstera.includes(pl) && R.gate.map((t) => t.replace('{user}', '민지')).includes(gt) && R.floorlamp.on.concat(R.floorlamp.off).includes(lp), [pl, gt, lp]); }
     ok('침대 자리 기능(하루 마감)은 그대로', (await js('PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, {}).bed')) === 'close', null);
     await shot('public_12_sofa');
 

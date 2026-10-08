@@ -14,7 +14,7 @@
     plant_snake: '산세베리아', plant_monstera: '몬스테라', plant_cactus: '선인장', plant_fern: '고사리',
     kitchen_wood: '원목 주방장', fridge_retro: '분홍 냉장고', bookshelf_open: '낮은 책장', // 2026-10-08 무늬 공용판후속 v01 1-1 (배치표 v02 name과 같음)
   };
-  // 배치표 기능 이름 -> js/features.js 기능 id (무늬 제안 이름 * 표시). TV = 이미 있는 영화·연극 기록(record)
+  // 배치표 기능 이름 -> js/features.js 기능 id (무늬 제안 이름 * 표시). TV = 영화 기록(record)
   const FEATURE_ID = { 'screen*': 'record', screen: 'record', 'calendar*': 'calendar', calendar: 'calendar' };
   // 후보에 따라 기능이 바뀌는 자리 (무늬 3절: 물컵 자리에 정수기를 두면 물 기록 창)
   const BY_SPRITE = { purifier: 'water' };
@@ -47,7 +47,7 @@
       o.size = [w, h];
       const fid = featureOf(sl, cand);
       if (fid) out.links[o.type] = fid;
-      out.slots.push({ id: sl.id, label: sl.label || sl.id, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
+      out.slots.push({ id: sl.id, label: sl.label || sl.id, room: sl.room || null, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
     });
     return out;
   }

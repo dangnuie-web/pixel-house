@@ -139,7 +139,7 @@ html.night .bk-dlg { background: #EFE3CB; box-shadow: inset 0 -3px 0 #D2C2A3; fi
 .bk-d-none { color: #A0876C; margin: 0 0 14px; }
 
 /* ===== 약속 달력 (약속 탭 "다가오는 약속" 아래) ===== */
-.cal { background: var(--K); border: 2px solid var(--I); border-radius: 12px; padding: 16px 18px 14px; max-width: 760px; }
+.cal { background: var(--K); border: 2px solid var(--I); border-radius: 12px; padding: 16px 18px 14px; } /* 폭 제한 없음: 오늘 약속 칸과 같은 폭으로 (2026-10-08 제작자) */
 .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .cal-head h3 { margin: 0; }
 .cal-nav { display: inline-flex; border: 2px solid var(--A); border-radius: 6px; overflow: hidden; }

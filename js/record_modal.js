@@ -21,7 +21,7 @@
     const stage = $('stage'); if (!stage) return null;
     el = document.createElement('div');
     el.id = 'rm'; el.className = 'bm rm'; el.hidden = true;
-    el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '영화·연극 기록');
+    el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '영화 기록');
     el.innerHTML = `<div class="bm-box" tabindex="-1">
       <div class="bm-head"><b class="bm-title"></b></div>
       <div class="bm-body life"></div>
@@ -60,14 +60,18 @@
   }
   // interact.js가 부름 (책꽂이). from = 누른 물건 type, line = 두부 한 줄(사이드바)
   //   kind = 처음 고를 탭 ('영화' | '연극'). line이 없으면 그 탭의 여는 말 (부기 record.open)
-  async function open(from, line, kind) {
+  //   group = 알약 탭에 넣을 칸들 (2026-10-08 제작자: 한 가구에 한 기능 -> TV = 영화, 기록 칸을 붙인 가구 = 그 칸 하나). 없으면 영화
+  async function open(from, line, kind, group) {
     if (st.open || blockedNow() || !BS()) return false;
     build(); if (!el) return false;
     const g = root.PHGame && root.PHGame.G; if (g) g.held = []; // 누르던 방향키가 남아 걷지 않게 (열린 동안 제작자은 멈춤)
     if (root.PHGame && root.PHGame.hideBubble) root.PHGame.hideBubble();
     st.open = true; st.from = from || null; st.opened++;
     if (Life() && !Life().data) { try { await Life().load(); } catch (e) { /* 아래에서 못 읽음 글 */ } }
-    BS().set(['영화', '연극'], kind || BS().kind || '영화'); BS().reset();
+    const grp = Array.isArray(group) && group.length ? group.slice() : ['영화'];
+    BS().set(grp, kind || BS().kind || grp[0]); BS().reset();
+    const title = grp.join('·'); // 영화·연극 = 그대로, 칸 하나 = 그 이름
+    q('.bm-title').textContent = grp.join() === '영화,연극' ? (PL().windowTitle || '영화·연극') : title; el.setAttribute('aria-label', title + ' 기록');
     el.hidden = false; fit(); paint(BS().canWrite() ? 'rc-add' : null);
     el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
     if (!el.contains(document.activeElement)) q('.bm-box').focus({ preventScroll: true });

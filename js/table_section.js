@@ -137,7 +137,8 @@
       const ra2 = ta ? ta.rows.map((r) => r.raw.trim()) : [], rb2 = tb.rows.map((r) => r.raw.trim());
       const diff = (xs, ys) => { const m = new Map(); xs.forEach((v) => m.set(v, (m.get(v) || 0) + 1)); const extra = []; ys.forEach((v) => { if (m.get(v)) m.set(v, m.get(v) - 1); else extra.push(v); }); return extra; };
       const gone = diff(rb2, ra2), added = diff(ra2, rb2);
-      const want = { add: [0, 1], update: [1, 1], remove: [1, 0] }[op]; if (!want) return false;
+      // seed = 섹션이 없던 파일에 섹션을 새로 만들며 줄 0~8개 (기록 항목: 기본 칸을 실제 줄로 적을 때, 2026-10-08 피드백 4. 0개 = 기본 영화 한 칸을 지움). 기존 섹션에는 못 씀
+      const want = op === 'seed' ? (A || added.length > 8 ? null : [0, added.length]) : { add: [0, 1], update: [1, 1], remove: [1, 0] }[op]; if (!want) return false;
       if (gone.length !== want[0] || added.length !== want[1]) return false;
       const ok = (l) => { if (/[\r\n]/.test(l)) return false; const c = splitRow(l); return c.length === spec.head.length && !!okCells(c.map(decode)); };
       if (op === 'update' && ra2.indexOf(gone[0]) !== rb2.indexOf(added[0])) return false;

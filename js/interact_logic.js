@@ -38,7 +38,8 @@
     (L.objects || []).forEach((o, i) => {
       if (o.px == null || !o.size) return;
       const key = K.keys[i];
-      const conf = Object.assign({}, T.DEFAULT || {}, (T.objects || {})[o.type] || {}, fnConf(FX.get(map[key])));
+      // T.sprites = 자리 후보 그림에 따라 바뀌는 움직임 (공용 집 스탠드 자리에 산세베리아 = 불 켜기 아님, 부기 공용판 v01 5절 2번)
+      const conf = Object.assign({}, T.DEFAULT || {}, (T.objects || {})[o.type] || {}, (o.sprite !== o.type && (T.sprites || {})[o.sprite]) || {}, fnConf(FX.get(map[key])));
       const rect = [o.px, o.py, o.size[0], o.size[1]];
       const s = { id: o.id || o.type + '_' + i, key, type: o.type, kind: 'obj', rect, o, layer: o.layer || null, conf, lamp: conf.fx === 'lamp' ? o.type : null };
       out.push(s);

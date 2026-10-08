@@ -16,7 +16,7 @@
     { id: 'meal', label: '식사 일지', short: '식사', go: 'mealLog', habit: '식사', fnHabit: true, target: '식탁에서 기록', lines: ['obj', 'table_two', 'go'] },
     { id: 'study', label: '공부', short: '공부', go: 'study', lines: ['obj', 'table_long', 'go'] },
     { id: 'reading', label: '독서 책꽂이', short: '독서', go: 'bookModal', habit: '독서', fnHabit: true, target: '책꽂이에 기록', oldTargets: ['쪽'], lines: ['obj', 'bookshelf', 'go'] }, // 2026-10-04 제작자: 독서 줄을 지우면 책꽂이도 꺼짐 (대변·식사와 같은 규칙). 2026-10-08 제작자: 쪽수 완전히 뺌 -> 기준 '쪽' -> '책꽂이에 기록' (옛 줄은 앱이 켤 때 옮김, js/habit_edit.js migrateFnRows)
-    { id: 'record', label: '영화·연극 기록', short: '영화', go: 'recordModal' }, // 2026-10-08 제작자: TV 누르면 기록 폼 [영화|연극]
+    { id: 'record', label: '영화 기록', short: '영화', go: 'recordModal' }, // 2026-10-08 제작자: 한 가구에 한 기능 -> TV = 영화만. 연극은 rk:연극으로 따로 연동. 영화 칸을 지우면 꺼짐 (js/furnish.js state)
     { id: 'water', label: '물 기록 (정수기 창)', short: '물', go: 'waterModal' },
     { id: 'water_cup', label: '물 한 잔 (바로 +1)', short: '물 +1', go: 'water' },
     { id: 'yoga', label: '요가', short: '요가', go: 'yoga', habit: '요가' },
@@ -31,6 +31,13 @@
   ];
   const BY_ID = {}; FEATURES.forEach((f) => { BY_ID[f.id] = f; });
   const NONE = 'none';
+  // 기록 칸 기능 (2026-10-08 피드백 4: 기록 편집 + 추가로 만든 칸도 가구 연동): id = 'rk:' + 칸 이름 (## 기록 항목). 누르면 그 칸 기록 창 (js/record_modal.js)
+  //   목록이 정해지지 않아 FEATURES에 없고 get()이 만들어 줌. 켜짐 = 그 칸이 있을 때 (js/furnish.js state). 칸을 지워도 연결은 남음 (같은 이름을 다시 만들면 다시 열림)
+  //   영화는 따로 칸 기능을 만들지 않고 record(TV)가 맡음. 연극은 다른 칸처럼 rk:연극
+  const RK = 'rk:', RK_RE = /^rk:[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z ]{1,12}$/;
+  const rkId = (name) => RK + String(name);
+  function rkFeature(id) { const n = id.slice(RK.length); return { id, label: n + ' 기록', short: n, go: 'recordModal', kind: n, rk: true }; }
+  const getF = (id) => BY_ID[id] || (typeof id === 'string' && RK_RE.test(id) && id.trim() === id ? rkFeature(id) : null);
   // 기본 연결 = 2026-10-04까지 interactions.js에 물건마다 적혀 있던 것 그대로
   //   공용 집(배치표에 가구 자리가 있는 집)은 자리마다 붙는 기능으로 바꿈 (js/house_slots.js PH_HOUSE_LINKS)
   const DEFAULT_LINKS = root.PH_HOUSE_LINKS ? Object.assign({}, root.PH_HOUSE_LINKS) : {
@@ -72,7 +79,7 @@
   function cleanLinks(o) {
     const out = {};
     if (!o || typeof o !== 'object' || Array.isArray(o)) return out;
-    Object.keys(o).slice(0, MAX_LINKS).forEach((k) => { const v = o[k]; if (KEY_RE.test(k) && (v === NONE || BY_ID[v])) out[k] = v; });
+    Object.keys(o).slice(0, MAX_LINKS).forEach((k) => { const v = o[k]; if (KEY_RE.test(k) && (v === NONE || getF(v))) out[k] = v; });
     return out;
   }
   function cleanSeen(a) { return Array.isArray(a) ? Array.from(new Set(a.filter((x) => BY_ID[x] && BY_ID[x].fnHabit))) : []; }
@@ -83,7 +90,8 @@
     const has = new Set(keys || []), o = cleanLinks(overrides), map = {};
     Object.keys(DEFAULT_LINKS).forEach((k) => { if (has.has(k)) map[k] = DEFAULT_LINKS[k]; });
     Object.keys(o).forEach((k) => { if (!has.has(k)) return; if (o[k] === NONE) delete map[k]; else map[k] = o[k]; });
-    FEATURES.forEach((f) => {
+    Array.from(new Set(Object.values(map))).forEach((fid) => { // 정해진 기능 + 기록 칸 기능(rk:)
+      const f = { id: fid };
       const ks = Object.keys(map).filter((k) => map[k] === f.id); if (ks.length <= 1) return;
       const keep = ks.find((k) => o[k] === f.id) || ks[0];
       ks.forEach((k) => { if (k !== keep) delete map[k]; });
@@ -93,7 +101,7 @@
   // 한 가구에 기능 하나 붙이기 (fid = null | 'none' = 없음) -> 새 overrides. 기능은 원래 가구에서 빠짐
   function setLink(keys, overrides, key, fid) {
     if (!KEY_RE.test(String(key))) throw new Error('가구 key 오류');
-    if (fid != null && fid !== NONE && !BY_ID[fid]) throw new Error('모르는 기능: ' + fid);
+    if (fid != null && fid !== NONE && !getF(fid)) throw new Error('모르는 기능: ' + fid);
     const cur = resolve(keys, overrides), o = cleanLinks(overrides), v = fid == null ? NONE : fid;
     o[key] = v;
     if (v !== NONE) Object.keys(cur).forEach((k) => { if (k !== key && cur[k] === v) o[k] = NONE; });
@@ -107,8 +115,8 @@
   // names = 생활습관 표 습관 이름들, seen = 표에 한 번이라도 있었던 일지 기능 id (앱 설정)
   //   -> 'on' (켜짐) | 'virtual' (일지 기능: 아직 표에 없고 한 번도 없었음 = 화면에 기본으로 보이고 첫 저장 때 표에 더함) | 'off' (꺼짐)
   function stateOf(fid, names, seen) {
-    const f = BY_ID[fid]; if (!f) return 'off';
-    if (!f.habit) return 'on';
+    const f = getF(fid); if (!f) return 'off';
+    if (!f.habit) return 'on'; // 기록 칸(rk:)·record 는 칸이 있는지 = js/furnish.js 가 생활 기록을 보고 정함
     const has = names instanceof Set ? names.has(f.habit) : (names || []).includes(f.habit);
     if (has) return 'on';
     if (f.fnHabit && !(seen || []).includes(f.id)) return 'virtual';
@@ -121,7 +129,7 @@
   const fnHabits = () => FEATURES.filter((f) => f.fnHabit);
   const byHabit = (name) => FEATURES.find((f) => f.fnHabit && f.habit === name) || null;
 
-  const FX = { FEATURES, BY_ID, NONE, DEFAULT_LINKS, NAMES, nameOf, KEY_RE, keysOf, partKey, baseKey, cleanLinks, cleanSeen, resolve, setLink, keysWith, stateOf, isOn, states, seenFrom, fnHabits, byHabit, get: (id) => BY_ID[id] || null };
+  const FX = { FEATURES, BY_ID, NONE, RK_RE, rkId, isRk: (id) => !!getF(id) && !!getF(id).rk, DEFAULT_LINKS, NAMES, nameOf, KEY_RE, keysOf, partKey, baseKey, cleanLinks, cleanSeen, resolve, setLink, keysWith, stateOf, isOn, states, seenFrom, fnHabits, byHabit, get: (id) => getF(id) };
   root.PHFeatures = FX;
   if (typeof module !== 'undefined' && module.exports) module.exports = FX;
 })(typeof window !== 'undefined' ? window : globalThis);

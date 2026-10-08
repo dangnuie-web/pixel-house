@@ -29,6 +29,8 @@
   const HEAD = ['습관', '종류', '기준', '주기'];
   const NAME_MAX = 20, TARGET_MAX = 30;
   const NO_CYCLE = '-';
+  // 기록 카드 + 추가 "횟수·양 기록" 기준 (2026-10-08 제작자 피드백 4: 단위 입력 없음). "회" = 생활 습관 카드에서 "+ n회"로 적힘 (js/life_check.js unitOf를 그대로 통과)
+  const LOG_UNIT = '회';
   const water = () => (root.PH_SETTINGS && root.PH_SETTINGS.WATER_HABIT) || '물';
   const fnOf = (name) => (FX ? FX.byHabit(name) : null); // 일지 기능 습관이면 그 기능
   const fnRow = (f) => [f.habit, '기록', f.target, NO_CYCLE];
@@ -319,7 +321,7 @@
   }
   const needsMigrate = (src) => migrateFnRows(src).changed;
 
-  const HE = { KIND, KINDS, migrateFnRows, needsMigrate, HEAD, NAME_MAX, TARGET_MAX, NO_CYCLE, checkName, checkTarget, checkCycle, habitsTable, addHabit, updateHabit, removeHabit, moveHabit,
+  const HE = { KIND, KINDS, LOG_UNIT, migrateFnRows, needsMigrate, HEAD, NAME_MAX, TARGET_MAX, NO_CYCLE, checkName, checkTarget, checkCycle, habitsTable, addHabit, updateHabit, removeHabit, moveHabit,
     onlyHabitsChanged, onlyHabitUpdated, okRow, fnOf, removeStudy, unremoveStudy, onlyStudyRemoved, onlyStudyAdded, water };
   root.PHHabitEdit = HE;
   if (typeof module !== 'undefined' && module.exports) module.exports = HE;

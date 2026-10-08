@@ -160,6 +160,8 @@ function writePrefs(p) { try { fs.writeFileSync(prefsPath(), JSON.stringify(p, n
 function chooseSet() {
   const ok = (k) => typeof k === 'string' && SET_NAMES.includes(k);
   if (ok(process.env.PH_SET)) return process.env.PH_SET; // 시험용 (저장 안 함)
+  // 공용판: 온보딩에서 고른 집 (profile.json house = room1·room2·room3, 2026-10-08 투룸·쓰리룸)
+  if (PROFILE && PROFILE.id === 'default' && PROFILE.user && ok(PROFILE.user.house)) return PROFILE.user.house;
   const p = readPrefs().artSet; if (ok(p)) return p;
   if (ok(SETTINGS.ART_SET_DEFAULT)) return SETTINGS.ART_SET_DEFAULT;
   return NEWEST || null;
@@ -239,6 +241,11 @@ function createWindow() {
     });
   }
   if (SHOTS) {
+    // 시험 창은 안 보이게 그림 (2026-10-08 제작자 공용판 피드백 1: 시험 창이 쓰던 창 위로 떠서 가림).
+    //   창 투명도 0 = 화면에 띄워 둔 채(그리기·캡처는 그대로, capturePage는 창이 아니라 화면 내용을 찍음) 눈에는 안 보임.
+    //   마우스는 아래 setIgnoreMouseEvents로 뒤 창에 그대로 감, 포커스도 안 뺏음(showInactive·setFocusable false).
+    //   화면 밖으로 옮기는 방법은 macOS가 제목 막대를 화면 안으로 당겨 놓을 수 있어 안 씀. 눈으로 보며 고칠 때만 PH_SHOTS_SHOW=1
+    if (process.env.PH_SHOTS_SHOW !== '1') win.setOpacity(0);
     win.once('ready-to-show', () => win.showInactive()); // 포커스를 뺏지 않고 띄움 (그려야 캡처됨)
     // 새로고침·다시 열기 뒤에는 backgroundThrottling: false가 풀릴 때가 있어, 시험 창이 다른 창 뒤에 있으면 requestAnimationFrame이 안 돎
     //   -> 입장 연출이 문(제작자 계단 걷기 glide)에서 멈춤 (2026-10-08 test_app 18~19개·test_furnish_app 흔들림). 페이지를 읽을 때마다 다시 끔. 시험에서만

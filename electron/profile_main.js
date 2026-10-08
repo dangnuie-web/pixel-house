@@ -15,7 +15,7 @@ const os = require('os');
 
 const NAME_MAX = 12;
 const NAME_BAD = /[|｜\\/<>`*#{}\[\]\u0000-\u001f\u007f\u2028\u2029]/;
-const HOUSES = ['room1']; // 집 목록 (목록형, 지금은 원룸 하나. 투룸·쓰리룸은 원룸 확인 뒤)
+const HOUSES = ['room1', 'room2', 'room3']; // 집 목록 (목록형): 원룸·투룸·쓰리룸 (2026-10-08 무늬 공용판투룸쓰리룸 v01, 제작자 지시)
 const AVATARS = ['avatar1', 'avatar2', 'avatar3'];
 const CAT_DEFAULT = '두부'; // 고양이 이름 기본 (js/profile.js CAT_DEFAULT와 같음)
 const SLOT_RE = /^[a-z][a-z0-9_]{0,30}$/, SPRITE_RE = /^[a-z][a-z0-9_]{0,40}$/;

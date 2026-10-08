@@ -8,7 +8,7 @@
   const LIFE_TABS = ['habits', 'meetings', 'bucket', 'archive'];
   const DOOR_MS = 650;
   // 입장 화면 크기 = entrance 그림 크기 (없으면 전개도 크기). 버튼 자리 = settings.ENTER_BUTTON (u = 입장 그림 1px)
-  // 입장 그림이 없는 집(공용 원룸) = 임시 표지 그림 크기 (js/placeholders.js D.cover.size). 무늬 공용 입장 그림이 오면 그것
+  // 입장 그림이 없는 집 = 임시 표지 그림 크기 (js/placeholders.js D.cover.size). 공용 원룸은 2026-10-08부터 무늬 entrance_room1 (배치표 entrance, scripts/sync_assets.py)
   function coverSize() { const sz = root.PHArt.size('entrance'), tmp = root.PH_TEMP_DRAW && root.PH_TEMP_DRAW.cover && root.PH_TEMP_DRAW.cover.size; return sz ? { w: sz.w, h: sz.h } : tmp ? { w: tmp.w, h: tmp.h } : { w: root.PH_LAYOUT.W, h: root.PH_LAYOUT.H }; }
   function layoutCover() {
     const c = coverSize(), b = root.PH_SETTINGS.ENTER_BUTTON, el = $('cover');
@@ -125,8 +125,10 @@
     const p = (e.overlay && e.overlay.guest) || ga.place; if (!p) return null;
     return { px: p.px, py: p.py, w: ga.frames[0][0].length, h: ga.frames[0].length };
   }
-  // 누른 곳: 그림 px -> 'guest' | spot id | null
+  // 누른 곳: 그림 px -> 'guest' | 'door' (입장 그림 door_zone = 눌러도 입장, 무늬 공용판후속 v01 2절) | spot id | null
   function coverHit(px, py) {
+    const e = root.PH_ASSETS && root.PH_ASSETS.entrance, dz = e && e.door_zone;
+    if (dz && px >= dz.px && px < dz.px + dz.w && py >= dz.py && py < dz.py + dz.h) return 'door';
     const g = guestPlace();
     if (App.guest && g && px >= g.px && px < g.px + g.w && py >= g.py && py < g.py + g.h) return 'guest';
     const sp = coverSpots().find((q) => px >= q.px && px < q.px + q.w && py >= q.py && py < q.py + q.h);
@@ -143,6 +145,7 @@
     if (App.screen !== 'start' || App.entering) return;
     const cv = $('cover-cv'), r = cv.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height;
     const hit = coverHit(px, py); App.lastCoverHit = hit; if (!hit) return;
+    if (hit === 'door') { onEnter(); return; }
     const E = root.PH_LINES.entrance || {};
     if (hit === 'guest') {
       const g = guestPlace(), list = (E.guest && E.guest.click) || [];

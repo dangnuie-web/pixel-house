@@ -48,7 +48,7 @@
     btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
     const bar = document.createElement('div');
     bar.id = 'fn-bar'; bar.className = 'fn-bar'; bar.hidden = true; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', P().toggle);
-    bar.innerHTML = `<i class="fn-bar-dot" aria-hidden="true"></i><b class="fn-bar-m">${esc(P().barMode)}</b><span class="fn-bar-t">${esc(P().bar)}</span><button type="button" class="fn-reset">${esc(P().reset)}</button><button type="button" class="fn-done">${esc(P().done)}</button>`;
+    bar.innerHTML = `<i class="fn-bar-dot" aria-hidden="true"></i><b class="fn-bar-m">${esc(P().barMode)}</b><span class="fn-bar-t">${esc((root.PHHouseSlots && root.PHHouseSlots.slots.length && P().barSwap) || P().bar)}</span><button type="button" class="fn-reset">${esc(P().reset)}</button><button type="button" class="fn-done">${esc(P().done)}</button>`;
     bar.querySelector('.fn-reset').addEventListener('click', (e) => { e.stopPropagation(); reset(); });
     bar.querySelector('.fn-done').addEventListener('click', (e) => { e.stopPropagation(); setMode(false); });
     const tags = document.createElement('div'); tags.id = 'fn-tags'; tags.className = 'fn-tags'; tags.hidden = true; tags.setAttribute('aria-hidden', 'true');
@@ -130,17 +130,29 @@
     // 무늬 v01 (제작자 승인 2026-10-04): 머리 = 작은 "가구 기능 연동" + 누른 가구 이름 크게. 줄 테두리 없음. 다른 가구가 쓰는 줄 = 갈색 글 + 올리면 자물쇠
     const row = (fn, cls, checked, furnText, furnEmpty, fnText, dis) => `<button type="button" role="menuitemradio" class="fn-item${cls}" data-fn="${esc(fn)}" aria-checked="${checked}"${dis ? ' aria-disabled="true"' : ''}>` +
       `<small class="fn-fn">${esc(fnText)}</small><b class="fn-furn${furnEmpty ? ' empty' : ''}">${dis ? '<i class="fn-lock" aria-hidden="true"></i>' : ''}${esc(furnText)}</b></button>`;
-    let h = `<p class="fn-menu-t" id="fn-menu-t">${esc(P_.menuTitle)}</p><p class="fn-menu-furn">${esc(furn)}</p>`;
     // 집 꾸미기 (가) (2026-10-08 로드맵 4단계): 공용 집의 정해진 자리면 후보 고르기 칸 (js/house_slots.js). 고르면 저장하고 집을 그 자리에서 다시 엶
+    //   무늬 공용판후속 v01 3-2: 제목 = 자리 이름("침대 자리"), 소제목 "이 자리 가구 · n개 중 고르기", 후보 = 그림 칸(체크 장판 위, 자리 안 같은 정수 배율),
+    //   고른 칸 = 갈색 테 + 고리, 아래 나눔선 + "붙일 기능". 후보 1개 자리(변기·세면대)는 칸 없음
     const slot = s.kind === 'obj' && root.PHHouseSlots ? root.PHHouseSlots.slots.find((x) => x.type === s.type) : null;
-    if (slot && slot.candidates.length > 1 && root.PHOnboardDesktop) {
-      h += `<p class="fn-swap-t">${esc(P_.swapTitle || '가구 바꾸기')}</p><div class="fn-swap" role="group" aria-label="${esc(P_.swapTitle || '가구 바꾸기')}">` +
-        slot.candidates.map((c) => `<button type="button" class="fn-swap-b" data-slot="${esc(slot.id)}" data-sprite="${esc(c.sprite)}" aria-pressed="${c.sprite === slot.sprite}">${esc(c.name)}</button>`).join('') + '</div>';
+    const swapOn = !!(slot && slot.candidates.length > 1 && root.PHOnboardDesktop);
+    const slotName = slot ? String(slot.label || '').replace(/\s*\(.*\)\s*$/, '') || furn : furn;
+    // 방이 여럿인 집(투룸·쓰리룸, 자리 19~23곳)은 작은 제목 옆에 그 자리가 있는 방 이름 (무늬 공용판투룸쓰리룸 v01 7절 5번 slots[].room)
+    const rooms = (root.PH_LAYOUT && root.PH_LAYOUT.rooms) || [], rm = slot && slot.room && rooms.length > 3 ? rooms.find((r) => r.id === slot.room) : null;
+    let h = `<p class="fn-menu-t" id="fn-menu-t">${esc(P_.menuTitle)}${rm ? ` · <span class="fn-menu-room">${esc(rm.name || rm.id)}</span>` : ''}</p><p class="fn-menu-furn">${esc(swapOn ? slotName : furn)}</p>`;
+    let pics = null;
+    if (swapOn) {
+      pics = swapPics(slot);
+      const n = slot.candidates.length;
+      h += `<p class="fs-h fn-swap-t">${esc(P_.swapTitle || '이 자리 가구')} <span>${esc((P_.swapCount || '{n}개 중 고르기').replace('{n}', n))}</span></p>` +
+        `<div class="fs fn-swap" role="group" aria-label="${esc(P_.swapTitle || '이 자리 가구')}" style="grid-template-columns:repeat(${n},1fr)">` +
+        slot.candidates.map((c) => `<button type="button" class="fs-tile fn-swap-b" data-slot="${esc(slot.id)}" data-sprite="${esc(c.sprite)}" aria-pressed="${c.sprite === slot.sprite}">` +
+          `<span class="fs-pic" style="height:${pics.h + 8}px"><canvas data-fs="${esc(c.sprite)}" aria-hidden="true"></canvas></span><span class="fs-name">${esc(c.name)}</span></button>`).join('') + '</div>' +
+        `<hr class="fn-sep" aria-hidden="true"><p class="fs-h">${esc(P_.fnTitle || '붙일 기능')}</p>`;
     }
     h += `<div class="fn-list" role="menu" aria-labelledby="fn-menu-t">`;
     // 2026-10-08: 공용 집 전용 기능(약속 달력)은 공용 집에만, 옷 갈아입기는 그 집에서 옷을 못 바꾸면(원룸 아바타 = 기본 옷 고정) 목록에서 뺌
     const hiddenHere = (f) => (f.houseOnly && !root.PH_HOUSE_LINKS) || (f.id === 'wardrobe' && root.PH_HOUSE_LINKS && root.PHOutfit && !root.PHOutfit.enabled());
-    FX.FEATURES.forEach((f) => {
+    (FS().features ? FS().features() : FX.FEATURES).forEach((f) => { // 기록 칸(rk:)도 (2026-10-08 피드백 4)
       if (FS().state(f.id) === 'off' || hiddenHere(f)) return;
       const here = cur === f.id, other = FX.keysWith(m, f.id).filter((k) => k !== s.key);
       const right = here ? furn : other.length ? FX.nameOf(other[0]) : P_.unlinked;
@@ -151,6 +163,9 @@
     E.menu.setAttribute('aria-label', P_.menuTitle + ': ' + furn);
     E.menu.querySelectorAll('.fn-item').forEach((b) => b.addEventListener('click', () => choose(s.key, b.dataset.fn)));
     E.menu.querySelectorAll('.fn-swap-b').forEach((b) => b.addEventListener('click', () => swap(b.dataset.slot, b.dataset.sprite)));
+    if (pics) E.menu.querySelectorAll('canvas[data-fs]').forEach((c) => drawPic(c, c.dataset.fs, pics.k));
+    // 무늬 3-2 #6: 메뉴가 열린 동안 집 말풍선은 숨김 (메뉴 뒤로 비치지 않게)
+    if (Game() && Game().hideBubble) Game().hideBubble();
     // 자리: 가구 오른쪽(모자라면 왼쪽), 위아래는 무대 안
     E.menu.hidden = false; E.menu.style.left = '0px'; E.menu.style.top = '0px';
     const a = toCss(s.rect[0], s.rect[1]), b = toCss(s.rect[0] + s.rect[2], s.rect[1] + s.rect[3]), W = E.stage.clientWidth, H = E.stage.clientHeight, mw = E.menu.offsetWidth, mh = E.menu.offsetHeight;
@@ -210,6 +225,17 @@
     say(!f ? line('unlinked', { furn }) : line('linked', { furn, fn: f.label }));
     return U.last;
   }
+  // 가구 바꾸기 그림 칸 배율 (무늬 3-2 #2): 그 자리 후보가 모두 64x88 안에 드는 가장 큰 정수 (최소 1). h = 가장 큰 후보 높이 x 배율
+  function swapPics(slot) {
+    const Art = root.PHArt, sz = slot.candidates.map((c) => (Art && Art.has(c.sprite) ? Art.size(c.sprite) : { w: 16, h: 16 }));
+    const W = Math.max(...sz.map((z) => z.w)), H = Math.max(...sz.map((z) => z.h)), k = Math.max(1, Math.floor(Math.min(64 / W, 88 / H)));
+    return { k, h: H * k };
+  }
+  function drawPic(cv, sprite, k) {
+    const Art = root.PHArt; if (!Art || !Art.has(sprite)) return;
+    const z = Art.size(sprite); cv.width = z.w; cv.height = z.h; cv.style.width = z.w * k + 'px'; cv.style.height = z.h * k + 'px';
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(Art.frameCanvas(sprite, 0), 0, 0);
+  }
   // 자리 후보 바꾸기: 앱 설정(profile.json furniture)에 저장 -> 같은 그림 세트로 화면을 다시 엶 (지금 자리·탭 그대로 이어짐, js/artset.js resume)
   async function swap(slotId, sprite) {
     if (U.busy) return null;
@@ -219,9 +245,30 @@
     U.busy = false;
     if (!r || !r.ok) { say(line('fail')); U.last = { slot: slotId, sprite, error: true }; return null; }
     U.last = { slot: slotId, sprite, swapped: true };
+    // 다시 연 뒤 두부 한마디 (부기 공용판 v01 1-2 swapped / 후보에 따라 기능이 바뀌면 swappedFn). 다시 읽어도 남게 sessionStorage
+    const cand = slot.candidates.find((c) => c.sprite === sprite) || {}, before = slot.candidates.find((c) => c.sprite === slot.sprite) || {}, fnChanged = cand.feature && cand.feature !== before.feature;
+    try { sessionStorage.setItem(SWAP_KEY, JSON.stringify({ furn: cand.name || sprite, fn: fnChanged ? ((FX.get(cand.feature) || {}).label || '') : '' })); } catch (e) { /* 말만 못 함 */ }
     const g = Game(), resume = Object.assign({ entered: true, tab: 'home' }, g ? g.resumeState() : {});
     if (root.PHDesktop && root.PHDesktop.setArtSet) root.PHDesktop.setArtSet(root.PH_ART_SET, resume);
     return U.last;
+  }
+  // 기록 편집 + 추가 (js/habit_edit_ui.js, 2026-10-08 피드백 4): 새 기록 칸에 붙일 수 있는 가구 = 켜진 기능이 없는 가구 (다른 기능을 몰래 빼앗지 않음)
+  //   -> [{ key, name }] 이름 순. 가구 그림이 없는 화면(브라우저 시험 등)이면 빈 목록
+  function freeFurniture() {
+    if (!L || !TB || !root.PHInteractLogic || !FS()) return [];
+    const m = map();
+    return allKeys().filter((k) => !m[k] || FS().state(m[k]) === 'off').map((key) => ({ key, name: FX.nameOf(key) }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  }
+  // 기능이 붙은 가구 key (없으면 null)
+  function linkedTo(fid) { if (!L || !TB || !root.PHInteractLogic || !FS()) return null; return FX.keysWith(map(), fid)[0] || null; }
+  // 가구 하나에 기능 붙이기 (목록 없이). 쓰는 곳: 기록 편집 + 추가. 이미 다른 켜진 기능이 붙은 가구면 안 붙임 (taken)
+  async function linkTo(key, fid) {
+    if (!FX.get(fid) || !allKeys().includes(key)) return { ok: false, code: 'bad' };
+    const m = map(); if (m[key] && m[key] !== fid && FS().state(m[key]) !== 'off') return { ok: false, code: 'taken', fid: m[key] };
+    await FS().setLinks(FX.setLink(allKeys(), FS().links, key, fid));
+    U.last = { key, fid, from: 'linkTo' };
+    return { ok: true, key, fid, furn: FX.nameOf(key) };
   }
   async function reset() {
     if (U.busy) return;
@@ -263,7 +310,16 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  root.PHFurnishUI = Object.assign(U, { setMode, toggle, onClick, openMenu, closeMenu, choose, swap, reset, drawTags,
+  const SWAP_KEY = 'pixel-house.swapped';
+  // 가구를 바꾸고 집을 다시 연 뒤: 집이 움직이기 시작하면 swapped(swappedFn) 한 줄 (5초 안에 못 하면 말 없이 넘어감)
+  function saySwapped() {
+    let v = null; try { v = JSON.parse(sessionStorage.getItem(SWAP_KEY) || 'null'); sessionStorage.removeItem(SWAP_KEY); } catch (e) { v = null; }
+    if (!v || !v.furn) return;
+    let n = 0; const t = setInterval(() => { const g = G(); if (++n > 50) { clearInterval(t); return; } if (!g || g.mode !== 'play' || !g.active) return; clearInterval(t);
+      const k = v.fn && (LN().swappedFn || []).length ? 'swappedFn' : 'swapped', text = line(k, { furn: v.furn, fn: v.fn }); U.swapSaid = text; say(text); }, 100);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', saySwapped); else setTimeout(saySwapped, 0);
+  root.PHFurnishUI = Object.assign(U, { setMode, toggle, onClick, openMenu, closeMenu, choose, swap, reset, drawTags, freeFurniture, linkTo, linkedTo,
     state: () => ({ on: U.on, menu: U.menu ? Object.assign({}, U.menu) : null, busy: U.busy, last: U.last, log: U.log.slice(), map: map(),
       tags: U.els ? [...U.els.tags.querySelectorAll('.fn-tag')].map((t) => ({ key: t.dataset.key, fn: t.dataset.fn, text: t.textContent })) : [] }) });
 })(window);

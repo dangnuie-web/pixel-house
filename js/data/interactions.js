@@ -52,6 +52,8 @@
       stairs: { fx: 'none', area: true }, garden: { fx: 'none', area: true }, veranda: { fx: 'none', area: true },
     },
     DEFAULT: { fx: 'shake' },
+    // 자리 후보 그림이 type과 다를 때 덮는 값 (js/interact_logic.js spots). 공용 원룸 스탠드 자리(type floorlamp)에 산세베리아 = 흔들림 + 일반 대사 (부기 공용판 v01 5절 2번)
+    sprites: { plant_snake: { fx: 'shake' } },
     // B 물 화분 (토리 결정 2026-10-03: sink_v 그림 안 창가 화분. 무늬 waterplant_0/1/2를 sink_v 다음에 덮어 그림, 자리 = 그림 JSON px·py)
     //   단계: 오늘 물 칸 수 0~1 = base / 2~4 = grow / 5~6 = bloom. 시들기 없음. 그림이 없는 세트는 sink_v 그대로
     //   sparkleAt: 꽃 필 때·6칸이 될 때 반짝임 자리 (무늬 전달 "(27,145) 근처")

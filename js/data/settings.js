@@ -36,8 +36,11 @@
     //   2026-10-08 설정 묶음(js/profile.js, profiles/*): 아래는 공용 기본값 (원룸 room1). 제작자 판(v12 등 세트·캐릭터)은 profiles/player가 통째로 바꿈
     //   공용판 캐릭터 그림(chars.player.sprite)은 온보딩에서 고른 아바타로 바뀜 (js/profile.js)
     ART_SET_DEFAULT: 'room1',
+    ROOM_PASS_QUIET: ['living'], // 다른 방 가는 길에 지나가기만 하면 공간 대사를 안 하는 공간 (부기 새 방 v01 4절: 투룸·쓰리룸 거실)
     ART_SETS: {
       room1: { label: '원룸', chars: { player: { sprite: 'avatar1' }, dubu: { sprite: 'dubuM', fallback: { sprite: 'dubu' } } } }, // 무늬 공용판원룸 v01 (256x240)
+      room2: { label: '투룸', chars: { player: { sprite: 'avatar1' }, dubu: { sprite: 'dubuM', fallback: { sprite: 'dubu' } } } }, // 무늬 공용판투룸쓰리룸 v01 (336x256)
+      room3: { label: '쓰리룸', chars: { player: { sprite: 'avatar1' }, dubu: { sprite: 'dubuM', fallback: { sprite: 'dubu' } } } }, // 같은 문서 (384x320)
     },
     INTRO_PLAYER: true, // 2026-10-03 토리 전달: 제작자 캐릭터 v02로 입장 장면 넣음
     // 입장 뒤 조작 (제작자 결정 2026-10-03: "입장 후 플레이어가 움직이고, 두부는 그냥 돌아다녀")

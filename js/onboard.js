@@ -17,7 +17,9 @@
   const catOf = () => OB.cat || CAT0();
   const fill = (s) => { const t = String(s || '').split('{user}').join(OB.name || ''); return root.PHProfile && root.PHProfile.fillCat ? root.PHProfile.fillCat(t, catOf()) : t.replace(/\{cat(\|[^}]+)?\}/g, catOf()); };
   const strip = (s) => (root.PHWorld ? root.PHWorld.parseLine(s).say : String(s).replace(/\([^)]*\)/g, '').trim());
-  function say(line) { OB.line = strip(fill(line)); const b = $('ob-say'); if (b) b.textContent = OB.line; }
+  // 말풍선 글: 마지막 어절은 줄바꿈 없이 묶음 ("남아요냥 / ~"처럼 물결표만 떨어지지 않게, 무늬 공용판후속 v01 3-1 #4)
+  function sayHtml(t) { const i = String(t).lastIndexOf(' '); return i < 0 ? `<span class="nw">${esc(t)}</span>` : esc(t.slice(0, i + 1)) + `<span class="nw">${esc(t.slice(i + 1))}</span>`; }
+  function say(line) { OB.line = strip(fill(line)); const b = $('ob-say'); if (b) b.innerHTML = sayHtml(OB.line); }
 
   function drawSprite(cv, key, scale) {
     const Art = root.PHArt; if (!cv || !Art || !Art.has(key)) return;
@@ -25,16 +27,44 @@
     const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.drawImage(Art.frameCanvas(key, 0), 0, 0, cv.width, cv.height);
   }
-  function drawHouseThumb(cv) { // 집 목록 그림: 배치표 바탕 + 기본 가구를 한 장으로 줄여서 (정수 배율 1)
-    const Art = root.PHArt, Lay = root.PH_LAYOUT; if (!cv || !Art || !Lay || !Art.has('background')) return;
-    cv.width = Lay.W; cv.height = Lay.H;
-    const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
-    root.PHRender.drawScene(ctx, { actors: [], t: 0, walkMs: 130 });
+  const FOLDER_ICON = { rows: ['kkkkk.......', 'kYYYYk......', 'kkkkkkkkkkkk', 'kyYYYYYYYYYk', 'kYYYYYYYYYYk', 'kYYYYYYYYYYk', 'kYYYYYYYYYYk', 'kkkkkkkkkkkk'], pal: { k: '#29262F', Y: '#F3CF6B', y: '#E0A84A' } }; // 무늬 공용판화면목업 v01 FOLDER_ICON
+  function drawFolder(cv) {
+    if (!cv) return; const F = FOLDER_ICON; cv.width = F.rows[0].length; cv.height = F.rows.length; const ctx = cv.getContext('2d');
+    F.rows.forEach((r, y) => [...r].forEach((c, x) => { if (F.pal[c]) { ctx.fillStyle = F.pal[c]; ctx.fillRect(x, y, 1, 1); } }));
+  }
+  // 경로 보이기: 홈 폴더는 ~ (무늬 3-1 #7). 전체 경로는 title
+  const homeShort = (d) => String(d || '').replace(/^\/Users\/[^/]+(?=\/|$)/, '~');
+  // 공용 집 배치표·그림 (js/house_rooms.js PH_DATA_SETS, js/assets_rooms.js PH_ASSET_SETS). 온보딩 화면은 원룸 세트로 열리므로 다른 집은 여기서 직접 그림
+  const houseData = (h) => ((root.PH_DATA_SETS || {})[h] || {}).PH_LAYOUT_DATA || {};
+  const houseArt = (h) => (root.PH_ASSET_SETS || {})[h] || {};
+  const ROOM_COLOR = { bath: '#AFD2E2', genkan: '#C9C6BF', room: '#E7D5B2', living: '#DDBF98', bedroom: '#EAB8B6', study: '#A2BBA3', dress: '#E9C35C' }; // 무늬 목업 planIcon
+  function drawPlan(cv, h) { // 평면 아이콘: rows 1칸 = 3px, 방마다 색, 벽 먹선, 현관문 노랑
+    const D = houseData(h), R = D.rows; if (!cv || !R) return; const k = 3, T = D.tile || 16;
+    cv.width = R[0].length * k; cv.height = R.length * k; const g = cv.getContext('2d');
+    R.forEach((r, y) => [...r].forEach((ch, x) => {
+      let col = '#9DBE7C';
+      if (ch === '#') col = '#29262F'; else if (ch === 'e') col = '#E9C35C';
+      else if ('.d'.includes(ch)) { const px = x * T + T / 2, py = y * T + T / 2, rm = (D.rooms || []).filter((q) => Array.isArray(q.px) && px >= q.px[0] && px <= q.px[2] && py >= q.px[1] && py <= q.px[3]).pop(); col = rm ? (ROOM_COLOR[rm.id] || '#EEEEEE') : '#EEEEEE'; }
+      g.fillStyle = col; g.fillRect(x * k, y * k, k, k);
+    }));
+  }
+  function rawSprite(g, a, x, y) { // 그림 JSON 첫 장을 낮 색으로 (온보딩 미리보기만. 집 화면은 js/sprites.js)
+    if (!a || !a.frames || !a.frames[0]) return; const P = a.palette || {};
+    a.frames[0].forEach((row, j) => [...row].forEach((c, i) => { const v = P[c]; if (!v || v === 'transparent') return; g.fillStyle = v[0] === '#' ? v : '#' + v; g.fillRect(x + i, y + j, 1, 1); }));
+  }
+  function drawHouseThumb(cv) { // 고른 집 미리보기: 바탕 + 기본 가구, 정수 배율 1 (최대 384x320)
+    if (!cv) return; const D = houseData(OB.house), A = houseArt(OB.house), c = D.canvas; if (!c || !A.background) return;
+    cv.width = c[0]; cv.height = c[1]; cv.style.width = c[0] + 'px'; cv.style.height = c[1] + 'px';
+    const g = cv.getContext('2d'); rawSprite(g, A.background, 0, 0);
+    const ord = (o) => (o.layer === 'floor' ? 0 : o.layer === 'wall' ? 1 : 2);
+    (D.objects || []).filter((o) => o.px != null && A[o.sprite]).slice().sort((p, q) => ord(p) - ord(q) || ((p.sort_y != null ? p.sort_y : p.py + (p.size ? p.size[1] : 0)) - (q.sort_y != null ? q.sort_y : q.py + (q.size ? q.size[1] : 0))))
+      .forEach((o) => rawSprite(g, A[o.sprite], o.px, o.py));
   }
 
   function stepsBar() {
     const names = PL().steps || STEPS;
-    return `<ol class="ob-steps" aria-label="온보딩 단계">${names.map((n, i) => `<li class="${i === OB.step ? 'on' : i < OB.step ? 'past' : ''}" ${i === OB.step ? 'aria-current="step"' : ''}>${esc(n)}</li>`).join('')}</ol>`;
+    // 무늬 공용판후속 v01 3-1 #2: 누르는 칩처럼 안 보이게 번호 원 + 글. 지난 단계 ✓, 지금 = 갈색 원 + 굵게, 다음 = 흐림
+    return `<ol class="ob-steps" aria-label="${esc((PL().stepsLabel || '처음 설정 {n}/{all}단계').replace('{n}', OB.step + 1).replace('{all}', names.length))}">${names.map((n, i) => `<li class="${i === OB.step ? 'on' : i < OB.step ? 'past' : ''}" ${i === OB.step ? 'aria-current="step"' : ''}><span class="n" aria-hidden="true">${i < OB.step ? '✓' : i + 1}</span>${esc(n)}</li>`).join('')}</ol>`;
   }
   function body() {
     const P = PL(), st = STEPS[OB.step];
@@ -48,13 +78,18 @@
       const list = (OB.info && OB.info.avatars) || ['avatar1', 'avatar2', 'avatar3'], nm = P.avatarNames || {};
       return `<h3 class="ob-h">${esc(P.avatarTitle)}</h3><div class="ob-avatars" role="radiogroup">${list.map((a) => `<button type="button" class="ob-av" role="radio" data-av="${esc(a)}" aria-checked="${a === OB.avatar}"><canvas data-cv="${esc(a)}"></canvas><span>${esc(nm[a] || a)}</span></button>`).join('')}</div>`;
     }
-    if (st === 'house') return `<h3 class="ob-h">${esc(P.houseTitle)}</h3><ul class="ob-houses" role="radiogroup">
-      <li><button type="button" class="ob-house" role="radio" data-house="room1" aria-checked="${OB.house === 'room1'}"><canvas id="ob-house-cv"></canvas><span class="ob-house-t"><b>${esc(P.oneRoom)}</b><small>${esc(P.oneRoomNote)}</small></span></button></li></ul>`;
+    if (st === 'house') { // 원룸·투룸·쓰리룸 (무늬 공용판투룸쓰리룸 v01 6절): 칸 = 평면 아이콘(배치표 rows 1칸 3px) + 이름 + 방 구성, 아래 = 고른 집 1배 미리보기 + 한 줄 콘셉트
+      const list = (OB.info && OB.info.houses) || ['room1'], meta = (h) => houseData(h).house || {};
+      return `<h3 class="ob-h">${esc(P.houseTitle)}</h3><ul class="ob-houses" role="radiogroup">${list.map((h) => `<li><button type="button" class="ob-house" role="radio" data-house="${esc(h)}" aria-checked="${OB.house === h}"><canvas data-plan="${esc(h)}" aria-hidden="true"></canvas><span class="ob-house-t"><b>${esc(meta(h).label || h)}</b><small>${esc(meta(h).rooms_ko || '')}</small></span></button></li>`).join('')}</ul>
+      <figure class="ob-preview"><canvas id="ob-house-cv" aria-label="${esc((meta(OB.house).label || OB.house) + ' ' + (P.previewLabel || '미리보기'))}"></canvas><figcaption>${esc(meta(OB.house).concept || '')}</figcaption></figure>`;
+    }
     if (st === 'folder') {
       const f = OB.folder;
-      return `<h3 class="ob-h">${esc(P.folderTitle)}</h3><div class="ob-folder"><code id="ob-dir" title="${esc(f && f.dir)}">${esc(f ? f.dir : '')}</code>
+      // 무늬 3-1 #7: 입력칸처럼 안 보이게 점선 칸 + 폴더 그림 + 보통 글꼴 경로(홈 ~), 파일 이름은 따로 한 줄 (끊기지 않게)
+      return `<h3 class="ob-h">${esc(P.folderTitle)}</h3><div class="ob-folder"><canvas id="ob-folder-cv" aria-hidden="true"></canvas><span id="ob-dir" class="ob-dir" title="${esc(f && f.dir)}">${esc(f ? homeShort(f.dir) : '')}</span>
         <button type="button" id="ob-pick" class="ob-btn">${esc(P.folderBtn)}</button></div>
-        <p class="ob-note">${esc(P.folderNote)}${f ? ` · <span class="ob-file">${esc(f.file)}</span>` : ''}</p>`;
+        ${f ? `<p class="ob-file-row">${esc(f.found ? (P.fileFound || '이어 쓸 파일') : (P.fileNew || '만들 파일'))} <b class="ob-file">${esc(f.file)}</b></p>` : ''}
+        <p class="ob-note">${esc(P.folderNote)}</p>`;
     }
     const LT = root.PHLifeTemplate, rec = (LT && LT.RECOMMEND) || [];
     if (!OB.habits) OB.habits = new Set(rec.filter((r) => r.on).map((r) => r.id));
@@ -70,10 +105,12 @@
       <div class="ob-dubu"><canvas id="ob-dubu-cv" aria-hidden="true"></canvas><p id="ob-say" class="ob-say" aria-live="polite">${esc(OB.line)}</p></div>
       <div class="ob-body">${body()}</div>
       <div class="ob-nav">${OB.step > 0 ? `<button type="button" id="ob-back" class="ob-btn">${esc(P.back)}</button>` : '<span></span>'}
-        <span class="ob-nav-r">${last ? `<button type="button" id="ob-skip" class="ob-btn">${esc(P.skip)}</button><button type="button" id="ob-next" class="ob-btn main">${esc(P.start)}</button>` : `<button type="button" id="ob-next" class="ob-btn main">${esc(P.next)}</button>`}</span></div></div>`;
+        <span class="ob-nav-r">${last ? `<button type="button" id="ob-skip" class="ob-btn ghost">${esc(P.skip)}</button><button type="button" id="ob-next" class="ob-btn main">${esc(P.start)}</button>` : `<button type="button" id="ob-next" class="ob-btn main">${esc(P.next)}</button>`}</span></div></div>`;
     drawSprite($('ob-dubu-cv'), 'dubu_sit', 3);
     el.querySelectorAll('canvas[data-cv]').forEach((c) => drawSprite(c, c.dataset.cv + '_idle', 3));
-    drawHouseThumb($('ob-house-cv'));
+    drawHouseThumb($('ob-house-cv')); drawFolder($('ob-folder-cv'));
+    el.querySelectorAll('canvas[data-plan]').forEach((c) => drawPlan(c, c.dataset.plan));
+    const sb = $('ob-say'); if (sb) sb.innerHTML = sayHtml(OB.line);
     wire(el);
     const f = el.querySelector('#ob-name') || el.querySelector('#ob-cat') || el.querySelector('#ob-habit-new') || el.querySelector('[aria-checked="true"]') || el.querySelector('#ob-next');
     if (f) f.focus();
@@ -88,11 +125,19 @@
     on('#ob-cat', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); next(); } });
     on('#ob-cat', 'input', (e) => { OB.cat = e.target.value; });
     el.querySelectorAll('.ob-av').forEach((b) => b.addEventListener('click', () => { OB.avatar = b.dataset.av; say(pick(L().avatar.pick, 'avatar')); el.querySelectorAll('.ob-av').forEach((x) => x.setAttribute('aria-checked', String(x === b))); }));
-    el.querySelectorAll('.ob-house').forEach((b) => b.addEventListener('click', () => { OB.house = b.dataset.house; say(pick(L().house.pick, 'house')); b.setAttribute('aria-checked', 'true'); }));
+    el.querySelectorAll('.ob-house').forEach((b) => b.addEventListener('click', () => { OB.house = b.dataset.house; say(pick([].concat(L().house['pick_' + OB.house] || [], L().house.pick || []), 'house')); render(); })); // 미리보기·고른 표시를 다시 그림
     on('#ob-pick', 'click', pickFolder);
     el.querySelectorAll('.ob-chip[data-habit]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.habit; if (OB.habits.has(id)) OB.habits.delete(id); else OB.habits.add(id); b.setAttribute('aria-pressed', String(OB.habits.has(id))); }));
     el.querySelectorAll('.ob-chip[data-custom]').forEach((b) => b.addEventListener('click', () => { OB.custom.splice(Number(b.dataset.custom), 1); render(); }));
-    const add = () => { const i = el.querySelector('#ob-habit-new'), v = (i.value || '').replace(/\s+/g, ' ').trim(); if (!v) return; if (!OB.custom.includes(v)) OB.custom.push(v); render(); };
+    // 직접 더하기: 빈칸 = 말 없이 무시, 못 쓰는 이름 = habit.bad, 이미 있음(추천 칩·더한 것) = habit.dup, 더함 = habit.added (부기 공용판 v01 1-1)
+    //   이름 규칙 = 습관 편집과 같음 (js/habit_edit.js checkName: 표를 깨는 글자·숫자로 시작 등)
+    const add = () => {
+      const i = el.querySelector('#ob-habit-new'), v = (i.value || '').replace(/\s+/g, ' ').trim(); if (!v) return;
+      const HE = root.PHHabitEdit, H = L().habit || {}, rec = ((root.PHLifeTemplate && root.PHLifeTemplate.RECOMMEND) || []).find((r) => r.name === v);
+      if (HE && HE.checkName) { try { HE.checkName(v); } catch (e) { say(pick(H.bad, 'habit:bad')); render(); const j = $('ob-habit-new'); if (j) { j.value = v; j.focus(); } return; } }
+      if (rec || OB.custom.includes(v)) { say(pick(H.dup, 'habit:dup')); render(); return; }
+      OB.custom.push(v); say(pick(H.added, 'habit:added')); render();
+    };
     on('#ob-habit-add', 'click', add);
     on('#ob-habit-new', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); add(); } });
   }

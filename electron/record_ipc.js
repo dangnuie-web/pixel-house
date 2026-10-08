@@ -68,7 +68,7 @@ module.exports = function register(o) {
     if (!str(req.name)) throw new Error('이름 형식 오류');
     return RW.addKind(cur, req.name, date);
   }));
-  ipcMain.handle('ph:recordKindRemove', (e, req) => write(req, kindCheck, (cur) => { if (!str(req.name)) throw new Error('이름 형식 오류'); return RW.removeKind(cur, req.name); }));
+  ipcMain.handle('ph:recordKindRemove', (e, req) => write(req, kindCheck, (cur, date) => { if (!str(req.name)) throw new Error('이름 형식 오류'); return RW.removeKind(cur, req.name, date); })); // date = 화면에만 있던 영화·연극을 실제 줄로 적을 때 만든 날
 
   // ---- 버킷리스트 ----
   const bkCheck = (a, b, op) => BK.onlyBucketChanged(a, b, op);
