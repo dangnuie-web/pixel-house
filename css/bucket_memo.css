@@ -26,8 +26,8 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-chk { position: absolute; left: 0; bottom: 0; width: calc(11 * var(--u)); height: calc(10 * var(--u)); max-width: calc(14 * var(--du)); padding: 0; border: 0; background: none; cursor: pointer; }
 .bkm-chk:focus-visible, .bkm-t:focus-visible, .bkm-add:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
 .bkm-chk-i { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
-.bkm-it.edit .bkm-chk-i, .bkm-it.adding .bkm-chk-i { position: absolute; left: 0; bottom: 0; width: calc(11 * var(--u)); height: calc(10 * var(--u)); max-width: calc(14 * var(--du)); opacity: .55; }
-.bkm-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text; }
+.bkm-it.adding .bkm-chk-i { position: absolute; left: 0; bottom: 0; width: calc(11 * var(--u)); height: calc(10 * var(--u)); max-width: calc(14 * var(--du)); opacity: .55; }
+.bkm-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .bkm-date { flex: none; margin-left: calc(4 * var(--du)); font-size: max(10px, calc(6.5 * var(--du))); font-weight: 500; color: #3F6340; }
 .bkm-it.leaving { animation: bkm-leave 120ms steps(3, end) 880ms forwards; }
 @keyframes bkm-leave { to { transform: translateX(calc(8 * var(--du))); opacity: 0; } }
@@ -36,7 +36,8 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-in { flex: 1; min-width: 0; height: calc(12 * var(--du)); padding: 0; border: 0; border-bottom: max(1px, calc(.75 * var(--du))) dashed #3F6340; background: transparent; font: max(12px, calc(8 * var(--du))) var(--font); color: #29262F; outline: none; }
 .bkm-in.bad { border-bottom-color: #94443A; }
 .bkm-del { flex: none; margin-left: calc(3 * var(--du)); padding: 0 4px; border: 0; background: none; font: 500 max(10px, calc(6.5 * var(--du))) var(--font); color: #94443A; cursor: pointer; }
-/* 적기·고치기 칸 [그만두기][저장] (2026-10-08 피드백 2). 메모지 = 글자 버튼(지우기와 같은 결), 저장만 초록 펜 바탕 */
+/* 지우기 = 글씨를 누른 줄 오른쪽에만 (피드백 3). 적기 칸 [그만두기][저장] = 카드만 (피드백 2). 메모지 창 저장은 아래 막대 Esc 닫기 옆 (.bkm-barsave, 피드백 3) */
+.bkm-del:focus-visible { outline: 2px solid #29262F; outline-offset: 1px; }
 .bkm-btns { flex: none; display: inline-flex; align-items: center; gap: calc(2 * var(--du)); margin-left: calc(3 * var(--du)); }
 .bkm-cancel, .bkm-save { height: calc(11 * var(--du)); padding: 0 calc(3 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); font: 600 max(10px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
 .bkm-cancel { background: none; color: #86593A; }
@@ -52,6 +53,7 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-esc { font-size: max(10px, calc(6 * var(--du))); font-weight: 500; color: #86593A; }
 .bkm-undo { display: inline-flex; align-items: center; gap: calc(4 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); }
 .bkm-restore { height: calc(13 * var(--du)); padding: 0 calc(4 * var(--du)); border: 0; border-radius: calc(2 * var(--du)); background: #86593A; color: #F7F0E1; font: 600 max(11px, calc(6.5 * var(--du))) var(--font); cursor: pointer; }
+.bkm-bar .bkm-barsave { height: calc(13 * var(--du)); padding: 0 calc(5 * var(--du)); font-size: max(11px, calc(6.5 * var(--du))); }
 .bkm-bar button:focus-visible { outline: 2px solid #29262F; outline-offset: 2px; }
 .bkm-say { margin: 0; display: flex; gap: 6px; align-items: center; font-size: max(12px, calc(7 * var(--du))); }
 /* 벽 자리 고르기 (가구 기능 연동 .fn-hover 값 그대로) */
@@ -77,8 +79,8 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-cardwrap .bkm-chk { position: static; width: auto; height: auto; max-width: none; padding: 0; border: 0; background: none; cursor: pointer; display: inline-flex; }
 .bkc-box { flex: none; width: 20px; height: 20px; box-sizing: border-box; border: 2px solid var(--A); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; background: var(--ui-field); color: var(--ui-sel-tx); }
 .bkc-box.on { background: var(--ui-sel); border-color: var(--ui-sel); }
-.bkm-cardwrap .bkm-it.edit .bkc-box, .bkm-cardwrap .bkm-it.adding .bkc-box { opacity: .55; }
-.bkm-cardwrap .bkm-t { flex: 1; min-width: 0; cursor: text; }
+.bkm-cardwrap .bkm-it.adding .bkc-box { opacity: .55; }
+.bkm-cardwrap .bkm-t { flex: 1; min-width: 0; cursor: pointer; }
 .bkm-cardwrap .bkm-date { margin-left: 8px; font-size: 13px; color: var(--ui-sub); }
 .bkm-cardwrap .bkm-add { height: 28px; padding: 0 10px; border: 1px solid var(--ui-chip-line); border-radius: 5px; background: var(--ui-field); font: 500 13px var(--font); color: var(--ui-sub); cursor: pointer; }
 .bkm-cardwrap .bkm-add:hover { background: var(--ui-ring); }
@@ -95,7 +97,7 @@ html.night .bkm-paper { filter: drop-shadow(var(--du) calc(2 * var(--du)) 0 rgba
 .bkm-cardwrap .bkm-it.leaving { animation: bkc-leave 120ms steps(3, end) 880ms forwards; }
 @keyframes bkc-leave { to { transform: translateX(8px); opacity: 0; } }
 .bkm-cardwrap button:focus-visible, .bkm-cardwrap .bkm-t:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
-/* 카드 모양 적기·고치기 칸 버튼 = 다른 폼 [그만두기][저장] 결 (피드백 2) */
+/* 카드 모양 적기 칸 버튼 = 다른 폼 [그만두기][저장] 결 (피드백 2) */
 .bkm-cardwrap .bkm-btns { gap: 6px; margin-left: 4px; }
 .bkm-cardwrap .bkm-cancel, .bkm-cardwrap .bkm-save { height: 30px; padding: 0 14px; border-radius: 6px; font: 600 14px var(--font); }
 .bkm-cardwrap .bkm-cancel { border: 2px solid var(--A); background: var(--ui-paper); color: var(--A); }
