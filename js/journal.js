@@ -80,9 +80,11 @@
         tabs().map((t) => `<li role="option" class="jn-opt ${t.id === c.id ? 'on' : ''}" data-tab="${esc(t.id)}" aria-selected="${t.id === c.id}" tabindex="-1" data-focus="jn-opt:${esc(t.id)}">${esc(t.label)}</li>`).join('') + '</ul></div>';
       return h;
     }
-    return `<div class="jn-tabs ${st}" data-style="${st}" role="tablist" aria-label="생활일지 보기">` + tabs().map((t) => {
+    // 겹친 폴더 탭 쌓는 순서 (A7 2026-10-14): 왼쪽 탭이 늘 위 = --zi 탭 수 - 순서 (탭 수와 상관없이). 고른 탭은 CSS .on 이 맨 위 (css/journal.css)
+    const all = tabs();
+    return `<div class="jn-tabs ${st}" data-style="${st}" role="tablist" aria-label="생활일지 보기">` + all.map((t, i) => {
       const on = t.id === c.id;
-      return `<button type="button" role="tab" class="jn-tab ${on ? 'on' : ''}" id="jn-tab-${esc(t.id)}" data-tab="${esc(t.id)}" aria-selected="${on}" aria-controls="jn-panel" tabindex="${on ? 0 : -1}" data-focus="jn:${esc(t.id)}">${esc(t.label)}</button>`;
+      return `<button type="button" role="tab" class="jn-tab ${on ? 'on' : ''}" style="--zi:${all.length - i}" id="jn-tab-${esc(t.id)}" data-tab="${esc(t.id)}" aria-selected="${on}" aria-controls="jn-panel" tabindex="${on ? 0 : -1}" data-focus="jn:${esc(t.id)}">${esc(t.label)}</button>`;
     }).join('') + '</div>';
   }
   function habitPanel(d, t) {

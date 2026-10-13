@@ -19,7 +19,8 @@
   const strip = (s) => (root.PHWorld ? root.PHWorld.parseLine(s).say : String(s).replace(/\([^)]*\)/g, '').trim());
   // 말풍선 글: 마지막 어절은 줄바꿈 없이 묶음 ("남아요냥 / ~"처럼 물결표만 떨어지지 않게, 무늬 공용판후속 v01 3-1 #4)
   function sayHtml(t) { const i = String(t).lastIndexOf(' '); return i < 0 ? `<span class="nw">${esc(t)}</span>` : esc(t.slice(0, i + 1)) + `<span class="nw">${esc(t.slice(i + 1))}</span>`; }
-  function say(line) { OB.line = strip(fill(line)); const b = $('ob-say'); if (b) b.innerHTML = sayHtml(OB.line); }
+  // said = 지나간 줄 (시험: 느린 컴퓨터에선 hello 두 줄이 3초 뒤 이름 묻기로 넘어가 있음, 2026-10-14)
+  function say(line) { OB.line = strip(fill(line)); (OB.said = OB.said || []).push(OB.line); if (OB.said.length > 20) OB.said.shift(); const b = $('ob-say'); if (b) b.innerHTML = sayHtml(OB.line); }
 
   function drawSprite(cv, key, scale) {
     const Art = root.PHArt; if (!cv || !Art || !Art.has(key)) return;
@@ -210,6 +211,6 @@
     if (OB.step === 0 && OB.line === strip(hello[hello.length - 1] || '')) say(askLine('name'));
   }
   // 시험·확인용
-  function state() { return { on: OB.on, step: STEPS[OB.step], name: OB.name, cat: catOf(), avatar: OB.avatar, house: OB.house, folder: OB.folder, habits: Array.from(OB.habits || []), custom: OB.custom.slice(), line: OB.line, busy: OB.busy, done: OB.done, result: OB.result || null }; }
+  function state() { return { on: OB.on, step: STEPS[OB.step], name: OB.name, cat: catOf(), avatar: OB.avatar, house: OB.house, folder: OB.folder, habits: Array.from(OB.habits || []), custom: OB.custom.slice(), line: OB.line, said: (OB.said || []).slice(), busy: OB.busy, done: OB.done, result: OB.result || null }; }
   root.PHOnboard = { start, state, next, go, finish, pickFolder, STEPS };
 })(window);

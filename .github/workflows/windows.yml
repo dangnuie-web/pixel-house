@@ -58,10 +58,11 @@ jobs:
         if: always()
         run: npx electron-builder --win --publish never
 
+      # 앱 코드는 resources/app.asar 하나로 묶임 (2026-10-14 Actions 38449050638: 처음엔 resources/app/package.json 을 찾아 실패 — 시험 경로가 틀렸음, 맥 .app 도 app.asar)
       - name: 설치 파일 안 Electron 고지 확인
         if: always()
         run: |
-          node -e "const fs=require('fs'),r='dist/win-unpacked/';for(const f of ['PixelHouse.exe','resources/LICENSE.electron.txt','resources/LICENSES.chromium.html','resources/app/package.json'])if(!fs.existsSync(r+f)){console.error('설치 파일에 없음: '+f);process.exit(1)};console.log('실행 파일·고지 파일 있음')"
+          node -e "const fs=require('fs'),r='dist/win-unpacked/';for(const f of ['PixelHouse.exe','resources/LICENSE.electron.txt','resources/LICENSES.chromium.html','resources/app.asar'])if(!fs.existsSync(r+f)){console.error('설치 파일에 없음: '+f);process.exit(1)};console.log('실행 파일·고지 파일 있음')"
 
       # 친구가 하는 것과 같게: 설치 파일을 조용히(/S) 설치 → 설치된 PixelHouse.exe 를 켬
       - name: 설치 (사용자 폴더, 조용히)

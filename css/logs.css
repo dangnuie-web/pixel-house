@@ -69,9 +69,7 @@ html.night .lm-box { background: #EFE3CB; box-shadow: inset 0 -3px 0 #D2C2A3; fi
 .life button.lg-open:focus-visible, .life button.lg-add:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
 
 /* ===== 생활일지 대변·식사 탭 ===== */
-.jn-tabs.folder .jn-tab:nth-child(6) { z-index: 1; } .jn-tabs.folder .jn-tab:nth-child(7) { z-index: 0; }
-.jn-tabs.folder .jn-tab:nth-child(4) { z-index: 3; } .jn-tabs.folder .jn-tab:nth-child(5) { z-index: 2; }
-.jn-tabs.folder .jn-tab.on { z-index: 9; }
+/* 탭 쌓는 순서는 css/journal.css 한 곳 (A7 2026-10-14: 여기 nth-child 4~7 덮어쓰기 뺌) */
 .lg-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .lg-count { margin: 0; font-size: 14px; color: var(--w); }
 .lg-count b { color: var(--A); }

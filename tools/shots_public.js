@@ -42,7 +42,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     // ---- 1. 첫 실행 = 온보딩 ----
     let st = await js(`({ id: PHProfile.id, onboard: PHProfile.isOnboard(), scr: !document.getElementById('screen-onboard').hidden, start: !document.getElementById('screen-start').hidden, set: PH_ART_SET, brand: document.querySelector('#tabs .brand').textContent, title: document.title })`);
     ok('공용 묶음 + 첫 실행: 온보딩 화면, 입장 화면 숨김, 원룸 세트, 이름표 Pixel House', st.id === 'default' && st.onboard && st.scr && !st.start && st.set === 'room1' && st.brand === 'Pixel House' && st.title === 'Pixel House', st);
-    ok('온보딩 첫 줄 = 부기 hello', (await ob()).line.includes('처음 뵙겠어요'), await ob());
+    ok('온보딩 첫 줄 = 부기 hello (지나간 줄 첫째, 2026-10-14: 윈도우 서버는 화면이 늦게 떠 3.2초 뒤 이름 묻기로 넘어가 있었음)', ((await ob()).said || [])[0] && (await ob()).said[0].includes('처음 뵙겠어요'), await ob());
     ok('기록 폴더 기본 = 시험 폴더 (PH_DEFAULT_DIR), 기록 파일 아직 없음', (await ob()).folder && (await ob()).folder.dir === DIR && !(await ob()).folder.found && !fs.existsSync(LIFE), await ob());
     await shot('public_01_onboard_hello');
     // 이름: 빈칸 -> 안내, "민지" -> 다음
@@ -81,6 +81,9 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
         rooms: document.querySelector('.ob-rooms').textContent, roomsShown: getComputedStyle(document.querySelector('.ob-rooms')).display !== 'none', concept: document.querySelector('.ob-concept').textContent,
         note: (document.querySelector('.ob-preview .ob-note') || {}).textContent || '', next: R(nx), nav: R(document.querySelector('.ob-nav')), navBg: getComputedStyle(document.querySelector('.ob-nav')).backgroundColor, vh: innerHeight, scroll: sc.scrollHeight > sc.clientHeight, padTop: getComputedStyle(sc).paddingTop }; })()`);
     const PLN = await js('PH_ONBOARD_PLAIN');
+    // (2026-10-14 윈도우 Actions) 기본 창 크기는 화면 작업 영역을 따라감 — 서버 화면(1024x768)에선 창 높이 681 이라 좁은 모양이 됨(앱 규칙대로, [다음]은 보였음).
+    //   넓은 창 확인은 맥 기본 창과 같은 1200x932 로 맞춘 뒤, 끝나면 되돌림
+    const [WB, HB] = win.getContentSize(); if (WB < 1200 || HB < 932) { win.setContentSize(1200, 932); await sleep(400); }
     { const hs = await houseGeo();
       ok('집 단계: 원룸·투룸·쓰리룸 세 칸 (평면 아이콘 48x45·63x48·72x60 = 1칸 3px 그대로), 원룸 골라짐, 미리보기 256x240', (await ob()).step === 'house' && hs.n === 'room1:원룸:true,room2:투룸:false,room3:쓰리룸:false' && hs.plans === '48x45,63x48,72x60' && hs.w === 256 && hs.h === 240, hs);
       ok('집 단계 넓은 창(기본 창): 카드 740·위 여백 24, 왼쪽 목록 280 / 20 띄고 오른쪽 미리보기 틀 안쪽 384x320, 아이콘 틀 72x60 세 칸 같음(아래 맞춤), 글 x 세 칸 같음, 방 구성 목록에', hs.isHouse && hs.card.w === 740 && hs.padTop === '24px' && hs.list.w === 280 && hs.box.x - hs.list.r === 20 && hs.boxIn.join() === '384,320' && Math.abs(hs.box.y - hs.list.y) <= 1 && hs.frames === '72x60,72x60,72x60' && hs.planBottom === '0,0,0' && new Set(hs.textX.split(',')).size === 1 && hs.smallShown === 'true,true,true' && !hs.roomsShown, hs);
@@ -109,6 +112,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
         await shot('public_03d_onboard_house_narrow_bottom');
         await js(`document.getElementById('screen-onboard').scrollTop = 0`); }
       win.setContentSize(W0, H0); await sleep(400); }
+    { const [a, b] = win.getContentSize(); if (a !== WB || b !== HB) { win.setContentSize(WB, HB); await sleep(400); } } // 넓은 창 확인 전 기본 크기로
     await clickSel('.ob-house[data-house="room1"]'); await sleep(200);
     await shot('public_03_onboard_house');
     await clickSel('#ob-next'); await sleep(250);

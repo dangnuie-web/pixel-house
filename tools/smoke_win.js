@@ -21,7 +21,7 @@ const { spawn, execFileSync } = require('child_process');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const args = process.argv.slice(2);
 const shotAt = args.indexOf('--shot');
-const pos = args.filter((a, i) => !a.startsWith('--') && i !== shotAt + 1);
+const pos = args.filter((a, i) => !a.startsWith('--') && !(shotAt >= 0 && i === shotAt + 1)); // --shot 없을 때 첫 인자를 빼던 것 고침 (2026-10-14)
 const exe = pos[0], appDir = pos[1] || null;
 const shotDir = shotAt >= 0 ? path.resolve(args[shotAt + 1]) : null;
 const HIDE = args.includes('--hide');
@@ -51,6 +51,17 @@ function moveCursor(x, y) {
   if (!WIN) return false;
   const ps = 'Add-Type -Name U -Namespace W -MemberDefinition \'[DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);\'; [W.U]::SetCursorPos(' + Math.round(x) + ',' + Math.round(y) + ') | Out-Null';
   execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore', timeout: 30000 });
+  return true;
+}
+
+// 윈도우: 펫을 따라가며 커서 옮기기. 상태 파일(PH_SMOKE_STATE)의 지금 펫 자리(cx, by - th*0.4)로 0.15초마다, 클릭 받기(ignore false)가 되면 그만
+function followCursor(stateFile, n) {
+  if (!WIN) return false;
+  const ps = 'Add-Type -Name U -Namespace W -MemberDefinition \'[DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);\'; '
+    + 'for ($i = 0; $i -lt ' + n + '; $i++) { try { $s = Get-Content -Raw -LiteralPath \'' + stateFile + '\' | ConvertFrom-Json } catch { Start-Sleep -Milliseconds 150; continue }; '
+    + 'if ($s.pet -eq $null) { break }; if ($i -gt 2 -and -not $s.pet.ignore) { break }; '
+    + '[W.U]::SetCursorPos([int]$s.pet.cx + ($i % 2), [int]($s.pet.by - $s.pet.th * 0.4)) | Out-Null; Start-Sleep -Milliseconds 150 }';
+  execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore', timeout: 60000 });
   return true;
 }
 
@@ -126,10 +137,13 @@ function moveCursor(x, y) {
     if (pet && shotDir) { await sleep(1500); const pc = await connect(pet.webSocketDebuggerUrl); await pc.evaluate(`document.body.style.background = '#B9C7D6'; 0`); await sleep(300); await pc.shot(path.join(shotDir, 'pet.png')); await pc.evaluate(`document.body.style.background = ''; 0`); pc.close(); }
     if (st && st.pet && WIN) {
       // 커서 감시: 펫 몸(발 위 40%) 위로 → 화면 쪽 hit → 클릭 받기, 멀리 → 다시 통과 (C2)
+      // (2026-10-14 Actions 38449050638: 첫 판은 7초 전 펫 자리로 커서를 옮겨 실패 — 그사이 펫이 걸어감(cx 소수 = 걷는 중), PowerShell 한 번 띄우는 데 1~3초)
+      //   -> PowerShell 하나가 0.15초마다 상태 파일의 지금 펫 자리를 읽어 커서를 따라 붙임(1px 씩 흔들어 mousemove 를 만듦), 클릭 받기가 되면 멈춤
       const p = st.pet, bx = Math.round(p.cx), by = Math.round(p.by - p.th * 0.4);
-      moveCursor(bx, by); await sleep(400); moveCursor(bx + 1, by); await sleep(1200);
+      followCursor(stateFile, 40);
       const a = state();
-      check('커서가 펫 위에 오면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, a && a.pet);
+      const hit = pet ? await (async () => { try { const pc = await connect(pet.webSocketDebuggerUrl); const h = await pc.evaluate('JSON.stringify(window.__petDebug().hit)'); pc.close(); return h; } catch (e) { return 'CDP 실패'; } })() : null;
+      check('커서가 펫 위에 오면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, { pet: a && a.pet, rendererHit: hit });
       moveCursor(Math.max(0, bx - 700), Math.max(0, by - 500)); await sleep(1200);
       const b = state();
       check('커서가 떠나면 다시 클릭 통과 (펫 옆 바탕화면이 눌림)', b && b.pet && b.pet.ignore === true, b && b.pet);
