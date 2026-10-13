@@ -66,7 +66,10 @@ const BODY = { x: 250, y: 700 }, AIR = { x: 250, y: 560 }, OUT = { x: 50, y: 50 
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 ok('통과 중 커서가 펫 몸 상자 안 → main 이 클릭 받기로 (화면 쪽 mousemove 가 안 와도, 윈도우 Actions 38453257327)', eq(C.step({ ignore: true, said: null }, BODY, BOX, B), { ignore: false, resetHit: true, clearSaid: false }));
 ok('통과 중 창 안이지만 몸 밖(머리 위 빈 곳) → 그대로 통과', C.step({ ignore: true, said: null }, AIR, BOX, B).ignore === null);
-ok('화면 쪽이 "펫 아님"이라 한 뒤엔 상자 안이어도 다시 안 끔 (깜빡임 없음), 창 밖에 나가면 잊음', C.step({ ignore: true, said: false }, BODY, BOX, B).ignore === null && eq(C.step({ ignore: true, said: false }, OUT, BOX, B), { ignore: null, resetHit: false, clearSaid: true }));
+ok('화면 쪽이 "펫 아님"이라 한 뒤엔 상자 안에 있는 동안 다시 안 켬 (깜빡임 없음), 창 밖에 나가면 잊음', C.step({ ignore: true, said: false }, BODY, BOX, B).ignore === null && eq(C.step({ ignore: true, said: false }, OUT, BOX, B), { ignore: null, resetHit: false, clearSaid: true }));
+{ // 창 안 빈 곳에서 "펫 아님" → 창을 안 나가고 몸 위로 (Actions 38454677265 실패 순서): 빈 곳에서 잊고, 몸 위에서 켬
+  let st = { ignore: true, said: false }; const r1 = C.step(st, AIR, BOX, B); if (r1.clearSaid) st.said = null; const r2 = C.step(st, BODY, BOX, B);
+  ok('창 안 빈 곳("펫 아님") → 창 안 나가고 몸 위 → 클릭 받기', r1.clearSaid && r1.ignore === null && r2.ignore === false, [r1, r2]); }
 ok('클릭 받기 중 커서가 창 밖 → 다시 통과 + 화면 hit 모름으로', eq(C.step({ ignore: false }, OUT, BOX, B), { ignore: true, resetHit: true, clearSaid: true }));
 ok('클릭 받기 중 커서가 창 안 → 그대로 (화면 쪽 판단)', C.step({ ignore: false }, { x: 200, y: 600 }, BOX, B).ignore === null);
 ok('말풍선 메뉴가 열려 있으면 창 안 어디든 클릭 받기', C.step({ ignore: true, dialog: true, said: false }, AIR, BOX, B).ignore === false);

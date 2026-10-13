@@ -11,7 +11,7 @@ function inWin(p, b) { return !!p && !!b && p.x >= b.x && p.y >= b.y && p.x < b.
 function inBody(p, box) { return !!p && !!box && Math.abs(p.x - box.cx) <= box.tw * 0.3 && p.y >= box.by - box.th * 0.85 && p.y <= box.by - box.th * 0.1; }
 // s = { ignore, drag, hidden, dialog, said }, said = 화면 쪽이 마지막에 알려 준 hit (true|false|null=모름)
 // -> { ignore: 바꿀 값 | null, resetHit: 화면 쪽 hit 를 모름으로, clearSaid: said 를 null 로 }
-//   화면 쪽이 "그 점은 펫 아님(false)"이라고 한 뒤로는 커서가 창 밖에 나갔다 올 때까지 상자만 보고 다시 끄지 않음 (투명한 점에서 깜빡이지 않게)
+//   화면 쪽이 "그 점은 펫 아님(false)"이라고 하면 커서가 몸 상자 안에 있는 동안은 다시 켜지 않음 (상자 안 투명한 점에서 깜빡이지 않게). 상자 밖으로 나가면 잊음 (2026-10-14 고침: 전엔 창 밖까지)
 //   말풍선 메뉴가 열려 있으면(dialog) 창 안 어디든 클릭 받기 (메뉴 칸을 누를 수 있게)
 function step(s, p, box, bounds) {
   const none = { ignore: null, resetHit: false, clearSaid: false };
@@ -20,7 +20,9 @@ function step(s, p, box, bounds) {
   if (s.ignore) {
     if (!inside) return s.said === null || s.said === undefined ? none : { ignore: null, resetHit: false, clearSaid: true };
     if (s.dialog) return { ignore: false, resetHit: true, clearSaid: false };
-    return inBody(p, box) && s.said !== false ? { ignore: false, resetHit: true, clearSaid: false } : none;
+    if (inBody(p, box)) return s.said !== false ? { ignore: false, resetHit: true, clearSaid: false } : none;
+    // 몸 상자 밖(창 안 빈 곳)에 있으면 "펫 아님"을 잊음 → 다시 몸 위로 오면 켬 (Actions 38454677265: 빈 곳에서 "펫 아님" 뒤 창을 안 나가고 몸 위로 옮기니 끝까지 안 켜졌음)
+    return s.said === false ? { ignore: null, resetHit: false, clearSaid: true } : none;
   }
   return inside ? none : { ignore: true, resetHit: true, clearSaid: true };
 }

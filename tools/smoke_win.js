@@ -148,14 +148,15 @@ function followCursor(stateFile, n) {
       //   -> PowerShell 하나가 0.15초마다 상태 파일의 지금 펫 자리를 읽어 커서를 따라 붙임(1px 씩 흔들어 mousemove 를 만듦), 클릭 받기가 되면 멈춤
       const p = st.pet, bx = Math.round(p.cx), by = Math.round(p.by - p.th * 0.4);
       const petDbg = async () => { if (!pet) return null; try { const pc = await connect(pet.webSocketDebuggerUrl); const h = await pc.evaluate('JSON.stringify({ hit: window.__petDebug().hit, lastMove: window.__petDebug().lastMove, now: Date.now() })'); pc.close(); return JSON.parse(h); } catch (e) { return 'CDP 실패'; } };
-      // 진단 (판정 아님, 2026-10-14 Actions 38453257327 뒤): 펫 창 안이지만 몸 상자 밖(머리 위 빈 곳)에 커서를 두고 "진짜 입력"(SendInput 상대 이동)을 넣음 → 통과 중인 창의 화면 쪽에 mousemove 가 오는지(= forward 가 되는지)
+      // 순서 = 사람 손과 같게: 진짜 입력(SendInput)으로 펫 창 안 빈 곳(머리 위)에서 움직임 → 창을 안 나가고 몸 위로 (Actions 38454677265 에서 막혔던 순서)
       const probe = sendMoves(Math.round(p.cx), Math.round(p.by - p.th - 40), 6);
       await sleep(500); const pd = await petDbg(), ps0 = state();
-      console.log('  진단 forward: SendInput=' + probe + ' 화면 쪽 마지막 mousemove=' + JSON.stringify(pd && pd.lastMove) + ' (now ' + (pd && pd.now) + ') 통과=' + (ps0 && ps0.pet && ps0.pet.ignore) + ' 커서=' + JSON.stringify(ps0 && ps0.pet && ps0.pet.cursor));
       followCursor(stateFile, 40);
       const a = state(), hit = await petDbg();
-      check('커서가 펫 위에 오면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, { pet: a && a.pet, renderer: hit });
-      console.log('  진단 커서: 화면 ' + JSON.stringify(a && a.pet && a.pet.cursor) + ' 펫 창 안 ' + JSON.stringify(a && a.pet && a.pet.inPet) + ' 몸 상자 ' + JSON.stringify(a && a.pet && a.pet.body) + ' said ' + (a && a.pet && a.pet.said) + ' 상자로 켬 ' + (a && a.pet && a.pet.boxOn) + ' 화면 쪽 ' + JSON.stringify(hit));
+      check('창 안 빈 곳 → 몸 위로 옮기면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, { pet: a && a.pet, renderer: hit });
+      // 진단 (판정 아님): 빈 곳에서 진짜 입력이 화면 쪽에 넘어갔는지(forward), 몸 위에서 커서·상자·판단 값
+      console.log('  진단 forward(빈 곳): SendInput=' + probe + ' 화면 쪽 마지막 mousemove=' + JSON.stringify(pd && pd.lastMove) + ' (now ' + (pd && pd.now) + ') 통과=' + (ps0 && ps0.pet && ps0.pet.ignore) + ' said=' + (ps0 && ps0.pet && ps0.pet.said) + ' 커서=' + JSON.stringify(ps0 && ps0.pet && ps0.pet.cursor));
+      console.log('  진단 커서(몸 위): 화면 ' + JSON.stringify(a && a.pet && a.pet.cursor) + ' 펫 창 안 ' + JSON.stringify(a && a.pet && a.pet.inPet) + ' 몸 상자 ' + JSON.stringify(a && a.pet && a.pet.body) + ' said ' + (a && a.pet && a.pet.said) + ' 상자로 켬 ' + (a && a.pet && a.pet.boxOn) + ' 화면 쪽 ' + JSON.stringify(hit));
       moveCursor(Math.max(0, bx - 700), Math.max(0, by - 500)); await sleep(1200);
       const b = state();
       check('커서가 떠나면 다시 클릭 통과 (펫 옆 바탕화면이 눌림)', b && b.pet && b.pet.ignore === true, b && b.pet);
