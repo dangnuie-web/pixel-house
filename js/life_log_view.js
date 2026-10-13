@@ -7,13 +7,15 @@
   function html(lines, h) {
     const P = LL.parse(lines || []), days = LL.byDate(P);
     if (!days.length) return '';
+    // 2026-10-13 제작자: 오늘 한마디·기분 뺌. 옛 ## 한마디 줄이 파일에 있으면 한마디 칸을 그대로 보여 주고(읽기만), 한 줄도 없으면 칸을 숨김
+    const hasNote = days.some((g) => g.notes.length);
     const esc = h.esc, row = (g) => {
       const sl = g.sleep ? `<span class="lg-sleep">${esc(LL.fmtTime(g.sleep.bed) || '?')} ~ ${esc(LL.fmtTime(g.sleep.wake) || '?')}</span>${g.sleep.memo ? `<small>${esc(g.sleep.memo)}</small>` : ''}` : '';
       const ml = g.meals.map((m) => `<span class="lg-meal" data-kind="${esc(m.kind)}"><b>${esc(m.kind)}</b> ${esc(m.text)}</span>`).join('');
       const nt = g.notes.map((n) => `<span class="lg-note">${n.mood ? `<b class="lg-mood" data-mood="${esc(n.mood)}">${esc(n.mood)}</b> ` : ''}${esc(n.text)}</span>`).join(''); // 기분 칸 (interact D)
-      return `<tr data-date="${esc(g.date)}"><td>${h.dayLabel(g.date)}</td><td>${sl}</td><td>${ml}</td><td>${nt}</td></tr>`;
+      return `<tr data-date="${esc(g.date)}"><td>${h.dayLabel(g.date)}</td><td>${sl}</td><td>${ml}</td>${hasNote ? `<td>${nt}</td>` : ''}</tr>`;
     };
-    return `<section class="records lifelog"><h3>생활 기록 <small>잠 · 식사 · 한마디</small></h3><table><thead><tr><th>날짜</th><th>잠</th><th>식사</th><th>한마디</th></tr></thead><tbody>` +
+    return `<section class="records lifelog"><h3>생활 기록 <small>잠 · 식사${hasNote ? ' · 한마디' : ''}</small></h3><table><thead><tr><th>날짜</th><th>잠</th><th>식사</th>${hasNote ? '<th>한마디</th>' : ''}</tr></thead><tbody>` +
       days.map(row).join('') + '</tbody></table></section>';
   }
   root.PHLifeLogView = { html };

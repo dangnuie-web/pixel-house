@@ -1,4 +1,4 @@
-// 집 안 상호작용 (F 틀 + B 물 화분 + A 오늘 약속 한 줄 + C 하루 마감). D 기분 4칸은 dialog_flow.js 오늘 한마디 앞 단계.
+// 집 안 상호작용 (F 틀 + B 물 화분 + A 오늘 약속 한 줄 + C 하루 마감). D 기분 4칸·오늘 한마디는 2026-10-13 뺌.
 // 계산은 js/interact_logic.js, 물건 표는 js/data/interactions.js, 대사는 js/data/interact_lines.js (부기 MVP 대사 v01)
 // 누르기: 물건 클릭(그림이 칠해진 곳) 또는 제작자 캐릭터가 마주 본 칸의 물건에 Space.
 //   걸을 수 있는 칸 위 그림(카펫·의자·가구 윗부분)은 제작자이 그 물건 위·바로 옆일 때만 클릭이 반응 (멀면 예전처럼 걸어감)
@@ -398,12 +398,7 @@
     if (items.length) { if ((await ui.tell(start, { card: { title: pick([['close', 'cardTitle']]), items } })) == null) return out; }
     else { if ((await ui.tell(start)) == null) return out; if ((await ui.tell(pick([['close', 'cardEmpty']]))) == null) return out; }
     out.steps.push('card');
-    if (!IL.hasNote(log, date)) {
-      const a = await ui.ask(pick([['close', 'askNote']]), [{ id: 'note', label: LN.close.btn.note }, { id: 'sleep', label: LN.close.btn.sleep }], { cols: 2 });
-      if (a == null) return out;
-      out.steps.push('ask:' + a);
-      if (a === 'note') { const r = await root.PHDialogFlow.run(ui, Object.assign({}, ctx, { topic: 'note' })); out.note = r; }
-    }
+    // 2026-10-13 제작자: "한마디 남길게 / 그냥 잘게" 묻기 뺌 (오늘 한마디·기분 뺌). 카드 다음 바로 잘 자요
     await ui.tell(pick([['close', 'goodnight']]));
     out.closed = true; out.steps.push('goodnight');
     return out;

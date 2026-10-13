@@ -5,15 +5,14 @@
 //   ui.input(text, { placeholder, value, skip, validate }) -> 적은 글 | { skip: true }
 //   ui.tell(text)                                         -> true (다음) / null (Esc)
 // ctx: { lines, clickLines, settings, now(), data: { text, lastModified } | null, api, onWrite(res), pick(key, list) }
-//   (interact) ctx.topic = 첫 인사·선택지 없이 그 주제로 바로 (하루 마감의 "한마디 남길게" = 'note')
-//   (interact) ctx.moods = 기분 4칸 [{ id, label, desc, icon }], ctx.more = 대사 묶음 하나 더 (js/data/interact_lines.js: mood.*)
-//     moods가 있으면 오늘 한마디 앞에 기분 고르기 -> "한 줄 더 적어 볼래요?" (여기까지 = 기분만 저장)
+//   ctx.topic = 첫 인사·선택지 없이 그 주제로 바로. ctx.more = 대사 묶음 하나 더
+//   2026-10-13 제작자: "오늘 한마디"·기분 4칸 뺌 (펫 메뉴·대화창·공용판 모두). 옛 기록 파일의 ## 한마디 줄은 그대로 남고, 생활일지 모아 보기에서 읽기만
 //   api = PHDesktop (setSleep, addMeal, setNote, setWater). 날짜·파일은 메인이 정함. 화면은 "오늘 이미 있는지" 보여 주려고 같은 날짜 규칙(DAY_START_HOUR)을 씀
 // 규칙 (부기 원고 v01, 토리 결정 2026-10-03): 잔소리·평가 없음, 흐름 중간에 그만두면 아무것도 저장하지 않음,
 //   간식은 확인 없이 한 줄 더함, 아침·점심·저녁은 그날 이미 있으면 "고칠까요?" 먼저
 // 꺼진 기능 (2026-10-04 제작자): ctx.off = 꺼진 선택지 id 목록 (지금은 'meal'뿐: 식사 일지 습관 줄을 지우면 js/dialog.js가 넣음)
 //   -> 선택지에서 빠지고, 시간대 첫 권하는 선택지가 꺼졌으면 ALT로 바꾸고 인사도 greet.alt.<바뀐 선택지> (dialog_lines.js, 비트 임시)
-//   잠·한마디·그냥 같이 있기는 습관 줄이 없어 늘 켜짐. 물은 "물" 줄을 지울 수 없어 늘 켜짐 (줄이 없으면 원래대로 fail 한 줄)
+//   잠·그냥 같이 있기는 습관 줄이 없어 늘 켜짐. 물은 "물" 줄을 지울 수 없어 늘 켜짐 (줄이 없으면 원래대로 fail 한 줄)
 //   메인도 꺼진 식사 쓰기를 거절 { off: true } -> common.fail
 (function (root) {
   'use strict';
@@ -22,13 +21,13 @@
   const Md = root.PHLifeMd || req('./life_md.js');
   const World = root.PHWorld || req('./world.js');
 
-  const MENU = ['sleep', 'meal', 'water', 'note', 'idle'];
-  // 시간대별 권하는 선택지 (부기 원고 1장: 아침 = 잠, 낮·저녁 = 식사, 밤·새벽 = 오늘 한마디)
-  const FIRST = { morning: 'sleep', day: 'meal', evening: 'meal', night: 'note', dawn: 'note' };
+  const MENU = ['sleep', 'meal', 'water', 'idle'];
+  // 시간대별 권하는 선택지 (부기 원고 1장: 아침 = 잠, 낮·저녁 = 식사). 밤·새벽은 오늘 한마디였음 -> 한마디를 빼며 그냥 같이 있기 (2026-10-13 비트 임시)
+  const FIRST = { morning: 'sleep', day: 'meal', evening: 'meal', night: 'idle', dawn: 'idle' };
   const MEAL_IDS = ['breakfast', 'lunch', 'dinner', 'snack'];
 
-  // 첫 권하는 선택지가 꺼졌을 때 대신 권할 것 (낮 = 물 한 잔, 저녁 = 오늘 한마디). 그것도 꺼졌으면 MENU 순서로 처음 켜진 것
-  const ALT = { morning: 'note', day: 'water', evening: 'note', night: 'sleep', dawn: 'sleep' };
+  // 첫 권하는 선택지가 꺼졌을 때 대신 권할 것 (낮·저녁 = 물 한 잔. 저녁은 오늘 한마디였음, 2026-10-13). 그것도 꺼졌으면 MENU 순서로 처음 켜진 것
+  const ALT = { morning: 'water', day: 'water', evening: 'water', night: 'sleep', dawn: 'sleep' };
   const offSet = (off) => new Set((off || []).filter((k) => MENU.includes(k) && k !== 'idle'));
   function firstOf(band, off) {
     const o = offSet(off), f = FIRST[band] || 'meal';
@@ -149,40 +148,6 @@
       if (!(await save((lm) => ctx.api.setWater(n, lm)))) return out;
       out.water = n;
       return done(n === row.slots ? 'water.full' : 'water.up', { n, goal: row.slots });
-    }
-
-    // ---- 오늘 한마디 ----
-    if (topic === 'note') {
-      const notes = today().notes, lastNote = notes.length ? notes[notes.length - 1] : null;
-      let fix = false;
-      if (lastNote) {
-        const a = await ui.ask(line('note.exists'), [{ id: 'more', label: D.btn.more }, { id: 'fix', label: D.btn.fix }, { id: 'keep', label: D.btn.keep }], { cols: 2 });
-        if (a == null) return cancel();
-        if (a === 'keep') { step('keep'); await ui.tell(line('common.keep')); return out; }
-        fix = a === 'fix';
-      }
-      // D 기분 4칸 (새 한마디일 때만. 고칠 때는 그 줄 기분 그대로)
-      let mood = null;
-      if (!fix && ctx.moods && ctx.moods.length) {
-        const m = await ui.ask(line('mood.ask'), ctx.moods.map((x) => ({ id: x.id, label: x.label, desc: x.desc, icon: x.icon || null })), { cols: 2, kind: 'mood' });
-        if (m == null) return cancel();
-        const pick = ctx.moods.find((x) => x.id === m); mood = pick.label; out.mood = mood; step('mood:' + mood);
-        await ui.tell(line('mood.after.' + pick.id));
-        const w = await ui.ask(line('mood.more'), [{ id: 'write', label: line('mood.btn.write') }, { id: 'skip', label: line('mood.btn.skip') }], { cols: 2 });
-        if (w == null) return cancel();
-        if (w === 'skip') {
-          step('mood-only');
-          if (!(await save((lm) => ctx.api.setNote('', lm, false, mood)))) return out;
-          out.noteSaved = true;
-          return done('mood.end');
-        }
-      }
-      const v = await ui.input(line('note.ask'), { placeholder: D.ui.notePlaceholder, value: fix ? lastNote.text : '', validate: checkText(true) });
-      if (v == null || (v && v.skip)) return cancel();
-      const text = LL.clean(v); step((fix ? 'fix:' : 'note:') + text);
-      if (!(await save((lm) => (mood ? ctx.api.setNote(text, lm, fix, mood) : ctx.api.setNote(text, lm, fix))))) return out;
-      out.noteSaved = true;
-      return done('note.saved');
     }
 
     // ---- 그냥 같이 있기: 새 3줄 + lines.js click 12줄 중 무작위 ----

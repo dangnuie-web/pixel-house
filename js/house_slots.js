@@ -30,6 +30,15 @@
   }
   const featureOf = (slot, cand) => BY_SPRITE[cand.sprite] || (slot.feature ? FEATURE_ID[slot.feature] || slot.feature : null);
 
+  function swapObjects(D, sw) {
+    const hide = new Set(Array.isArray(sw.hide) ? sw.hide : []);
+    if (hide.size) D.objects = D.objects.filter((q) => !hide.has(q.type));
+    (Array.isArray(sw.add) ? sw.add : []).forEach((x) => {
+      if (!x || !x.type || D.objects.some((q) => q.type === x.type)) return; // 같은 type이 이미 있으면 두 번 더하지 않음
+      const o = Object.assign({}, x); o.size = Array.isArray(x.size) ? x.size.slice() : x.size; D.objects.push(o);
+    });
+  }
+
   // D = 배치표, A = 그림 묶음, choice = { 자리 id: 그림 이름 } -> { links: { 물건 type: 기능 id }, slots: [{ id, label, type, sprite, candidates }] }
   function apply(D, A, choice) {
     const out = { links: {}, slots: [] };
@@ -46,6 +55,9 @@
       const fr = A && A[cand.sprite] && A[cand.sprite].frames[0], w = fr ? fr[0].length : cand.size[0], h = fr ? fr.length : cand.size[1];
       if (o.sprite !== cand.sprite) { const p = place(sl.box, sl.anchor, w, h); o.px = p[0]; o.py = p[1]; o.sprite = cand.sprite; o.file = cand.file; delete o.frame; }
       o.size = [w, h];
+      // 후보 바꿈 (무늬 공용판집다듬기 v01 3절, 2026-10-13): 후보에 swap이 있으면 hide type 물건을 빼고 add 물건을 더함 (낮은 둥근 탁자 = 의자 대신 방석).
+      //   배치표는 창을 열 때마다 새로 읽으므로, 다른 후보로 바꾸면(다시 열면) 원래 물건 그대로 = 되돌리기. 저장 값은 자리 id -> 그림 이름 그대로
+      if (cand.swap) swapObjects(D, cand.swap);
       const fid = featureOf(sl, cand);
       if (fid) out.links[o.type] = fid;
       out.slots.push({ id: sl.id, label: sl.label || sl.id, room: sl.room || null, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
@@ -66,7 +78,7 @@
     return o;
   }
 
-  const HS = { NAMES, FEATURE_ID, place, apply, addMemo, slots: [], links: null };
+  const HS = { NAMES, FEATURE_ID, place, apply, swapObjects, addMemo, slots: [], links: null };
   const D = root.PH_LAYOUT_DATA;
   HS.memo = addMemo(D, root.PH_ASSETS, root.PH_SETTINGS, root.PH_ART_SET);
   if (D && Array.isArray(D.slots)) {

@@ -79,7 +79,7 @@ body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility:
 .ob-card.is-house .ob-houses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .ob-card.is-house .ob-house { flex-direction: column; align-items: center; gap: 6px; padding: 8px; text-align: center; }
 .ob-card.is-house .ob-house-t small { display: none; }
-.ob-card.is-house .ob-preview { align-self: center; align-items: flex-start; max-width: 100%; }
+.ob-card.is-house .ob-preview { align-self: center; align-items: flex-start; max-width: 100%; min-width: min(387px, 100%); } /* 387 = 틀 384 + 테 1.5x2. 배율 1 화면은 테가 1px로 그려져 틀이 383으로 줄던 것 막음 (2026-10-13) */
 /* 미리보기 틀 384x320 고정 (안쪽 크기. 테 1.5px는 바깥이라 쓰리룸 384x320이 잘리지 않음), 고른 집 1배 가운데·아래 맞춤 */
 .ob-preview-box { box-sizing: content-box; width: 384px; height: 320px; max-width: calc(100% - 3px); background: var(--ui-field); border: 1.5px solid var(--ui-inner); border-radius: 4px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
 .ob-preview-box canvas { border-radius: 0; }
@@ -87,8 +87,9 @@ body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility:
 .ob-preview .ob-rooms { white-space: pre-line; word-break: keep-all; }
 .ob-preview .ob-note { margin-top: 2px; }
 /* 넓은 창 (사이드바 200 + 카드 740 + 양옆 24): 왼쪽 목록 280 / 오른쪽 미리보기. 무늬 값 736 + 미리보기 틀 테 바깥 3px */
+/* 집 단계 위 여백 24px = 창 폭 상관없이 (무늬 2026-10-13 확인: 좁은 창도 24px) */
+#screen-onboard.is-house { padding-top: 24px; }
 @media (min-width: 988px) {
-  #screen-onboard.is-house { padding-top: 24px; }
   .ob-card.is-house { width: min(740px, 100%); }
   .ob-card.is-house .ob-body { display: grid; grid-template-columns: 280px auto; column-gap: 20px; row-gap: 10px; align-items: start; }
   .ob-card.is-house .ob-h { grid-column: 1 / -1; }
@@ -100,3 +101,8 @@ body.onboarding #tabs button[role=tab], body.onboarding #side-dubu { visibility:
 }
 /* 스크롤이 생겨도 [이전]/[다음]이 보이게 카드 아래에 붙임 (모든 단계 같은 규칙, 무늬 권장) */
 .ob-nav { position: sticky; bottom: 0; background: var(--ui-paper); padding-top: 8px; z-index: 1; }
+/* 집 단계 (무늬 2026-10-13 확인: 좁은 창에서 바 아래 24px로 미리보기가 비침): 바가 창 맨 아래 끝에 붙게. 화면 아래 여백 24 -> 카드 아래 바깥 여백,
+   바 아래 종이색 12 + 카드 안쪽 아래 6 = 지금과 같은 18 (넓은 창 모양 그대로) */
+#screen-onboard.is-house { padding-bottom: 0; }
+#screen-onboard.is-house .ob-card { margin-bottom: 24px; padding-bottom: 6px; }
+#screen-onboard.is-house .ob-nav { padding-bottom: 12px; }

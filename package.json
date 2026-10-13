@@ -41,7 +41,9 @@
           ]
         }
       ],
-      "identity": null
+      "identity": "-",
+      "hardenedRuntime": false,
+      "icon": "icons/public/icon.icns"
     },
     "dmg": {
       "title": "Pixel House"

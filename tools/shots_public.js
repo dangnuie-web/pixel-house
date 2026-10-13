@@ -79,7 +79,7 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
         list: R(document.querySelector('.ob-houses')), box: R(box), boxIn: [box.clientWidth, box.clientHeight], cv: R(c), w: c.width, h: c.height, card: R(card), isHouse: card.classList.contains('is-house'),
         cols: getComputedStyle(document.querySelector('.ob-houses')).gridTemplateColumns || '', smallShown: [...document.querySelectorAll('.ob-house-t small')].map((s) => getComputedStyle(s).display !== 'none').join(),
         rooms: document.querySelector('.ob-rooms').textContent, roomsShown: getComputedStyle(document.querySelector('.ob-rooms')).display !== 'none', concept: document.querySelector('.ob-concept').textContent,
-        note: (document.querySelector('.ob-preview .ob-note') || {}).textContent || '', next: R(nx), vh: innerHeight, scroll: sc.scrollHeight > sc.clientHeight, padTop: getComputedStyle(sc).paddingTop }; })()`);
+        note: (document.querySelector('.ob-preview .ob-note') || {}).textContent || '', next: R(nx), nav: R(document.querySelector('.ob-nav')), navBg: getComputedStyle(document.querySelector('.ob-nav')).backgroundColor, vh: innerHeight, scroll: sc.scrollHeight > sc.clientHeight, padTop: getComputedStyle(sc).paddingTop }; })()`);
     const PLN = await js('PH_ONBOARD_PLAIN');
     { const hs = await houseGeo();
       ok('집 단계: 원룸·투룸·쓰리룸 세 칸 (평면 아이콘 48x45·63x48·72x60 = 1칸 3px 그대로), 원룸 골라짐, 미리보기 256x240', (await ob()).step === 'house' && hs.n === 'room1:원룸:true,room2:투룸:false,room3:쓰리룸:false' && hs.plans === '48x45,63x48,72x60' && hs.w === 256 && hs.h === 240, hs);
@@ -99,7 +99,15 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
       const n = await houseGeo();
       ok('좁은 창(800x600): 목록 가로 3칸(칸 너비 같음)·방 구성 목록에서 빠지고 미리보기 아래 첫 줄·미리보기 틀 384x320 그대로', n.cols.split(' ').length === 3 && n.smallShown === 'false,false,false' && n.roomsShown && n.rooms.length > 0 && n.boxIn.join() === '384,320' && n.frames === '72x60,72x60,72x60', n);
       ok('좁은 창: 스크롤이 생겨도 [다음]이 창 안에 보임 (sticky)', n.next.b <= n.vh && n.next.y >= 0, { next: n.next, vh: n.vh, scroll: n.scroll });
+      // 무늬 2026-10-13 확인 고칠 것 2개: 위 여백 24px, 바(종이색)가 창 맨 아래 끝까지 (바 아래로 미리보기가 안 비침)
+      ok('좁은 창: 위 여백 24px + [이전]/[다음] 바가 창 맨 아래 끝까지 덮음', n.padTop === '24px' && n.scroll && n.nav.b === n.vh && n.navBg !== 'rgba(0, 0, 0, 0)', { padTop: n.padTop, nav: n.nav, vh: n.vh, bg: n.navBg });
       await shot('public_03c_onboard_house_narrow');
+      { const sc = await js(`(() => { const s = document.getElementById('screen-onboard'); s.scrollTop = s.scrollHeight; return 1; })()`); await sleep(200);
+        const e = await js(`(() => { const s = document.getElementById('screen-onboard'), c = document.querySelector('.ob-card').getBoundingClientRect(), r = document.querySelector('.ob-rooms').getBoundingClientRect(), k = document.querySelector('.ob-concept').getBoundingClientRect(), nv = document.querySelector('.ob-nav').getBoundingClientRect();
+          return { end: Math.round(s.scrollTop + s.clientHeight) >= s.scrollHeight - 1, below: Math.round(innerHeight - c.bottom), roomsVis: r.bottom <= nv.top, conceptVis: k.bottom <= nv.top }; })()`);
+        ok('좁은 창 맨 아래까지 내림: 카드 아래 여백 24, 방 구성·콘셉트 글이 바에 안 가림', sc === 1 && e.end && e.below === 24 && e.roomsVis && e.conceptVis, e);
+        await shot('public_03d_onboard_house_narrow_bottom');
+        await js(`document.getElementById('screen-onboard').scrollTop = 0`); }
       win.setContentSize(W0, H0); await sleep(400); }
     await clickSel('.ob-house[data-house="room1"]'); await sleep(200);
     await shot('public_03_onboard_house');

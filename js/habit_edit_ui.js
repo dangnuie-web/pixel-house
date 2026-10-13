@@ -54,7 +54,7 @@
     const real = rows.filter((r) => !r.isVirtual).length;
     rows.forEach((r, i) => {
       const nm = esc(r.name), lock = isWater(r), fn = fnOf(r);
-      const meta = [r.target && r.target !== '-' ? r.target : '', cycleText(r)].filter(Boolean).join(' · ');
+      const meta = [r.target && r.target !== '-' && !(kind === HE.KIND.log && r.target === HE.LOG_UNIT) ? r.target : '', cycleText(r)].filter(Boolean).join(' · ');
       // 무늬 편집연동화면 v01 (제작자 승인 2026-10-04): [▲▼ 묶음] 이름 기준 ……… [고치기] 삭제 / 잠김(자물쇠 + 글)
       h += `<li class="he-row" data-name="${nm}"><span class="he-order">` +
         `<button type="button" class="he-up" aria-label="${nm} ${esc(p.up)}" data-focus="he-up:${nm}" ${i === 0 || r.isVirtual ? 'disabled' : ''}></button>` +

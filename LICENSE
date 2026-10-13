@@ -1,7 +1,49 @@
-Copyright (c) 2026 Pixel House authors. All rights reserved.
+MIT License
 
-이 저장소의 코드, 그림(픽셀 아트), 대사 글은 저작권자에게 모든 권리가 있습니다.
-저작권자의 허락 없이 복제, 수정, 배포, 판매할 수 없습니다.
-배포 방식(무료 공개, 후원, 판매)이 정해지면 이 파일을 새 라이선스로 바꿉니다.
+Copyright (c) 2026 Dangnee
 
-이 앱이 개발에 쓰는 Electron, electron-builder는 각자의 라이선스(MIT)를 따르며, 이 저장소에 포함되어 있지 않습니다(npm install 로 받음).
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+Exception: pixel art and characters (그림·캐릭터 예외)
+
+The MIT License above covers the source code only. It does NOT cover the
+pixel art and characters (house backgrounds, furniture, the cat "Dubu",
+avatars, outfits, app icon) contained in the following files and folders:
+
+  - js/assets_rooms.js   (pixel art data for the houses and furniture)
+  - js/house_rooms.js    (house layouts and palettes)
+  - js/outfit_public.js  (avatar and outfit pixel art)
+  - js/placeholders.js   (the pixel maps of the cat "Dubu"; PH_TEMP_SPRITES)
+  - img/                 (screenshots)
+  - icons/               (app icon)
+
+Copyright (c) 2026 Dangnee. All rights reserved.
+You may use these files only to run this app as distributed or as modified
+by you. You may not copy, extract, modify, redistribute, or sell the pixel
+art or characters separately from this app, or reuse them in other works,
+without written permission from Dangnee.
+
+위 MIT 라이선스는 코드에만 적용됩니다. 위 목록의 파일과 폴더에 든 픽셀 그림과
+캐릭터(집 바탕, 가구, 고양이 두부, 아바타, 옷, 앱 아이콘)는 Dangnee에게 저작권이 있으며,
+이 앱을 실행하는 용도로만 쓸 수 있습니다. 허락 없이 따로 떼어 복제·수정·배포·판매하거나
+다른 작업에 다시 쓸 수 없습니다.
+
+This app uses Electron and electron-builder (MIT License) as development tools.
+They are not included in this repository (installed with npm install).

@@ -286,12 +286,7 @@
       return { text: r.text, lastModified: r.lastModified };
     } catch (e) { return null; }
   }
-  // (interact) 기분 4칸: 이름·설명 + 그림(그 세트에 mood_0~3이 있을 때만, 1배 그림을 data URL로)
-  function moodChoices() {
-    const M = root.PH_INTERACTIONS && root.PH_INTERACTIONS.MOODS, Art = root.PHArt; if (!M) return null;
-    return M.map((m) => { let icon = null; try { if (Art && m.sprite && Art.has(m.sprite)) icon = Art.frameCanvas(m.sprite, 0).toDataURL(); } catch (e) { icon = null; } return Object.assign({}, m, { icon }); });
-  }
-  // 대화창 선택지 중 습관 줄과 이어진 것 = 식사(식사 일지)뿐. 물은 줄을 지울 수 없음, 잠·한마디는 습관 줄 없음
+  // 대화창 선택지 중 습관 줄과 이어진 것 = 식사(식사 일지)뿐. 물은 줄을 지울 수 없음, 잠은 습관 줄 없음
   //   방금 읽은 글(data)의 생활습관 표 + 앱 설정 seen으로 계산 (js/features.js stateOf). 못 읽으면 PHFurnish.isOn (생활 탭 글)
   const TOPIC_FN = { meal: 'meal' };
   function offTopics(data) {
@@ -320,7 +315,7 @@
     const ctx = {
       lines: D, clickLines: (root.PH_LINES && root.PH_LINES.click) || [], settings: S, now: Dlg.now, lastPick: Dlg.lastPick,
       data, api, off: offTopics(data), // 꺼진 기능 선택지 (2026-10-04 제작자: 식사 일지 습관 줄을 지우면 "식사 적기"도 없음)
-      moods: moodChoices(), more: root.PH_INTERACT_LINES || null, // (interact) D 기분 4칸
+      more: root.PH_INTERACT_LINES || null, // (interact) 대사 묶음 하나 더 (기분 4칸은 2026-10-13 뺌)
       onWrite: (res) => { // 생활 탭이 가진 글도 새것으로 (물컵이 괜히 충돌로 보이지 않게)
         const Life = root.PHLife; if (!Life || !root.PHLifeMd) return;
         Life.data = root.PHLifeMd.parse(res.text); Life.lastModified = res.lastModified; Life.readAt = Date.now();

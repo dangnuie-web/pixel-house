@@ -155,7 +155,7 @@
   }
 
   // ---- C 하루 마감 카드: 한 것만 ----
-  //   data = PHLifeMd.parse 결과, log = PHLifeLog.parse 결과(잠·식사·한마디). 줄 = [{ key, label, text }]
+  //   data = PHLifeMd.parse 결과, log = PHLifeLog.parse 결과(잠·식사. 한마디·기분은 2026-10-13 뺌). 줄 = [{ key, label, text }]
   function dayCard(data, log, date, opt) {
     const o = opt || {}, out = [];
     const w = waterOn(data, o.waterHabit || '물', date);
@@ -166,18 +166,13 @@
     if (day) {
       const kinds = LL.MEALS.filter((k) => (k === LL.MULTI_MEAL ? day.meals[k].length : day.meals[k]));
       if (kinds.length) out.push({ key: 'meal', label: '식사', text: kinds.join(' · ') });
-      const moods = day.notes.map((n) => n.mood).filter(Boolean), texts = day.notes.filter((n) => n.text);
-      if (moods.length) out.push({ key: 'mood', label: '기분', text: moods.join(' · ') });
-      if (texts.length) out.push({ key: 'note', label: '한마디', text: texts[texts.length - 1].text + (texts.length > 1 ? ' 외 ' + (texts.length - 1) : '') });
     }
     return out;
   }
-  // 오늘 한마디나 기분이 있는지 (하루 마감에서 "한마디 남길게 / 그냥 잘게"를 물을지)
-  function hasNote(log, date) { const day = log ? LL.dayOf(log, date) : null; return !!(day && day.notes.length); }
 
   function fill(s, v) { return String(s).replace(/\{(\w+)\}/g, (m, k) => (v && v[k] != null ? v[k] : m)); }
 
-  const IL = { linkKeys, fnConf, spots, hitAt, faceTarget, nearFloor, overlap, letterBox, nearestLight, logDate, addDays, weekStart, waterStage, waterOn, weekly, meetingsFor, timeKey, dayCard, hasNote, fill, DIRS };
+  const IL = { linkKeys, fnConf, spots, hitAt, faceTarget, nearFloor, overlap, letterBox, nearestLight, logDate, addDays, weekStart, waterStage, waterOn, weekly, meetingsFor, timeKey, dayCard, fill, DIRS };
   root.PHInteractLogic = IL;
   if (typeof module !== 'undefined' && module.exports) module.exports = IL;
 })(typeof window !== 'undefined' ? window : globalThis);

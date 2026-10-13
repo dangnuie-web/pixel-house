@@ -13,8 +13,7 @@
 .dd-card-list li { font-size: max(12px, calc(7 * var(--du))); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dd-card-list b { font-weight: 700; margin-right: calc(2 * var(--du)); color: var(--dlg-sub, #6B5B4E); }
 
-/* 기분 4칸: 2x2 (무늬 배치: 위 줄 = 기운 있음 mood_0·mood_2, 아래 줄 = 기운 없음 mood_1·mood_3) */
-.dd-choices[data-kind="mood"] .dd-ch { height: calc(14 * var(--du)); }
+/* 기분 4칸은 2026-10-13 뺌 (.dd-icon은 선택지 그림 공용으로 남김) */
 .dd-icon { flex: none; width: calc(12 * var(--du)); height: calc(12 * var(--du)); image-rendering: pixelated; } /* 무늬 mood_0~3 (16x16) */
 .dd-desc { margin-left: calc(3 * var(--du)); font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub, #6B5B4E); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dd-ch.on .dd-desc { color: var(--dlg-sel-tx, #fff); }

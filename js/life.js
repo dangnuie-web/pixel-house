@@ -47,6 +47,8 @@
     return Life.data;
   }
   // 버킷리스트를 탭으로 꺼낼지 (settings.BUCKET_TAB)
+  // 기록 카드 "횟수·양 기록" 줄의 기준 "회"는 화면에서 숨김 (제작자 2026-10-13). 파일에는 그대로 "회" (js/habit_edit.js LOG_UNIT)
+  const LOG_UNIT = () => (root.PHHabitEdit && root.PHHabitEdit.LOG_UNIT) || '회';
   function bucketItems(d) { return d && d.bucket ? d.bucket.filter((b) => !b.placeholder) : []; }
   // 설정 화면에서 버킷리스트 탭을 껐으면(TABS_HIDDEN) 생활 습관 탭 아래 카드로 (부기 문구_공용판2 v01 4-1)
   function bucketAsTab(d) { if ((S.TABS_HIDDEN || []).includes('bucket')) return false; return S.BUCKET_TAB === 'tab' || (S.BUCKET_TAB !== 'inline' && bucketItems(d).length > 0); }
@@ -98,7 +100,7 @@
         else if (k.kind === LC.KIND.goal && (LC.weeklyOf(r.cycle) || (r.kind === LC.KIND.goal && HC.isToggle(r.cycle)))) extra = weekRow(d, r, ctx); // 주 n회·월 n회·매일 1회
         else if (k.kind === LC.KIND.log && LC.unitOf(r.target) && !(root.PHFeatures && root.PHFeatures.byHabit(r.name))) extra = amountRow(d, r, ctx); // 일지 기능 줄(독서 등)은 양 적기 없음 (2026-10-08 독서 쪽수 뺌)
         if (up) extra += `<p class="up-note">${esc(fill(UI.promotedNote, { until: md(Md.dateOf(up.until)) }))}</p>`;
-        return `<li data-line="${r.line}" data-habit="${esc(r.name)}"${up ? ' class="up"' : ''}><b>${esc(r.name)}</b><span class="tgt">${esc(r.target)}</span>${r.cycle && r.cycle.trim() !== '-' ? `<span class="cyc">${esc(r.cycle)}</span>` : ''}${extra}</li>`;
+        return `<li data-line="${r.line}" data-habit="${esc(r.name)}"${up ? ' class="up"' : ''}><b>${esc(r.name)}</b><span class="tgt">${esc(k.kind === LC.KIND.log && r.target === LOG_UNIT() ? '' : r.target)}</span>${r.cycle && r.cycle.trim() !== '-' ? `<span class="cyc">${esc(r.cycle)}</span>` : ''}${extra}</li>`;
       }).join('') + '</ul></section>';
   }
   const canCheck = (fn) => !!(root.PHDesktop && root.PHDesktop[fn]);
