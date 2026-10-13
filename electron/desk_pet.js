@@ -231,6 +231,7 @@ module.exports = function createDeskPet(o) {
     st.hidden = true; stopMoving();
     st.queue = []; st.talking = false; clearTimeout(st.talkTimer); send('pet:hideBubble');
     pet.hide();
+    if (o.onHidden) o.onHidden(); // 집 창도 없으면 앱이 끝남 (A8, electron/main.js)
     clearTimeout(st.hideTimer);
     st.hideTimer = setTimeout(() => { if (!alive()) return; st.hidden = false; pet.showInactive(); setIgnore(true); nextAction(); }, HIDE_MS);
   }

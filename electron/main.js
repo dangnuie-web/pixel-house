@@ -228,7 +228,7 @@ function createWindow() {
   mainWin = win;
   if (SMOKE_HIDE && !SHOTS) { win.setOpacity(0); win.setIgnoreMouseEvents(true); win.setFocusable(false); win.once('ready-to-show', () => win.showInactive()); } // 맥에서 연기 시험을 돌릴 때 화면을 가리지 않게 (tools/smoke_win.js --hide)
   dockFor(true); // 집 창이 있으면 Dock 아이콘 보임 (A4)
-  win.on('closed', () => { if (mainWin === win) mainWin = null; dockFor(false); });
+  win.on('closed', () => { if (mainWin === win) mainWin = null; dockFor(false); quitIfNothingVisible(); });
   openPage(win, chooseSet(), null);
   if (houseOn) watchLife(win); // 온보딩 중이면 끝난 뒤 (houseReady)
   // 앱 안에서 다른 페이지로 가거나 새 창을 열지 않는다
@@ -293,6 +293,12 @@ function dockFor(houseOpen) {
   if (petOnly && !dockHidden) { dockHidden = true; app.dock.hide(); }
   else if (!petOnly && dockHidden) { dockHidden = false; Promise.resolve(app.dock.show()).then(() => { if (!SHOTS && mainWin && !mainWin.isDestroyed()) mainWin.focus(); }).catch(() => {}); } // 숨었다 나온 앱은 새 창이 뒤에 뜰 수 있어 앞으로
 }
+// 보이는 창(집·펫)이 하나도 없으면 앱을 끝냄 (A8 2026-10-14 제작자: 창도 Dock 아이콘도 없이 앱만 남아 있었음).
+//   그런 때 = 집 창 없이 펫을 "잠깐 숨기기" / 펫이 숨은 채 집 창 닫기 → 숨은 펫 창이 남아 window-all-closed 가 안 오고, Dock 도 숨어(A4) 끝낼 길이 없었음
+//   펫 설정(desktopPet)은 그대로라 다음에 앱을 열면 펫도 다시 나옴
+function quitIfNothingVisible() {
+  setTimeout(() => { if (!BrowserWindow.getAllWindows().some((w) => !w.isDestroyed() && (w.isVisible() || w.isMinimized()))) app.quit(); }, 0); // Dock 으로 내린 집 창도 있는 것으로
+}
 function petWanted() { return !!(PROFILE && PROFILE.id === 'default' && !PROFILE.onboard && houseOn && PROFILE.user && PROFILE.user.desktopPet === true); }
 function deskPetCtl() {
   if (deskPet) return deskPet;
@@ -303,11 +309,12 @@ function deskPetCtl() {
     parts: () => (houseOn ? { file: LIFE_FULL, backup, features: FEAT, settings: S, fixedDay: fixed,
       guard: () => { if (SHOTS && !process.env.PH_HOUSE) throw new Error('시험 실행 중에는 실제 생활 기록에 쓰지 않음'); } } : null),
     now: fixed() ? () => new Date(fixed() + 'T12:00:00').getTime() : undefined, // 시험: 기록 날짜를 PH_TODAY로 고정할 때 펫 대화도 그날 낮
+    onHidden: () => quitIfNothingVisible(), // 펫 "잠깐 숨기기" (A8)
     onTurnOff: () => { // 펫 메뉴 "바탕화면 펫 끄기" = 설정에서 끈 것과 같음 (profile.json 에서 지움, 열린 집 창 설정 화면에도 알림)
       const u = Prof.turnOffDesktopPet(); if (u) PROFILE.user = u;
       if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('ph:deskPet', { on: false });
-      else if (BrowserWindow.getAllWindows().length === 0) app.quit();
       dockFor(!!(mainWin && !mainWin.isDestroyed()));
+      quitIfNothingVisible();
     },
   });
   return deskPet;

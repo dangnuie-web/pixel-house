@@ -185,5 +185,36 @@ module.exports = async function shotsDeskPet(win, ROOT, opts) {
     await until(() => opts.dock().mainWin, 6000); await sleep(600);
     d = opts.dock();
     ok('앱 다시 열기(activate) -> 집 창 새로, Dock 아이콘 다시 보임, 펫 그대로', d.mainWin && !d.hidden && (!mac || d.visible === true) && ctl.isOn() && BrowserWindow.getAllWindows().length === 2, d);
+
+    // ---- 9. 보이는 창이 하나도 없으면 앱이 끝남 (A8, 2026-10-14 제작자: 창도 Dock 도 없이 앱만 남아 있었음) ----
+    //   시험 프로세스가 진짜로 꺼지지 않게 app.quit 을 잠깐 세기만 하는 것으로 바꿈 (이 칸 끝에서 되돌림)
+    const eapp = require('electron').app, realQuit = eapp.quit;
+    let quits = 0; eapp.quit = () => { quits++; };
+    const visible = () => BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed() && w.isVisible()).length;
+    const mainOf = () => BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w !== petWin());
+    const reopen = async () => { eapp.emit('activate'); await until(() => opts.dock().mainWin, 6000); await sleep(500); };
+    try {
+      // 9-1 펫 보임 + 집 창 닫기 -> 앱 남음(펫이 보임)
+      let m = mainOf(); m.close(); await until(() => m.isDestroyed(), 4000); await sleep(300);
+      ok('A8-1 펫 켜짐·보임 + 집 창 닫기 -> 앱 그대로(끝내지 않음), 펫 보임', quits === 0 && ctl.isOn() && visible() === 1, { quits, vis: visible() });
+      // 9-2 그 상태에서 펫 "잠깐 숨기기" -> 보이는 창 0 -> 앱 끝남
+      ctl.T.hideForAWhile(); await sleep(400);
+      ok('A8-2 집 창 없이 펫 잠깐 숨기기 -> 보이는 창 0 -> 앱 끝냄', quits >= 1, { quits, vis: visible(), wins: BrowserWindow.getAllWindows().length });
+      quits = 0;
+      // 9-3 펫이 숨은 채 집 창을 열었다 닫기 -> 보이는 창 0 -> 앱 끝남 (숨은 펫 창이 남아 window-all-closed 가 안 옴)
+      await reopen(); m = mainOf(); m.close(); await until(() => m.isDestroyed(), 4000); await sleep(400);
+      ok('A8-3 펫 숨은 채 집 창 닫기 -> 앱 끝냄', quits >= 1, { quits, vis: visible(), wins: BrowserWindow.getAllWindows().length });
+      quits = 0;
+      // 9-4 펫 다시 보이게(설정에서 다시 켠 것과 같게 restart) + 집 창 닫고 펫 메뉴 "바탕화면 펫 끄기" -> 앱 끝남
+      await reopen(); ctl.restart(); await petReady(); m = mainOf(); m.close(); await until(() => m.isDestroyed(), 4000); await sleep(300);
+      const pq = await petPoint(); await pclick(pq.x, pq.y, 'right');
+      await until(async () => { const x = await cur(); return x && x.foot.length ? x : null; }, 5000);
+      await pclickSel('.bfoot .bf[data-act="quit"]'); await sleep(500);
+      ok('A8-4 집 창 없이 펫 메뉴 "바탕화면 펫 끄기" -> 펫 닫힘 + 앱 끝냄', !ctl.isOn() && quits >= 1, { quits, on: ctl.isOn(), wins: BrowserWindow.getAllWindows().length });
+      quits = 0;
+      // 9-5 펫 꺼짐 + 집 창 닫기 -> 앱 끝남
+      await reopen(); m = mainOf(); m.close(); await until(() => m.isDestroyed(), 4000); await sleep(300);
+      ok('A8-5 펫 꺼짐 + 집 창 닫기 -> 앱 끝냄', quits >= 1 && !ctl.isOn(), { quits, wins: BrowserWindow.getAllWindows().length });
+    } finally { eapp.quit = realQuit; }
   }
 };
