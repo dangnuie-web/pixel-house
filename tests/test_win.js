@@ -94,6 +94,9 @@ const wf = read('.github/workflows/windows.yml');
 ok('워크플로: 손으로만 실행(workflow_dispatch), 푸시 때 안 돎', /on:\s*\n\s*workflow_dispatch:/.test(wf) && !/^\s*(push|pull_request|schedule):/m.test(wf));
 ok('워크플로: 읽기 권한만, 비밀값 안 씀', /permissions:\s*\n\s*contents: read/.test(wf) && !/secrets\.|GITHUB_TOKEN|contents: write/.test(wf));
 ok('워크플로: 줄 끝 그대로·npm ci·Electron 받기·시험·exe·고지 확인·설치·켜 보기·제거·Artifacts 7일', ['core.autocrlf false', 'npm ci', 'node_modules/electron/install.js', 'scripts.test', 'electron-builder --win --publish never', 'LICENSE.electron.txt', "'/S'", 'tools/smoke_win.js', 'Uninstall', 'retention-days: 7'].every((k) => wf.includes(k)), ['core.autocrlf false', 'npm ci', 'install.js', 'scripts.test', 'electron-builder', 'LICENSE.electron.txt', '/S', 'smoke_win', 'Uninstall', 'retention'].filter((k) => !wf.includes(k)));
+// (2026-10-14 첫 푸시 때 "workflow file issue" 0초 실패: 한 줄 run: 안의 ': ' 를 YAML 이 키로 읽음) 한 줄 run: 값에는 ': '·' #' 가 없어야 함 → 그런 줄은 run: | 로
+const badRun = wf.split('\n').filter((l) => /^\s*(- )?run: (?![|>'"])/.test(l) && /: | #/.test(l.replace(/^\s*(- )?run: /, '')));
+ok('워크플로: 한 줄 run: 값에 ": "·" #" 없음 (YAML 이 깨지지 않게)', badRun.length === 0, badRun);
 ok('워크플로: 릴리스·게시 없음 (시험판 올리기는 따로 손으로)', !/gh release|softprops|action-gh-release|--publish always/.test(wf));
 const smoke = read('tools/smoke_win.js');
 ok('연기 시험: Node 기본 모듈만 (서버에서 설치 없이)', (smoke.match(/require\('([^']+)'\)/g) || []).every((r) => /'(fs|os|path|http|child_process)'/.test(r)));
