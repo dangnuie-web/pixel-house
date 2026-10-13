@@ -61,15 +61,20 @@ ok('글꼴: 맥 Apple SD Gothic Neo 다음 윈도우 Malgun Gothic (맥 모양 �
 
 // ---- 4. 바탕화면 펫 커서 감시 (C2 클릭 통과) ----
 const C = require('../electron/pet_cursor.js');
-const B = { x: 100, y: 500, width: 300, height: 255 };
-ok('클릭 받기 중 커서가 창 밖 → 다시 통과 + 화면 hit 되돌림', JSON.stringify(C.step({ ignore: false }, { x: 50, y: 50 }, B)) === JSON.stringify({ ignore: true, resetHit: true }));
-ok('클릭 받기 중 커서가 창 안 → 그대로 (화면 쪽 판단)', C.step({ ignore: false }, { x: 200, y: 600 }, B).ignore === null);
-ok('이미 통과 중 → 그대로', C.step({ ignore: true }, { x: 50, y: 50 }, B).ignore === null);
-ok('끄는 중(drag)·숨김 → 그대로 (끌다 창 밖으로 나가도 놓치지 않음)', C.step({ ignore: false, drag: true }, { x: 50, y: 50 }, B).ignore === null && C.step({ ignore: false, hidden: true }, { x: 50, y: 50 }, B).ignore === null);
+const B = { x: 100, y: 500, width: 300, height: 255 }, BOX = { cx: 250, by: 755, tw: 120, th: 113 };
+const BODY = { x: 250, y: 700 }, AIR = { x: 250, y: 560 }, OUT = { x: 50, y: 50 };
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+ok('통과 중 커서가 펫 몸 상자 안 → main 이 클릭 받기로 (화면 쪽 mousemove 가 안 와도, 윈도우 Actions 38453257327)', eq(C.step({ ignore: true, said: null }, BODY, BOX, B), { ignore: false, resetHit: true, clearSaid: false }));
+ok('통과 중 창 안이지만 몸 밖(머리 위 빈 곳) → 그대로 통과', C.step({ ignore: true, said: null }, AIR, BOX, B).ignore === null);
+ok('화면 쪽이 "펫 아님"이라 한 뒤엔 상자 안이어도 다시 안 끔 (깜빡임 없음), 창 밖에 나가면 잊음', C.step({ ignore: true, said: false }, BODY, BOX, B).ignore === null && eq(C.step({ ignore: true, said: false }, OUT, BOX, B), { ignore: null, resetHit: false, clearSaid: true }));
+ok('클릭 받기 중 커서가 창 밖 → 다시 통과 + 화면 hit 모름으로', eq(C.step({ ignore: false }, OUT, BOX, B), { ignore: true, resetHit: true, clearSaid: true }));
+ok('클릭 받기 중 커서가 창 안 → 그대로 (화면 쪽 판단)', C.step({ ignore: false }, { x: 200, y: 600 }, BOX, B).ignore === null);
+ok('말풍선 메뉴가 열려 있으면 창 안 어디든 클릭 받기', C.step({ ignore: true, dialog: true, said: false }, AIR, BOX, B).ignore === false);
+ok('끄는 중(drag)·숨김 → 그대로', C.step({ ignore: false, drag: true }, OUT, BOX, B).ignore === null && C.step({ ignore: true, hidden: true }, BODY, BOX, B).ignore === null);
 ok('창 오른쪽·아래 끝 칸은 밖', !C.inWin({ x: 400, y: 600 }, B) && !C.inWin({ x: 200, y: 755 }, B) && C.inWin({ x: 399, y: 754 }, B));
 const dp = read('electron/desk_pet.js');
 ok('펫이 커서 감시를 켬 (시험 창은 안 켬), 끌 때 멈춤', /watchCursor\(\);/.test(dp) && /if \(cursorTimer \|\| SHOTS\) return;/.test(dp) && /clearInterval\(cursorTimer\)/.test(dp));
-ok('펫 화면이 hitReset 을 받음 (preload 통로 + pet.js)', /'pet:hitReset'/.test(read('electron/pet_preload.js')) && /DP\.on\('pet:hitReset'/.test(read('pet/pet.js')));
+ok('펫 화면이 hitReset 을 받음 (preload 통로 + pet.js)', /'pet:hitReset'/.test(read('electron/pet_preload.js')) && /DP\.on\('pet:hitReset', \(\) => \{ hit = null; \}\)/.test(read('pet/pet.js')));
 ok('펫 창: 작업 표시줄에 안 나옴·항상 위·포커스 안 뺏음', /skipTaskbar: true/.test(dp) && /alwaysOnTop: !SHOTS/.test(dp) && /focusable: false/.test(dp));
 
 // ---- 5. 설치 설정 (package.json build) ----

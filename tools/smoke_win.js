@@ -54,6 +54,13 @@ function moveCursor(x, y) {
   return true;
 }
 
+// 윈도우: 커서를 (x, y)에 두고 SendInput 상대 이동 n번 (진짜 마우스처럼 저수준 훅을 거침) — forward 진단용. 다른 OS 는 false
+function sendMoves(x, y, n) {
+  if (!WIN) return false;
+  const ps = 'Add-Type -Name U2 -Namespace W2 -MemberDefinition \'[DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y); [DllImport("user32.dll")] public static extern void mouse_event(int f, int dx, int dy, int d, int e);\'; '
+    + '[W2.U2]::SetCursorPos(' + x + ',' + y + ') | Out-Null; for ($i = 0; $i -lt ' + n + '; $i++) { [W2.U2]::mouse_event(1, ($i % 2) * 2 - 1, 0, 0, 0); Start-Sleep -Milliseconds 80 }';
+  try { execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore', timeout: 30000 }); return true; } catch (e) { return 'ERR ' + e.message; }
+}
 // 윈도우: 펫을 따라가며 커서 옮기기. 상태 파일(PH_SMOKE_STATE)의 지금 펫 자리(cx, by - th*0.4)로 0.15초마다, 클릭 받기(ignore false)가 되면 그만
 function followCursor(stateFile, n) {
   if (!WIN) return false;
@@ -140,10 +147,15 @@ function followCursor(stateFile, n) {
       // (2026-10-14 Actions 38449050638: 첫 판은 7초 전 펫 자리로 커서를 옮겨 실패 — 그사이 펫이 걸어감(cx 소수 = 걷는 중), PowerShell 한 번 띄우는 데 1~3초)
       //   -> PowerShell 하나가 0.15초마다 상태 파일의 지금 펫 자리를 읽어 커서를 따라 붙임(1px 씩 흔들어 mousemove 를 만듦), 클릭 받기가 되면 멈춤
       const p = st.pet, bx = Math.round(p.cx), by = Math.round(p.by - p.th * 0.4);
+      const petDbg = async () => { if (!pet) return null; try { const pc = await connect(pet.webSocketDebuggerUrl); const h = await pc.evaluate('JSON.stringify({ hit: window.__petDebug().hit, lastMove: window.__petDebug().lastMove, now: Date.now() })'); pc.close(); return JSON.parse(h); } catch (e) { return 'CDP 실패'; } };
+      // 진단 (판정 아님, 2026-10-14 Actions 38453257327 뒤): 펫 창 안이지만 몸 상자 밖(머리 위 빈 곳)에 커서를 두고 "진짜 입력"(SendInput 상대 이동)을 넣음 → 통과 중인 창의 화면 쪽에 mousemove 가 오는지(= forward 가 되는지)
+      const probe = sendMoves(Math.round(p.cx), Math.round(p.by - p.th - 40), 6);
+      await sleep(500); const pd = await petDbg(), ps0 = state();
+      console.log('  진단 forward: SendInput=' + probe + ' 화면 쪽 마지막 mousemove=' + JSON.stringify(pd && pd.lastMove) + ' (now ' + (pd && pd.now) + ') 통과=' + (ps0 && ps0.pet && ps0.pet.ignore) + ' 커서=' + JSON.stringify(ps0 && ps0.pet && ps0.pet.cursor));
       followCursor(stateFile, 40);
-      const a = state();
-      const hit = pet ? await (async () => { try { const pc = await connect(pet.webSocketDebuggerUrl); const h = await pc.evaluate('JSON.stringify(window.__petDebug().hit)'); pc.close(); return h; } catch (e) { return 'CDP 실패'; } })() : null;
-      check('커서가 펫 위에 오면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, { pet: a && a.pet, rendererHit: hit });
+      const a = state(), hit = await petDbg();
+      check('커서가 펫 위에 오면 클릭 받기 (펫을 누르거나 끌 수 있음)', a && a.pet && a.pet.ignore === false, { pet: a && a.pet, renderer: hit });
+      console.log('  진단 커서: 화면 ' + JSON.stringify(a && a.pet && a.pet.cursor) + ' 펫 창 안 ' + JSON.stringify(a && a.pet && a.pet.inPet) + ' 몸 상자 ' + JSON.stringify(a && a.pet && a.pet.body) + ' said ' + (a && a.pet && a.pet.said) + ' 상자로 켬 ' + (a && a.pet && a.pet.boxOn) + ' 화면 쪽 ' + JSON.stringify(hit));
       moveCursor(Math.max(0, bx - 700), Math.max(0, by - 500)); await sleep(1200);
       const b = state();
       check('커서가 떠나면 다시 클릭 통과 (펫 옆 바탕화면이 눌림)', b && b.pet && b.pet.ignore === true, b && b.pet);

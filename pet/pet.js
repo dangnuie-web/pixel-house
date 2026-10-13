@@ -146,9 +146,10 @@
   }
   let hit = false, down = false;
   function setHit(h) { if (h !== hit) { hit = h; window.DP.send('pet:hit', h); } }
-  window.addEventListener('mousemove', (e) => { if (!down) setHit(onPet(e.clientX, e.clientY) || onBubble(e.clientX, e.clientY)); });
+  let lastMove = null; // 진단 (윈도우 forward 확인): 마지막으로 받은 mousemove 창 안 좌표·시각
+  window.addEventListener('mousemove', (e) => { lastMove = { x: e.clientX, y: e.clientY, at: Date.now(), on: onPet(e.clientX, e.clientY) }; if (!down) setHit(onPet(e.clientX, e.clientY) || onBubble(e.clientX, e.clientY)); });
   document.addEventListener('mouseleave', () => { if (!down) setHit(false); });
-  window.DP.on('pet:hitReset', () => { hit = false; }); // main 커서 감시가 다시 통과로 바꿈 (커서가 창 밖, C2) -> 다음에 펫 위로 오면 hit 를 꼭 다시 보냄
+  window.DP.on('pet:hitReset', () => { hit = null; }); // main 커서 감시가 통과를 바꿈 -> 다음 mousemove 판단(true·false)을 꼭 보냄 (오피스 펫과 같음)
   window.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     if (onBubble(e.clientX, e.clientY)) { // 말주머니 클릭 = 바로 닫기. 말풍선 메뉴면 버튼·입력칸이 받음, 두부 한 줄(tell)은 누르면 다음
@@ -339,7 +340,7 @@
   window.__petDlg = Dlg;
 
   // 개발 확인용 (main의 cmd.json js 명령으로 읽음)
-  window.__petDebug = () => ({ pose, bubble: wrap.hidden ? null : btext.textContent, hit, view, png: P ? { ready: P.ready, total: P.total, pixelated: P.pixelated, pix: !!P.pix, last: lastKey, cssW, cssH, headH, dpr: P.dpr } : null });
+  window.__petDebug = () => ({ pose, bubble: wrap.hidden ? null : btext.textContent, hit, lastMove, view, png: P ? { ready: P.ready, total: P.total, pixelated: P.pixelated, pix: !!P.pix, last: lastKey, cssW, cssH, headH, dpr: P.dpr } : null });
   window.__petOnPet = onPet;
   window.__petBlinkNow = (hold) => { BLINK_MS = hold || 180; nextBlink = performance.now(); lastKey = ''; };
 })();

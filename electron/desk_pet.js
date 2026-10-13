@@ -238,7 +238,7 @@ module.exports = function createDeskPet(o) {
 
   // ---------- IPC (펫 화면 -> main). 한 번만 등록, 펫 창에서 온 것만 ----------
   const fromPet = (e) => alive() && e.sender === pet.webContents;
-  ipcMain.on('pet:hit', (e, hit) => { if (fromPet(e) && !st.drag) setIgnore(!hit); });
+  ipcMain.on('pet:hit', (e, hit) => { if (fromPet(e) && !st.drag) { st.said = !!hit; st.lastHitAt = Date.now(); setIgnore(!hit); } }); // said = 커서 감시가 화면 쪽 판단을 존중 (electron/pet_cursor.js)
   // 커서 감시 (C2 윈도우 클릭 통과): 클릭 받기 중인데 커서가 창 밖이면 다시 통과 (계산은 electron/pet_cursor.js). 시험 창은 늘 통과라 안 돎
   let cursorTimer = null;
   function watchCursor() {
@@ -246,10 +246,12 @@ module.exports = function createDeskPet(o) {
     cursorTimer = setInterval(() => {
       if (!alive()) return;
       let p; try { p = screen().getCursorScreenPoint(); } catch (e) { return; }
-      const r = Cursor.step({ ignore: st.ignore, drag: !!st.drag, hidden: !!st.hidden }, p, pet.getBounds());
-      if (r.ignore !== null) setIgnore(r.ignore);
+      st.cursor = p;
+      const r = Cursor.step({ ignore: st.ignore, drag: !!st.drag, hidden: !!st.hidden, dialog: !!st.dialog, said: st.said === undefined ? null : st.said }, p, { cx: st.cx, by: st.by, tw: TW, th: TH }, pet.getBounds());
+      if (r.clearSaid) st.said = null;
+      if (r.ignore !== null) { if (r.ignore === false) st.boxOn = (st.boxOn || 0) + 1; setIgnore(r.ignore); }
       if (r.resetHit) send('pet:hitReset');
-    }, 150);
+    }, 120);
     if (cursorTimer.unref) cursorTimer.unref();
   }
   ipcMain.on('pet:dragStart', (e) => { if (fromPet(e)) dragStart(); });
@@ -384,7 +386,8 @@ module.exports = function createDeskPet(o) {
 
   return {
     start, stop, refresh, restart, isOn: alive, window: () => pet,
-    state: () => (alive() ? { ignore: !!st.ignore, hidden: !!st.hidden, drag: !!st.drag, bounds: pet.getBounds(), cx: st.cx, by: st.by, th: TH, tw: TW } : null), // 연기 시험 (tools/smoke_win.js, PH_SMOKE_STATE)
+    state: () => (alive() ? { ignore: !!st.ignore, hidden: !!st.hidden, drag: !!st.drag, dialog: !!st.dialog, bounds: pet.getBounds(), cx: st.cx, by: st.by, th: TH, tw: TW, said: st.said === undefined ? null : st.said, lastHitAt: st.lastHitAt || null, boxOn: st.boxOn || 0,
+      cursor: st.cursor || null, inPet: st.cursor ? { x: st.cursor.x - pet.getBounds().x, y: st.cursor.y - pet.getBounds().y } : null, body: { x1: Math.round(st.cx - TW * 0.3), x2: Math.round(st.cx + TW * 0.3), y1: Math.round(st.by - TH * 0.85), y2: Math.round(st.by - TH * 0.1) } } : null), // 진단: 커서 화면 좌표·펫 창 안 좌표·몸 상자 // 연기 시험 (tools/smoke_win.js, PH_SMOKE_STATE)
     look: () => (look ? { pet: look.pet, kind: look.kind, missing: look.missing, k: look.layout.k } : null),
     // 시험용 (tools/shots_deskpet.js)
     T: { st, pose: (mode, dir) => { if (dir) st.dir = dir; stopMoving(); st.mode = mode; send('pet:pose', { mode, dir: st.dir }); }, tap, showMenu, openTalk, hideForAWhile, dragEnd, say, talk: () => talk, house: () => house, lines: () => lines, TH: () => TH, winH: () => WIN_H, liftUp: () => { st.drag = { ox: 0, oy: 0, sx: 0, sy: 0, moved: false, still: Date.now() }; stopMoving(); liftUp(); } },

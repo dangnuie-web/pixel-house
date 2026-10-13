@@ -1,14 +1,27 @@
-// 바탕화면 펫 커서 감시 한 걸음 (C2, 2026-10-14 비트). 계산만 (화면 접근 없음). electron/desk_pet.js watchCursor 가 0.15초마다 부른다
-// 투명한 펫 창은 평소 클릭 통과(ignore). 화면 쪽(pet/pet.js)이 커서가 펫·말주머니 위에 오면 hit -> main 이 통과를 끔(클릭 받기)
-// 오피스 펫 윈도우 버그(2026-10-13 Actions, tori-pet lib/cursor.js): 통과를 끈 채 커서가 순간 이동하거나 빨리 나가면 화면 쪽 mouseleave 가 안 와서
-//   떠난 뒤에도 펫 창 자리(300x255)가 계속 클릭을 먹음 -> 커서가 창 밖이면 main 이 직접 통과를 다시 켜고, 화면 쪽 hit 를 false 로 되돌림(resetHit)
-//   (하우스 펫은 통과를 끄는 것을 화면 쪽 hit 로만 해서 오피스 펫의 "몸 상자" 판단은 필요 없음)
+// 바탕화면 펫 커서 감시 한 걸음 (C2·D1, 2026-10-14 비트). 계산만 (화면 접근 없음). electron/desk_pet.js watchCursor 가 0.12초마다 부른다
+// 투명한 펫 창은 평소 클릭 통과(ignore). 통과 중엔 창이 마우스를 못 받으니, 펫 위에 왔는지는 두 길로 앎:
+//   (가) 화면 쪽(pet/pet.js)이 넘겨받은 mousemove(forward)로 판단해 hit 를 보냄
+//   (나) main 이 커서 자리(screen.getCursorScreenPoint)가 펫 몸 상자 안이면 통과를 끔 → 그다음은 창이 진짜 마우스를 받아 화면 쪽이 정확한 그림 점으로 다시 판단
+// (나)를 더한 까닭: 2026-10-14 윈도우 Actions 38453257327 — 커서를 펫 위에 놓아도 화면 쪽에 mousemove 가 안 옴(rendererHit false, 통과 그대로).
+//   윈도우의 forward 는 저수준 마우스 훅으로 넘기는데 시험의 SetCursorPos 는 그 훅을 안 거침(추정). 진짜 마우스에선 오는지 확인 못 함 → forward 에만 기대지 않음
+//   오피스 펫 tori-pet lib/cursor.js 와 같은 방식 (몸 상자 + 화면 쪽 판단 존중 said + 창 밖이면 main 이 다시 통과)
 'use strict';
 function inWin(p, b) { return !!p && !!b && p.x >= b.x && p.y >= b.y && p.x < b.x + b.width && p.y < b.y + b.height; }
-// s = { ignore, drag, hidden }, p = 커서 화면 좌표, bounds = 펫 창 { x, y, width, height }
-// -> { ignore: true(다시 통과) | null(그대로), resetHit }
-function step(s, p, bounds) {
-  if (!s || s.hidden || s.drag || s.ignore) return { ignore: null, resetHit: false };
-  return inWin(p, bounds) ? { ignore: null, resetHit: false } : { ignore: true, resetHit: true };
+// 펫 몸 상자: 가운데 cx, 발 by, 그림 tw x th (화면 좌표). 가운데 60% 폭, 발 위 10%~85% 높이 (투명한 귀·꼬리 끝은 화면 쪽이 가림)
+function inBody(p, box) { return !!p && !!box && Math.abs(p.x - box.cx) <= box.tw * 0.3 && p.y >= box.by - box.th * 0.85 && p.y <= box.by - box.th * 0.1; }
+// s = { ignore, drag, hidden, dialog, said }, said = 화면 쪽이 마지막에 알려 준 hit (true|false|null=모름)
+// -> { ignore: 바꿀 값 | null, resetHit: 화면 쪽 hit 를 모름으로, clearSaid: said 를 null 로 }
+//   화면 쪽이 "그 점은 펫 아님(false)"이라고 한 뒤로는 커서가 창 밖에 나갔다 올 때까지 상자만 보고 다시 끄지 않음 (투명한 점에서 깜빡이지 않게)
+//   말풍선 메뉴가 열려 있으면(dialog) 창 안 어디든 클릭 받기 (메뉴 칸을 누를 수 있게)
+function step(s, p, box, bounds) {
+  const none = { ignore: null, resetHit: false, clearSaid: false };
+  if (!s || s.hidden || s.drag) return none;
+  const inside = inWin(p, bounds);
+  if (s.ignore) {
+    if (!inside) return s.said === null || s.said === undefined ? none : { ignore: null, resetHit: false, clearSaid: true };
+    if (s.dialog) return { ignore: false, resetHit: true, clearSaid: false };
+    return inBody(p, box) && s.said !== false ? { ignore: false, resetHit: true, clearSaid: false } : none;
+  }
+  return inside ? none : { ignore: true, resetHit: true, clearSaid: true };
 }
-module.exports = { step, inWin };
+module.exports = { step, inWin, inBody };
