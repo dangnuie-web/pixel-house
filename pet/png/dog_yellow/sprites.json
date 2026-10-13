@@ -1,0 +1,118 @@
+{
+ "note": "tools/make_pet_sprites.py가 만듦. 손으로 고치지 말 것",
+ "actions": {
+  "stand": {
+   "source": "20261013_pixel-house-pet_dogyellow_서있기_v01.png",
+   "frames": [
+    "stand_1.png",
+    "stand_2.png"
+   ],
+   "w": 850,
+   "h": 715,
+   "anchor": "foot",
+   "line": 707,
+   "cx": 425,
+   "facing": "right",
+   "top": 8,
+   "bottom": 707,
+   "heights": [
+    699,
+    699
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    109
+   ],
+   "norm": 1.0,
+   "greenKeyed": 819980,
+   "contentW": 833
+  },
+  "walk": {
+   "source": "20261013_pixel-house-pet_dogyellow_걷기_v01.png",
+   "frames": [
+    "walk_1.png",
+    "walk_2.png",
+    "walk_3.png",
+    "walk_4.png"
+   ],
+   "w": 520,
+   "h": 484,
+   "anchor": "foot",
+   "line": 476,
+   "cx": 260,
+   "facing": "right",
+   "top": 8,
+   "bottom": 476,
+   "heights": [
+    466,
+    467,
+    466,
+    468
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    63,
+    62,
+    63
+   ],
+   "norm": 1.4984,
+   "greenKeyed": 952470,
+   "contentW": 504,
+   "heightRatio": 0.667
+  },
+  "talk": {
+   "source": "20261013_pixel-house-pet_dogyellow_말하기_v01.png",
+   "frames": [
+    "talk_1.png",
+    "talk_2.png"
+   ],
+   "w": 848,
+   "h": 713,
+   "anchor": "foot",
+   "line": 705,
+   "cx": 424,
+   "facing": "right",
+   "top": 8,
+   "bottom": 705,
+   "heights": [
+    697,
+    697
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    110
+   ],
+   "norm": 1.0,
+   "greenKeyed": 821611,
+   "contentW": 832,
+   "heightRatio": 0.997
+  },
+  "lift": {
+   "source": "20261013_pixel-house-pet_dogyellow_들어올리기_v01.png",
+   "frames": [
+    "lift_1.png",
+    "lift_2.png"
+   ],
+   "w": 762,
+   "h": 831,
+   "anchor": "top",
+   "line": 8,
+   "cx": 381,
+   "facing": "front",
+   "top": 8,
+   "bottom": 823,
+   "heights": [
+    806,
+    815
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    93
+   ],
+   "norm": 1.0,
+   "greenKeyed": 947504,
+   "contentW": 746
+  }
+ },
+ "ref": "stand"
+}

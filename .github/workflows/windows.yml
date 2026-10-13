@@ -1,0 +1,104 @@
+# Pixel House 윈도우 시험 + 설치 파일 + 켜 보기 (4-2단계 C5, 2026-10-14 비트 초안)
+# 공개 저장소에서 돈다 (개발 원본 저장소에서는 돌리지 않음)
+# 윈도우 컴퓨터가 없어서 깃허브 Actions 윈도우 서버에서 exe 를 만들고 진짜로 설치해 켜 본다. 마지막 눈 확인은 사람이 체크리스트로
+# 결과 exe 는 Actions "Artifacts" 로만 남긴다(7일). 릴리스·게시는 하지 않는다(시험판 올리기는 따로 손으로)
+# 손으로만 돈다(workflow_dispatch). 비밀값·토큰을 쓰지 않는다(기본 읽기 권한만)
+# 오피스·오피스 펫 윈도우 Actions 에서 겪은 일을 미리 넣음: 줄 끝 CRLF, Electron 44 실행·고지 파일을 npm ci 가 안 받음, 가짜 APPDATA 없는 폴더, 설치 exe 창 안 뜸 → 창 뜨는지 확인
+name: windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Pixel House 윈도우 시험 · exe · 설치해 켜 보기
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      # 윈도우 git 은 기본으로 줄 끝을 CRLF 로 바꿈 → 저장소 그대로(LF) 받기
+      - name: 줄 끝 그대로 받기
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 의존성 (package-lock 그대로)
+        run: npm ci --no-audit --no-fund
+
+      # Electron 44 는 npm ci 때 실행 파일·고지 파일을 받지 않는다(처음 쓸 때 받음). 시험·빌드가 node_modules/electron/dist 를 쓰므로 여기서 받는다
+      # (오피스 2026-10-13 실행 38388268944: "Electron 고지 파일이 없어요", 펫 38375590513: 고지 없는 exe)
+      - name: Electron 실행 파일 받기 (package-lock 버전 그대로)
+        run: |
+          node node_modules/electron/install.js
+          node -e "const fs=require('fs'),d='node_modules/electron/dist';for(const f of ['electron.exe','LICENSE','LICENSES.chromium.html','version'])if(!fs.existsSync(d+'/'+f)){console.error('없음: '+f);process.exit(1)};console.log('Electron '+fs.readFileSync(d+'/version','utf8').trim())"
+
+      # job 의 env: 칸에서는 runner 문맥을 못 씀(오피스 2026-10-13 "workflow file issue") → 단계에서 GITHUB_ENV 로
+      - name: 임시 폴더
+        shell: pwsh
+        run: '"PH_TMP=$env:RUNNER_TEMP" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8'
+
+      # npm test 는 && 로 이어져 처음 실패에서 멈춤 → 하나씩 다 돌리고 실패 수를 셈
+      - name: 시험 (package.json test 목록 전부)
+        shell: pwsh
+        run: |
+          $tests = node -e "console.log(require('./package.json').scripts.test.split('&&').map((s)=>s.trim().replace(/^node /,'')).join('\n'))"
+          $fail = @()
+          foreach ($t in $tests) { Write-Host "== $t"; node $t; if ($LASTEXITCODE -ne 0) { $fail += $t } }
+          Write-Host ("시험 파일 " + $tests.Count + "개 중 실패 " + $fail.Count + "개: " + ($fail -join ', '))
+          if ($fail.Count -gt 0) { exit 1 }
+
+      - name: 윈도우 설치 파일 (NSIS x64, 서명 없음)
+        if: always()
+        run: npx electron-builder --win --publish never
+
+      - name: 설치 파일 안 Electron 고지 확인
+        if: always()
+        run: node -e "const fs=require('fs'),r='dist/win-unpacked/';for(const f of ['PixelHouse.exe','resources/LICENSE.electron.txt','resources/LICENSES.chromium.html','resources/app/package.json'])if(!fs.existsSync(r+f)){console.error('설치 파일에 없음: '+f);process.exit(1)};console.log('실행 파일·고지 파일 있음')"
+
+      # 친구가 하는 것과 같게: 설치 파일을 조용히(/S) 설치 → 설치된 PixelHouse.exe 를 켬
+      - name: 설치 (사용자 폴더, 조용히)
+        if: always()
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dist\Pixel-House-windows-setup.exe" -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'PixelHouse.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { Write-Error '설치된 PixelHouse.exe 없음'; exit 1 }
+          Write-Host ("설치 자리: " + $exe.FullName)
+          "PH_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $lnk = Get-ChildItem -Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs" -Recurse -Filter 'Pixel House.lnk' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $lnk) { Write-Error '시작 메뉴 바로 가기 "Pixel House" 없음'; exit 1 }
+          Write-Host ("시작 메뉴: " + $lnk.FullName)
+
+      # 창 뜸·%APPDATA%\Pixel House·온보딩 → 기록 파일·물 한 잔 쓰기·바탕화면 펫 켜기·클릭 통과(진짜 커서)·펫 끄기
+      - name: 설치한 앱 켜 보기
+        if: always()
+        run: node tools/smoke_win.js "${{ env.PH_EXE }}" --shot out/smoke
+
+      - name: 제거 (조용히)
+        if: always()
+        shell: pwsh
+        run: |
+          $u = Get-ChildItem -Path (Split-Path $env:PH_EXE) -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if (-not $u) { Write-Error '제거 프로그램 없음'; exit 1 }
+          Start-Process -FilePath $u.FullName -ArgumentList '/S' -Wait
+          Start-Sleep -Seconds 3
+          if (Test-Path $env:PH_EXE) { Write-Error '제거 뒤에도 PixelHouse.exe 가 남음'; exit 1 }
+          Write-Host '제거됨'
+
+      - name: 결과 남기기 (7일)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixel-house-windows
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            dist/Pixel-House-windows-setup.exe
+            out/smoke/*.png

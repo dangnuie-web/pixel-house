@@ -7,6 +7,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 let boot = {};
 try { if (/[?&]pb=1(&|$)/.test(location.search)) boot = ipcRenderer.sendSync('ph:profileSync') || {}; } catch (e) { boot = {}; }
 contextBridge.exposeInMainWorld('PHProfileBoot', boot);
+// 플랫폼 (C1 윈도우판 2026-10-14): 화면 글 ⌘ / Ctrl+ 고르기, html class (맥 전용 모양)
+contextBridge.exposeInMainWorld('PHPlatform', { os: process.platform, mac: process.platform === 'darwin', win: process.platform === 'win32' });
 // 첫 실행 온보딩·집 꾸미기 (electron/profile_main.js). 폴더는 고르기 창에서 고른 것·기본 폴더만 받음
 contextBridge.exposeInMainWorld('PHOnboardDesktop', {
   info: () => ipcRenderer.invoke('ph:onboardInfo'),
@@ -14,7 +16,8 @@ contextBridge.exposeInMainWorld('PHOnboardDesktop', {
   pickFolder: () => ipcRenderer.invoke('ph:onboardPickFolder'),
   finish: (req) => ipcRenderer.invoke('ph:onboardFinish', req), // req = { name, cat(고양이 이름, 2026-10-08), avatar, house, dir, habits }
   setFurniture: (slot, sprite) => ipcRenderer.invoke('ph:furnitureSet', { slot, sprite }),
-  setProfile: (key, value) => ipcRenderer.invoke('ph:profileSet', { key, value }), // 설정 화면 (공용판): pet·cat·brand·avatar·house·tabsHidden 하나씩
+  setProfile: (key, value) => ipcRenderer.invoke('ph:profileSet', { key, value }), // 설정 화면 (공용판): pet·cat·brand·avatar·house·tabsHidden·desktopPet 하나씩
+  onDeskPet: (cb) => { ipcRenderer.on('ph:deskPet', (e, d) => cb({ on: !!(d && d.on) })); }, // 바탕화면 펫을 펫 메뉴에서 끔 (2026-10-13)
 });
 contextBridge.exposeInMainWorld('PHDesktop', {
   read: (rel) => ipcRenderer.invoke('ph:read', rel), // 하우스 폴더 안 .md -> { text, lastModified }

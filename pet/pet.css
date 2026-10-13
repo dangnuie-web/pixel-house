@@ -1,0 +1,126 @@
+/* 펫 창: 배경 투명. 말주머니 = 무늬 "두부 펫 말풍선 메뉴 디자인 v01" A안 "쪽지 목록" (제작자 결정 2026-10-04)
+   (제작 문서)
+   색은 하우스 대화창 --dlg-*와 같은 값 (새 색 없음). 한 줄 말주머니도 같은 크림 쪽지 (토리 펫은 오피스 회백 그대로) */
+:root {
+  --pb-bg: #F7F0E1;       /* 말풍선 바탕 (하우스 대화창 크림) */
+  --pb-line: #29262F;     /* 테두리 */
+  --pb-inner: #DDCFB4;    /* 안쪽 아래 2px (종이 두께) */
+  --pb-shadow: #5C3E2B;   /* 아래 그림자 3px */
+  --pb-text: #29262F;
+  --pb-sub: #86593A;      /* 번호, 줄 이름, 설명, 넘어가기, 아래 줄 */
+  --pb-hover: #F1E3C7;    /* 마우스 올림 */
+  --pb-ring: #E9D2B0;     /* 칩 올림, 입력칸 포커스 링, 고름 위 번호 */
+  --pb-chip-line: #C8A57C;
+  --pb-sel: #86593A;      /* 고름·누름, 적기 */
+  --pb-sel-tx: #F7F0E1;
+  --pb-field: #FFFDF8;
+  --pb-ph: #A08A70;
+  --pb-off-bg: #EFE6D3; --pb-off-tx: #B9A88F;
+  --pb-dot: #E59A4F;
+  --font: "Apple SD Gothic Neo", "AppleSDGothicNeo", "Malgun Gothic", system-ui, sans-serif; /* 윈도우 = 맑은 고딕 (C1) */
+}
+html, body { margin: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none; cursor: default; }
+#dubu { position: absolute; bottom: 0; image-rendering: pixelated; }
+/* 그림자는 꼬리까지 같이 (흐림 0) */
+#bwrap { position: absolute; left: 0; top: 0; filter: drop-shadow(0 3px 0 var(--pb-shadow)); cursor: pointer; }
+#bwrap[hidden] { display: none; }
+#bubble { position: relative; max-width: 240px; box-sizing: border-box; background: var(--pb-bg); color: var(--pb-text);
+  border: 2px solid var(--pb-line); border-radius: 10px; box-shadow: inset 0 -2px 0 var(--pb-inner);
+  padding: 9px 12px 11px; font: 600 13px/19px var(--font); white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; }
+#btext { font-weight: 600; }
+#btail { position: absolute; image-rendering: pixelated; }
+#bwrap.pop { animation: pop 160ms steps(2, end); }
+@keyframes pop { 0% { transform: translateY(4px); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #bwrap.pop { animation: none; } }
+canvas.px { image-rendering: pixelated; display: block; }
+
+/* ---------- 말풍선 메뉴 ---------- */
+/* 폭: 화면마다 (디자인 2장 표). JS가 --bw로 정함, 한 줄(tell)은 글 길이대로 214~268 */
+#bwrap.dlg #bubble { max-width: 268px; min-width: 214px; }
+#bwrap.dlg #bubble.fixw { width: var(--bw); }
+#bmenu { margin-top: 7px; white-space: normal; font-weight: normal; }
+#bmenu[hidden] { display: none; }
+#bmenu[data-mode="tell"] { margin-top: 5px; }
+#bmenu[data-kind="rating"], #bmenu[data-mode="time"] { margin-top: 6px; }
+button { -webkit-appearance: none; appearance: none; font-family: var(--font); }
+button:focus, button:focus-visible { outline: none; }
+
+/* A안 목록: 한 줄에 하나, 바탕 없음. 아이콘 16 | 글자 | 번호(오른쪽 끝) */
+.dc-grid { display: flex; flex-direction: column; gap: 2px; margin: 0 -4px; }
+.dc { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; column-gap: 8px; align-items: center; box-sizing: border-box;
+  height: 26px; padding: 0 6px; margin: 0; border: 0; border-radius: 6px; background: transparent; color: var(--pb-text);
+  font: 500 13px/26px var(--font); text-align: left; cursor: pointer; word-break: keep-all; white-space: nowrap; }
+.dc.noic { grid-template-columns: minmax(0, 1fr) auto; }
+.dc .di { width: 16px; height: 16px; }
+.dc .dl { overflow: hidden; text-overflow: ellipsis; }
+.dc .dn { font: 400 11px/26px var(--font); color: var(--pb-sub); }
+.dc .dd { font: 400 11px/26px var(--font); color: var(--pb-sub); }
+.dc:hover { background: var(--pb-hover); }
+/* 고름 = 키보드 커서 (마우스 올림은 커서를 옮기지 않음, 하우스 대화창과 같은 규칙). 누름 = 고름 + 1px 아래 */
+.dc.cur, .dc:active { background: var(--pb-sel); color: var(--pb-sel-tx); }
+.dc.cur .dn, .dc.cur .dd, .dc:active .dn, .dc:active .dd { color: var(--pb-ring); }
+.dc:active { transform: translateY(1px); }
+/* 기분: 얼굴 + 이름(13/600) + 설명(11) + 번호 */
+#bmenu[data-kind="mood"] .dc { grid-template-columns: 16px auto minmax(0, 1fr) auto; }
+#bmenu[data-kind="mood"] .dl { font-weight: 600; overflow: visible; }
+#bmenu[data-kind="mood"] .dd { overflow: hidden; text-overflow: ellipsis; }
+
+/* 글자 버튼 (넘어가기): 갈색 글자, 올림·고름 = 먹색 + 밑줄 */
+.dc.dtx, .dc.dh { display: block; height: auto; border-radius: 0; transform: none; }
+.dc.dtx, .dc.dtx:hover, .dc.dtx.cur, .dc.dtx:active, .dc.dh, .dc.dh:hover, .dc.dh.cur, .dc.dh:active { background: none; }
+.dtx { background: none; border: 0; padding: 0; margin: 0; color: var(--pb-sub); font: 500 12px/30px var(--font); cursor: pointer; white-space: nowrap; }
+.dtx:hover, .dtx.cur { color: var(--pb-text); text-decoration: underline; text-underline-offset: 3px; }
+
+/* 식사 하트: 칸 28, 하트 12x12 2배 = 24px. 올린(고른) 하트까지 채움 */
+.dc-grid.hearts { flex-direction: row; align-items: center; gap: 2px; margin: 0 0 0 -2px; height: 30px; }
+.hearts .dh { display: block; width: 28px; height: 30px; padding: 3px 2px; margin: 0; border: 0; background: none; cursor: pointer; box-sizing: border-box; }
+.hearts .dh canvas { width: 24px; height: 24px; }
+.hearts .dh .on, .hearts .dh.fill .off { display: none; }
+.hearts .dh.fill .on { display: block; }
+.hearts .dtx { margin-left: auto; padding-right: 2px; }
+
+/* 먹은 양: 칸 42x50, 위장 24 1배 + 퍼센트. 5번째 칸이 넘어가기 */
+.dc-grid.amounts { flex-direction: row; gap: 4px; margin: 0; }
+.amounts .dc { display: block; width: 42px; height: 50px; padding: 3px 0 0; text-align: center; }
+.amounts .dc canvas { width: 24px; height: 24px; margin: 0 auto 1px; }
+.amounts .dc .dl { display: block; font: 600 11px/18px var(--font); }
+.amounts .dtx { flex: 1; width: auto; height: 50px; padding: 0; font-size: 11.5px; line-height: 50px; text-align: center; }
+
+/* 잠: 줄 이름 위, 칩은 한 줄을 꽉 채움 */
+.dt-name { display: block; font: 500 11px/14px var(--font); color: var(--pb-sub); margin-bottom: 2px; }
+.dt-row { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 3px; margin-bottom: 6px; }
+.dt-done { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.dt-done .dt-name { margin: 0; }
+.chip { position: relative; box-sizing: border-box; height: 24px; padding: 0 2px; margin: 0; border: 1px solid var(--pb-chip-line); border-radius: 5px;
+  background: var(--pb-field); color: var(--pb-text); font: 500 12px/22px var(--font); text-align: center; cursor: pointer; white-space: nowrap; }
+.chip:hover { background: var(--pb-ring); }
+.chip.picked, .chip:active { background: var(--pb-sel); border-color: var(--pb-sel); color: var(--pb-sel-tx); }
+span.chip { display: inline-block; padding: 0 8px; cursor: default; }
+.chip.dot::after { content: ""; position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 1px; background: var(--pb-dot); }
+
+/* 입력칸 28 + (넘어가기) + 적기 46x28 */
+.df { display: flex; align-items: center; gap: 4px; margin: 0; }
+.dfi { flex: 1; min-width: 0; box-sizing: border-box; height: 28px; font: 400 12.5px/26px var(--font); color: var(--pb-text); background: var(--pb-field);
+  border: 1px solid var(--pb-chip-line); border-radius: 5px; box-shadow: inset 0 1px 0 var(--pb-inner); padding: 0 8px; margin: 0; outline: none;
+  -webkit-user-select: text; user-select: text; }
+.dfi::placeholder { color: var(--pb-ph); font-size: 12px; }
+.dfi:focus { border-color: var(--pb-sub); box-shadow: inset 0 1px 0 var(--pb-inner), 0 0 0 2px var(--pb-ring); }
+.df .dtx { padding: 0 4px; line-height: 28px; }
+.dfo { flex: none; width: 46px; height: 28px; box-sizing: border-box; border: 1px solid var(--pb-line); border-radius: 5px; background: var(--pb-sel); color: var(--pb-sel-tx);
+  font: 600 12px/26px var(--font); padding: 0; margin: 0; cursor: pointer; }
+.dfo:active { transform: translateY(1px); }
+.dfo.empty { background: var(--pb-off-bg); border-color: var(--pb-off-bg); color: var(--pb-off-tx); }
+
+/* 저장 뒤 한 줄: (물이면) 컵 줄 + 오른쪽 아래 다음 표시 5x3 */
+.dmore-row { display: flex; align-items: flex-end; justify-content: space-between; }
+.cups { display: flex; margin-left: -2px; }
+.cups canvas { width: 16px; height: 16px; margin-right: -1px; }
+.cups canvas.empty { opacity: .28; }
+.dmore { width: 5px; height: 3px; margin: 0 5px 3px auto; }
+
+/* 오른쪽 클릭 아래 줄: 점선(2px 선 + 2px 틈) -> "잠깐 숨기기 (10분) ┆ 종료" */
+.bfoot { display: flex; justify-content: flex-end; align-items: center; margin-top: 6px; padding-top: 4px; height: 26px; box-sizing: border-box;
+  background: linear-gradient(to right, var(--pb-chip-line) 50%, transparent 50%) 0 3px / 4px 1px repeat-x; }
+.bfoot .sep { width: 1px; height: 9px; background: var(--pb-chip-line); margin: 0 7px; }
+.bf { font: 500 11px/18px var(--font); color: var(--pb-sub); background: none; border: none; padding: 0 2px 0 0; margin: 0; cursor: pointer; }
+.bf:hover, .bf.cur { color: var(--pb-text); text-decoration: underline; text-underline-offset: 3px; }

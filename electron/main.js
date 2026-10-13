@@ -12,6 +12,7 @@ const os = require('os');
 const ROOT = path.resolve(__dirname, '..');
 const DEV = process.env.PH_DEV === '1';
 const SHOTS = process.env.PH_SHOTS === '1';
+const SMOKE_HIDE = process.env.PH_SMOKE_HIDE === '1'; // 연기 시험(tools/smoke_win.js)을 맥에서 돌릴 때만: 창을 투명도 0·마우스 통과로 (시험 창과 같음)
 
 app.setName('Pixel House');
 
@@ -36,7 +37,7 @@ setProfileEnv();
 function bootData() {
   const u = PROFILE.user || {};
   return { id: PROFILE.id, bundle: PROFILE.bundle || {}, onboard: !!PROFILE.onboard,
-    user: PROFILE.id === 'default' ? { name: u.name || '', cat: u.cat || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {}, pet: u.pet || '', brand: u.brand || '', tabsHidden: u.tabsHidden || [] } : {} };
+    user: PROFILE.id === 'default' ? { name: u.name || '', cat: u.cat || '', avatar: u.avatar || '', house: u.house || '', furniture: u.furniture || {}, pet: u.pet || '', brand: u.brand || '', tabsHidden: u.tabsHidden || [], desktopPet: u.desktopPet === true } : {} };
 }
 ipcMain.on('ph:profileSync', (e) => { e.returnValue = bootData(); });
 
@@ -45,17 +46,8 @@ ipcMain.on('ph:profileSync', (e) => { e.returnValue = bootData(); });
 // 시험은 PH_HOUSE로 가짜 폴더(tests/fixtures/house)를 가리킨다. 쓰기는 기능이 정해지면 ph:write로 따로 (원본 백업 후)
 //   기록 폴더 = 설정 묶음이 정함 (제작자 판 = 묶음 houseDir 또는 PH_HOUSE, 공용판 = 온보딩에서 고른 폴더). 온보딩 중엔 null (읽기·쓰기 없음)
 let HOUSE = PROFILE.dir ? path.resolve(PROFILE.dir) : null;
-const SECRET = /^\.env|\.(pem|key)$|^id_rsa/i;
-function resolveSafe(rel) {
-  if (!HOUSE) throw new Error('기록 폴더 없음 (온보딩 중)');
-  if (typeof rel !== 'string' || !rel) throw new Error('경로 오류');
-  const segs = rel.split('/').filter((s) => s !== '');
-  if (segs.some((s) => s === '..' || s.startsWith('.') || SECRET.test(s) || s === '_to_delete')) throw new Error('허용 안 됨: ' + rel);
-  if (!/\.md$/i.test(segs[segs.length - 1])) throw new Error('md만 읽음: ' + rel);
-  const full = path.join(HOUSE, ...segs);
-  if (!full.startsWith(HOUSE + path.sep)) throw new Error('허용 안 됨: ' + rel);
-  return full;
-}
+const HousePath = require('./house_path'); // 경로 검사 (C1 2026-10-14 떼어 냄, 윈도우 \·드라이브 거절)
+function resolveSafe(rel) { return HousePath.safeMd(HOUSE, rel); }
 ipcMain.handle('ph:read', (e, rel) => {
   const full = resolveSafe(rel);
   return { text: fs.readFileSync(full, 'utf8'), lastModified: fs.statSync(full).mtimeMs };
@@ -223,15 +215,20 @@ function windowSize() {
   s = Math.max(1, s >= 1.95 ? 2 : s);
   return { width: Math.round(W * s) + PAD + SIDE, height: Math.round(H * s) + PAD + BAR, minWidth: Math.round(W * 0.75) + SIDE, minHeight: Math.round(H * 0.75) + BAR };
 }
+let shotsRan = false;
 function createWindow() {
   const sz = windowSize();
   const win = new BrowserWindow({
     width: sz.width, height: sz.height, minWidth: sz.minWidth, minHeight: sz.minHeight, useContentSize: true,
     title: 'Pixel House', backgroundColor: '#34384A',
-    titleBarStyle: 'hiddenInset', show: !SHOTS,
+    titleBarStyle: 'hiddenInset', show: !SHOTS && !SMOKE_HIDE,
+    autoHideMenuBar: process.platform !== 'darwin', // 윈도우: 메뉴 막대(편집·보기·창)는 Alt 로만 (C1). 맥은 맨 위 메뉴 막대 그대로
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: !SHOTS },
   });
   mainWin = win;
+  if (SMOKE_HIDE && !SHOTS) { win.setOpacity(0); win.setIgnoreMouseEvents(true); win.setFocusable(false); win.once('ready-to-show', () => win.showInactive()); } // 맥에서 연기 시험을 돌릴 때 화면을 가리지 않게 (tools/smoke_win.js --hide)
+  dockFor(true); // 집 창이 있으면 Dock 아이콘 보임 (A4)
+  win.on('closed', () => { if (mainWin === win) mainWin = null; dockFor(false); });
   openPage(win, chooseSet(), null);
   if (houseOn) watchLife(win); // 온보딩 중이면 끝난 뒤 (houseReady)
   // 앱 안에서 다른 페이지로 가거나 새 창을 열지 않는다
@@ -257,11 +254,14 @@ function createWindow() {
     // 시험 창은 사람 마우스·키를 받지 않음 (2026-10-03: 시험 중 화면에 뜬 창을 누르면 그림 세트가 바뀌거나 키가 눌린 채로 남아 시험이 흔들림).
     // 시험 입력은 webContents.sendInputEvent로 화면에 직접 넣으므로 그대로 들어감
     win.setIgnoreMouseEvents(true); win.setFocusable(false);
+    if (shotsRan) return; // 시험 도중 집 창을 닫았다 다시 연 경우(A4 시험): 새 창도 안 보이게만 하고 시험은 한 번만
+    shotsRan = true;
     // PH_SHOTS_SCRIPT = tools 안 시험 파일 이름 (shots.js = v08 전체 흐름, shots_sets.js = v09·세트 바꾸기, shots_dialog.js = 두부 대화창)
     const script = /^shots(_[a-z0-9]+)?\.js$/.test(process.env.PH_SHOTS_SCRIPT || '') ? process.env.PH_SHOTS_SCRIPT : 'shots.js';
     require(path.join(ROOT, 'tools', script))(win, ROOT, { chooseSet, prefsPath, readPrefs, menuPick, setNames: SET_NAMES, menu: () => Menu.getApplicationMenu(),
       reopen: () => openPage(win, chooseSet(), null), // 시험용: 다시 연 것처럼 (저장된 값으로)
-      profile: () => PROFILE, profileStore: Prof.store })
+      profile: () => PROFILE, profileStore: Prof.store, deskPet: () => deskPetCtl(),
+      dock: () => ({ hidden: dockHidden, visible: app.dock ? app.dock.isVisible() : null, mainWin: !!(mainWin && !mainWin.isDestroyed()) }) }) // dock = A4 Dock 아이콘 (tools/shots_deskpet.js) // deskPet = 바탕화면 펫 (tools/shots_deskpet.js)
       .then((ok) => finish(ok ? 0 : 1), (e) => { console.error('SHOTS ERROR', e && e.stack || e); finish(1); });
   }
 }
@@ -279,6 +279,46 @@ function watchLife(win) {
   watchers.push({ close: () => fs.unwatchFile(LIFE_FULL) });
   win.on('focus', () => tell('focus'));
 }
+// ---- 바탕화면 펫 (2026-10-13 제작자 결정: 하우스 앱 안에 "바탕화면 펫 켜기", 공용판만, 처음 꺼짐). 코드는 electron/desk_pet.js ----
+//   켜짐 = 공용판(PROFILE default) + 온보딩 끝 + profile.json desktopPet true. 제작자 판은 켜지 않음 (설정 화면도 없음, 제작자은 따로 두부 펫 앱을 씀)
+//   펫 창이 떠 있으면 집 창을 닫아도 앱이 남음 (펫이 바탕화면에 그대로). 그동안 Dock 아이콘은 숨김 (아래 dockFor, A4 2026-10-14)
+let deskPet = null;
+// Dock 아이콘 (A4, 2026-10-14 제작자 정함: 집 창을 닫아도 펫 유지, 펫만 떠 있을 땐 Dock 아이콘 숨김). 맥만. 윈도우는 펫 창이 작업 표시줄에 안 나옴(skipTaskbar)이라 할 일 없음
+//   집 창이 열리면 보임, 닫혔는데 펫이 떠 있으면 숨김. 숨긴 동안 집 창 다시 열기 = 앱을 한 번 더 열기(Finder·Launchpad·Spotlight -> activate), 끝내기 = 펫 메뉴 "바탕화면 펫 끄기"
+//   (Dock이 숨으면 맨 위 메뉴 막대도 안 보여 Cmd+Q가 없음. 펫을 끄면 창이 하나도 없어 앱이 끝남)
+let dockHidden = false;
+function dockFor(houseOpen) {
+  if (process.platform !== 'darwin' || !app.dock) return;
+  const petOnly = !houseOpen && !!(deskPet && deskPet.isOn());
+  if (petOnly && !dockHidden) { dockHidden = true; app.dock.hide(); }
+  else if (!petOnly && dockHidden) { dockHidden = false; Promise.resolve(app.dock.show()).then(() => { if (!SHOTS && mainWin && !mainWin.isDestroyed()) mainWin.focus(); }).catch(() => {}); } // 숨었다 나온 앱은 새 창이 뒤에 뜰 수 있어 앞으로
+}
+function petWanted() { return !!(PROFILE && PROFILE.id === 'default' && !PROFILE.onboard && houseOn && PROFILE.user && PROFILE.user.desktopPet === true); }
+function deskPetCtl() {
+  if (deskPet) return deskPet;
+  const fixed = () => (SHOTS && /^\d{4}-\d{2}-\d{2}$/.test(process.env.PH_TODAY || '') ? process.env.PH_TODAY : null);
+  deskPet = require(path.join(__dirname, 'desk_pet.js'))({
+    app, BrowserWindow, ipcMain, screen, shots: SHOTS, show: process.env.PH_SHOTS_SHOW === '1', hide: SMOKE_HIDE,
+    boot: bootData,
+    parts: () => (houseOn ? { file: LIFE_FULL, backup, features: FEAT, settings: S, fixedDay: fixed,
+      guard: () => { if (SHOTS && !process.env.PH_HOUSE) throw new Error('시험 실행 중에는 실제 생활 기록에 쓰지 않음'); } } : null),
+    now: fixed() ? () => new Date(fixed() + 'T12:00:00').getTime() : undefined, // 시험: 기록 날짜를 PH_TODAY로 고정할 때 펫 대화도 그날 낮
+    onTurnOff: () => { // 펫 메뉴 "바탕화면 펫 끄기" = 설정에서 끈 것과 같음 (profile.json 에서 지움, 열린 집 창 설정 화면에도 알림)
+      const u = Prof.turnOffDesktopPet(); if (u) PROFILE.user = u;
+      if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('ph:deskPet', { on: false });
+      else if (BrowserWindow.getAllWindows().length === 0) app.quit();
+      dockFor(!!(mainWin && !mainWin.isDestroyed()));
+    },
+  });
+  return deskPet;
+}
+function syncDeskPet(prev) {
+  const want = petWanted(), ctl = deskPetCtl();
+  if (want && !ctl.isOn()) ctl.start();
+  else if (!want && ctl.isOn()) ctl.stop();
+  else if (want && prev && prev.pet !== PROFILE.user.pet) ctl.restart(); // 펫을 바꿈 -> 새 그림으로 다시 띄움 (대사도 새로)
+  else if (want && prev && (prev.cat !== PROFILE.user.cat || prev.name !== PROFILE.user.name)) ctl.refresh(); // 이름을 바꿈 -> 대사 다시
+}
 // 온보딩 끝 (electron/profile_main.js): 고른 값으로 설정 묶음을 다시 정하고, 기록 폴더 쓰기 IPC를 열고, 화면을 집으로 다시 엶
 function houseReady() {
   PROFILE = Prof.choose(); setProfileEnv();
@@ -286,6 +326,19 @@ function houseReady() {
   if (!HOUSE || PROFILE.onboard) return;
   startHouse();
   if (mainWin && !mainWin.isDestroyed()) { watchLife(mainWin); openPage(mainWin, chooseSet(), null); }
+}
+// 연기 시험 상태 쓰기 (C5 윈도우 Actions, tools/smoke_win.js): PH_SMOKE_STATE=<파일> 로 켰을 때만 0.3초마다 창·펫 상태를 JSON 으로. 읽기만, 화면·기록엔 손대지 않음
+function smokeState() {
+  const f = process.env.PH_SMOKE_STATE; if (!f) return;
+  const t = setInterval(() => {
+    try {
+      const wins = BrowserWindow.getAllWindows().map((w) => ({ title: w.getTitle(), visible: w.isVisible(), bounds: w.getBounds() }));
+      const st = { at: Date.now(), platform: process.platform, userData: app.getPath('userData'), house: HOUSE, life: LIFE_FULL, houseOn, onboard: !!PROFILE.onboard,
+        main: !!(mainWin && !mainWin.isDestroyed()), wins, pet: deskPet && deskPet.isOn() ? deskPet.state() : null, dockHidden };
+      fs.writeFileSync(f + '.tmp', JSON.stringify(st)); fs.renameSync(f + '.tmp', f);
+    } catch (e) { /* 다음 번에 */ }
+  }, 300);
+  t.unref();
 }
 function finish(code) {
   try { if (shotData) fs.rmSync(shotData, { recursive: true, force: true }); } catch (e) {}
@@ -297,13 +350,15 @@ function finish(code) {
 // 두 번째로 열면 바로 끄고, 이미 떠 있는 창을 앞으로. (확인 캡처 shots는 따로 만든 임시 사용자 폴더라 서로 안 막음)
 let mainWin = null;
 const watchers = [];
+// 윈도우: 작업 표시줄·알림이 설치한 앱(시작 메뉴 바로 가기)과 같은 앱으로 묶이게 (C1 2026-10-14). 값 = package.json build.appId (NSIS 바로 가기와 같음)
+if (process.platform === 'win32') app.setAppUserModelId('app.pixelhouse.desktop');
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.exit(0);
 } else {
   app.on('second-instance', () => {
     if (process.env.PH_LOG === '1') console.log('PH second-instance');
-    if (!mainWin || mainWin.isDestroyed()) return;
+    if (!mainWin || mainWin.isDestroyed()) { if (app.isReady()) createWindow(); return; } // 바탕화면 펫만 떠 있을 때 (2026-10-13)
     if (mainWin.isMinimized()) mainWin.restore();
     mainWin.show(); mainWin.focus(); app.focus({ steal: true });
   });
@@ -311,10 +366,12 @@ if (!gotLock) {
   if (!PROFILE.onboard) startHouse();
   else Prof.registerOnboard({ ipcMain, dialog, getWin: () => mainWin, S, onDone: houseReady });
   Prof.registerFurniture({ ipcMain, onChange: (u) => { if (u && PROFILE.id === 'default') PROFILE.user = u; } }); // 집 꾸미기 (공용판만)
-  Prof.registerSettings({ ipcMain, onChange: (u) => { if (u && PROFILE.id === 'default') { PROFILE.user = u; setProfileEnv(); } } }); // 설정 화면 (공용판만, 2026-10-08)
-  app.whenReady().then(createWindow);
+  Prof.registerSettings({ ipcMain, onChange: (u) => { if (u && PROFILE.id === 'default') { const prev = PROFILE.user; PROFILE.user = u; setProfileEnv(); syncDeskPet(prev); } } }); // 설정 화면 (공용판만, 2026-10-08). 바탕화면 펫 켜고 끄기도 (2026-10-13)
+  app.whenReady().then(() => { createWindow(); syncDeskPet(null); smokeState(); });
+  // 집 창을 닫고 바탕화면 펫만 남았을 때 앱을 한 번 더 열면(Dock 아이콘은 숨어 있음 -> Finder·Launchpad) = 집 창 다시 열기
+  app.on('activate', () => { if (app.isReady() && (!mainWin || mainWin.isDestroyed())) createWindow(); });
 }
-app.on('window-all-closed', () => app.quit());
+app.on('window-all-closed', () => app.quit()); // 바탕화면 펫 창이 떠 있으면 집 창을 닫아도 여기 안 옴 (펫을 끄면 그때 종료)
 
 // ---- 바로 꺼지기 (2026-10-02 토리 전달: SIGTERM에 몇십 초 걸렸다는 보고) ----
 // 지금 코드에서는 재현 안 됨(앱 SIGTERM 0.3초, 앱 종료 요청 0.5초, npm start 0.3초, 둘을 같이 띄운 경우 0.3초).

@@ -1,16 +1,18 @@
 {
   "name": "pixel-house",
   "productName": "Pixel House",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "고양이 집사 두부와 사는 픽셀 집. 물·잠·식사·약속·독서 같은 생활 기록을 내 컴퓨터 파일 하나에 남기는 맥 앱",
+  "description": "고양이 집사 두부와 사는 픽셀 집. 물·잠·식사·약속·독서 같은 생활 기록을 내 컴퓨터 파일 하나에 남기는 데스크톱 앱 (macOS·Windows)",
   "main": "electron/main.js",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/test_profile.js && node tests/test_houses.js && node tests/test_settings_app.js && node tests/test_public_app.js && node tests/test_public_life_app.js",
+    "test": "node tests/test_profile.js && node tests/test_houses.js && node tests/test_settings_app.js && node tests/test_public_app.js && node tests/test_public_life_app.js && node tests/test_desk_pet.js && node tests/test_desk_pet_app.js && node tests/test_pet_looks_app.js && node tests/test_build_names.js && node tests/test_win.js",
     "predist:mac": "install-electron",
-    "dist:mac": "electron-builder --mac --publish never"
+    "dist:mac": "electron-builder --mac --publish never",
+    "predist:win": "install-electron",
+    "dist:win": "electron-builder --win --publish never"
   },
   "devDependencies": {
     "electron": "44.5.1",
@@ -28,8 +30,20 @@
       "electron/**",
       "css/**",
       "js/**",
+      "pet/**",
+      "portraits/**",
       "profiles/default/**",
       "!**/.DS_Store"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/electron/dist/LICENSE",
+        "to": "LICENSE.electron.txt"
+      },
+      {
+        "from": "node_modules/electron/dist/LICENSES.chromium.html",
+        "to": "LICENSES.chromium.html"
+      }
     ],
     "mac": {
       "category": "public.app-category.lifestyle",
@@ -43,10 +57,33 @@
       ],
       "identity": "-",
       "hardenedRuntime": false,
+      "artifactName": "Pixel-House-mac-arm64.dmg",
       "icon": "icons/public/icon.icns"
     },
     "dmg": {
-      "title": "Pixel House"
+      "title": "Pixel House",
+      "writeUpdateInfo": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "executableName": "PixelHouse",
+      "artifactName": "Pixel-House-windows-setup.exe",
+      "icon": "icons/public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "differentialPackage": false,
+      "artifactName": "Pixel-House-windows-setup.exe",
+      "shortcutName": "Pixel House",
+      "uninstallDisplayName": "Pixel House"
     },
     "electronDist": "node_modules/electron/dist"
   }

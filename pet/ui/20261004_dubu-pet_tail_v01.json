@@ -1,0 +1,16 @@
+{
+"name": "tail",
+"scale_hint": 2,
+"size": [9, 5],
+"palette": {".": null, "K": "#F7F0E1", "k": "#29262F"},
+"ko": "말풍선 꼬리",
+"note": "말풍선 아래 가운데. 화면 2배(1칸 = 2px). 맨 윗줄이 말풍선 아래 테두리를 덮음",
+"frames": [
+[
+"kKKKKKKKk",
+".kKKKKKk.",
+"..kKKKk..",
+"...kKk...",
+"....k...."
+]
+]}

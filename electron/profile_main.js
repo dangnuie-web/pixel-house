@@ -67,7 +67,8 @@ module.exports = function create(o) {
       const c = cleanName(v.cat); // 고양이 이름 (2026-10-08 3-1단계, 없거나 이상하면 기본 두부 = 안 적음)
       const b = cleanBrand(v.brand), tabs = cleanTabs(v.tabsHidden); // 설정 화면 값 (없으면 안 적음 = 기본)
       return Object.assign({ bundle: 'default', name: n.name, avatar: v.avatar, house: v.house, dir: v.dir, furniture: cleanFurniture(v.furniture), createdAt: v.createdAt || null }, c.ok ? { cat: c.name } : {},
-        PETS.includes(v.pet) ? { pet: v.pet } : {}, b.ok ? { brand: b.name } : {}, tabs.length ? { tabsHidden: tabs } : {});
+        PETS.includes(v.pet) ? { pet: v.pet } : {}, b.ok ? { brand: b.name } : {}, tabs.length ? { tabsHidden: tabs } : {},
+        v.desktopPet === true ? { desktopPet: true } : {}); // 바탕화면 펫 (2026-10-13, 처음 꺼짐 = 안 적음)
     } catch (e) { return null; }
   }
   function write(v) {
@@ -164,7 +165,8 @@ module.exports = function create(o) {
   }
 
   // ---- 설정 화면 (공용판만): 칸 하나씩 바로 저장 (무늬 설정화면 v01: 저장 버튼 없음) ----
-  //   req = { key: 'pet' | 'cat' | 'brand' | 'avatar' | 'house' | 'tabsHidden', value }. 이름을 비우면 기본값(펫 이름 = 그 종류 기본, 하우스 = Pixel House)
+  //   req = { key: 'pet' | 'cat' | 'brand' | 'avatar' | 'house' | 'tabsHidden' | 'desktopPet', value }. 이름을 비우면 기본값(펫 이름 = 그 종류 기본, 하우스 = Pixel House)
+  //   desktopPet (2026-10-13 제작자 결정 "바탕화면 펫 켜기"): true = 켬, 그 밖 = 끔(안 적음). 펫 창 열고 닫기는 electron/main.js onChange
   function registerSettings({ ipcMain, onChange }) {
     ipcMain.handle('ph:profileSet', (e, req) => {
       const v = read(); if (!v || v.bundle !== 'default') return { ok: false, code: 'profile' };
@@ -181,13 +183,20 @@ module.exports = function create(o) {
       } else if (key === 'avatar') { if (!AVATARS.includes(val)) return { ok: false, code: 'bad' }; v.avatar = val; }
       else if (key === 'house') { if (!HOUSES.includes(val)) return { ok: false, code: 'bad' }; v.house = val; }
       else if (key === 'tabsHidden') { const t = cleanTabs(val); if (t.length) v.tabsHidden = t; else delete v.tabsHidden; }
+      else if (key === 'desktopPet') { if (typeof val !== 'boolean') return { ok: false, code: 'bad' }; if (val) v.desktopPet = true; else delete v.desktopPet; }
       else return { ok: false, code: 'key' };
       write(v);
       const u = read();
       if (onChange) onChange(u);
-      return { ok: true, user: { pet: u.pet || 'cat_white', cat: u.cat || '', brand: u.brand || BRAND_DEFAULT, avatar: u.avatar, house: u.house, tabsHidden: u.tabsHidden || [] } };
+      return { ok: true, user: { pet: u.pet || 'cat_white', cat: u.cat || '', brand: u.brand || BRAND_DEFAULT, avatar: u.avatar, house: u.house, tabsHidden: u.tabsHidden || [], desktopPet: u.desktopPet === true } };
     });
   }
 
-  return { choose, read, write, store, loadBundle, registerOnboard, registerFurniture, registerSettings, cleanName, cleanBrand, cleanFurniture, HOUSES, AVATARS, PETS, BRAND_MAX, NAME_MAX };
+  // 바탕화면 펫 끄기 (펫 메뉴 "바탕화면 펫 끄기", 2026-10-13): 공용판 profile.json 에서 desktopPet 지움. 돌려줌 = 새 사용자 값 (공용판 아니면 null)
+  function turnOffDesktopPet() {
+    const v = read(); if (!v || v.bundle !== 'default') return null;
+    delete v.desktopPet; write(v); return read();
+  }
+
+  return { choose, read, write, store, turnOffDesktopPet, loadBundle, registerOnboard, registerFurniture, registerSettings, cleanName, cleanBrand, cleanFurniture, HOUSES, AVATARS, PETS, BRAND_MAX, NAME_MAX };
 };

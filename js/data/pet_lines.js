@@ -6,12 +6,15 @@
   'use strict';
   // 펫 id -> 종류·그림 앞부분 (무늬 6절). cat_white = 지금 두부 그림
   const PH_PETS = {
-    cat_white: { kind: 'cat', sprite: 'dubuM' },
-    cat_cheese: { kind: 'cat', sprite: 'catcheeseM' },
-    cat_black: { kind: 'cat', sprite: 'catblackM' },
-    dog_white: { kind: 'dog', sprite: 'dogwhiteM' },
-    dog_yellow: { kind: 'dog', sprite: 'dogyellowM' },
+    cat_white: { kind: 'cat', sprite: 'dubuM', portrait: '20261002_dubu_portrait_v01.png' },
+    cat_cheese: { kind: 'cat', sprite: 'catcheeseM', portrait: '20261013_pixel-house_portrait_cat_cheese_v01.png' },
+    cat_black: { kind: 'cat', sprite: 'catblackM', portrait: '20261013_pixel-house_portrait_cat_black_v01.png' },
+    dog_white: { kind: 'dog', sprite: 'dogwhiteM', portrait: '20261013_pixel-house_portrait_dog_white_v01.png' },
+    dog_yellow: { kind: 'dog', sprite: 'dogyellowM', portrait: '20261013_pixel-house_portrait_dog_yellow_v01.png' },
   };
+  // portrait = 대화창 왼쪽 초상 (portraits/ 안 파일 이름, 앱에 들어가는 폴더. 2026-10-13 제작자 결정 "고른 펫별 초상").
+  //   4종 = 제작자 챗지피티 초상(디자인/20261013_pixel-house_초상_{펫}_v01.png)을 tools/make_pet_sprites.py가 두부와 같은 자르기로 384px
+  //   바탕화면 펫 그림 = pet/png/<펫 id>/ (흰 고양이 = pet/png 두부 그림), electron/desk_pet.js
   // 종류 글·기본 이름 (부기 3-1 3번). 강아지 기본 이름 "콩떡" = 부기 제안, 제작자 확정 2026-10-13 (바꾸면 여기 한 곳)
   const PH_PET_KIND = { cat: { kind: '고양이', defaultName: '두부' }, dog: { kind: '강아지', defaultName: '콩떡' } };
 
@@ -92,6 +95,9 @@
         '(꼬리 끝만 살랑) 부르시면 언제든 와요멍~',
       ],
       pet: {
+        // 식사 만족도·양 묻기 (바탕화면 펫 말풍선 메뉴, 부기 기획/20261013_pixel-house_문구_바탕화면펫_v01.md 2절 1안). 바탕화면 펫은 괄호 연출을 빼고 글만 보임
+        rating: '(꼬리를 붕붕) 맛있었던 만큼 하트를 채워 주세요멍~',
+        amount: '(그릇 쪽으로 코를 쭉) 얼마나 드셨어요멍~?',
         lift: ['(네 발이 대롱대롱) 앗, 높아요멍~', '(귀가 펄럭) 저 생각보다 무거워요멍~', '(꼬리를 붕붕) 어디 가는 거예요멍~?'],
         drop: ['(착 내려앉아 몸을 부르르 턴다) 착지 성공이에요멍~', '(바닥 냄새를 킁킁) 여기도 좋네요멍~'],
         click: [
@@ -168,6 +174,10 @@
     avatars: { avatar1: '보리', avatar2: '도토리', avatar3: '모래' }, // 무늬 임시 이름 (제작자 확인 대기)
     tabsTitle: '사이드바 탭', tabsNote: '켠 탭만 사이드바에 보여요. 우리집은 늘 있어요. 버킷리스트를 끄면 생활 습관 탭 아래에 카드로 남아요',
     tabAlways: '늘 보여요', tabBucket: '버킷에 적은 게 있을 때 나와요', // 무늬 임시
+    // 바탕화면 펫 켜기 (2026-10-13 제작자 결정, 펫 탭 맨 아래 스위치). 글 = 비트 임시 (부기 확인), 모양 = 사이드바 탭 스위치 그대로 (무늬 확인)
+    // 부기 기획/20261013_pixel-house_문구_바탕화면펫_v01.md 1절 1안
+    deskPet: '바탕화면 펫', deskPetSub: '집 창을 닫아도 바탕화면에서 지내요',
+    deskPetNote: '고른 펫이 화면 아래쪽을 걸어 다녀요. 누르면 물·식사·잠을 바로 적고, 오른쪽 클릭으로 잠깐 숨기거나 끌 수 있어요',
     applied: '바꾸면 바로 적용돼요', keys: 'Esc 닫기', // 무늬 임시
     savedNote: '바꾼 대로 저장했어요', ok: '✓ 바꿨어요', close: '닫기',
     err: {

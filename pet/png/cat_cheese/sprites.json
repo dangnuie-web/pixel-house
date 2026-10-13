@@ -1,0 +1,118 @@
+{
+ "note": "tools/make_pet_sprites.py가 만듦. 손으로 고치지 말 것",
+ "actions": {
+  "stand": {
+   "source": "20261013_pixel-house-pet_catcheese_서있기_v01.png",
+   "frames": [
+    "stand_1.png",
+    "stand_2.png"
+   ],
+   "w": 822,
+   "h": 800,
+   "anchor": "foot",
+   "line": 792,
+   "cx": 411,
+   "facing": "right",
+   "top": 8,
+   "bottom": 792,
+   "heights": [
+    784,
+    784
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    82
+   ],
+   "norm": 1.0,
+   "greenKeyed": 85,
+   "contentW": 806
+  },
+  "walk": {
+   "source": "20261013_pixel-house-pet_catcheese_걷기_v01.png",
+   "frames": [
+    "walk_1.png",
+    "walk_2.png",
+    "walk_3.png",
+    "walk_4.png"
+   ],
+   "w": 566,
+   "h": 532,
+   "anchor": "foot",
+   "line": 524,
+   "cx": 283,
+   "facing": "right",
+   "top": 8,
+   "bottom": 524,
+   "heights": [
+    510,
+    515,
+    513,
+    516
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    38,
+    38,
+    42
+   ],
+   "norm": 1.5253,
+   "greenKeyed": 225,
+   "contentW": 549,
+   "heightRatio": 0.656
+  },
+  "talk": {
+   "source": "20261013_pixel-house-pet_catcheese_말하기_v01.png",
+   "frames": [
+    "talk_1.png",
+    "talk_2.png"
+   ],
+   "w": 792,
+   "h": 780,
+   "anchor": "foot",
+   "line": 772,
+   "cx": 396,
+   "facing": "right",
+   "top": 8,
+   "bottom": 772,
+   "heights": [
+    764,
+    764
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    138
+   ],
+   "norm": 1.0,
+   "greenKeyed": 76,
+   "contentW": 776,
+   "heightRatio": 0.974
+  },
+  "lift": {
+   "source": "20261013_pixel-house-pet_catcheese_들어올리기_v01.png",
+   "frames": [
+    "lift_1.png",
+    "lift_2.png"
+   ],
+   "w": 602,
+   "h": 859,
+   "anchor": "top",
+   "line": 8,
+   "cx": 301,
+   "facing": "front",
+   "top": 8,
+   "bottom": 851,
+   "heights": [
+    833,
+    843
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    245
+   ],
+   "norm": 1.0,
+   "greenKeyed": 141,
+   "contentW": 585
+  }
+ },
+ "ref": "stand"
+}

@@ -14,6 +14,7 @@
   if (!SC || !LL) return;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const modKeys = (t) => (root.PHPlatform ? root.PHPlatform.mac : /Mac/.test((root.navigator || {}).platform || '')) ? t : String(t || '').replace(/⌘/g, 'Ctrl+'); // 단축키 글: 윈도우 Ctrl+ (C1, js/log_modal.js 와 같음)
   const U = () => (root.PH_LINES && root.PH_LINES.uiPlain && root.PH_LINES.uiPlain.sleep) || {}; // 화면 글
   const UP = () => (root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.sleep) || {};          // 펫 말
   const fill = (t, v) => String(t == null ? '' : t).replace(/\{(\w+)\}/g, (m, k) => (v && v[k] != null ? v[k] : m));
@@ -81,7 +82,7 @@
   function paint(focus) {
     const u = U().lm, d = st.date, nr = SC.rowOfMs(nowMs());
     const pens = [[2, u.pens.sleep, '1', SV().swatch(false, 5)], [1, u.pens.doze, '2', SV().swatch(true, 4)], [0, u.pens.eraser, '3', '<span class="eraser" aria-hidden="true"></span>']];
-    q('.lm-box').innerHTML = `<div class="lm-head"><b class="lm-title" id="slm-title">${esc(st.had ? u.titleEdit : u.titleNew)}</b><span class="lm-keys" aria-hidden="true">${esc(u.keys)}</span></div>` +
+    q('.lm-box').innerHTML = `<div class="lm-head"><b class="lm-title" id="slm-title">${esc(st.had ? u.titleEdit : u.titleNew)}</b><span class="lm-keys" aria-hidden="true">${esc(modKeys(u.keys))}</span></div>` +
       `<p class="lm-say"><b class="lm-name">${esc((root.PH_DIALOG_LINES || {}).name || '두부')}</b><span class="lm-line" aria-live="polite">${esc(st.line)}</span></p>` +
       `<div class="lm-row"><span class="lm-lab">${esc(u.date)}</span><span class="slm-daynav"><button type="button" class="slm-prev" aria-label="${esc(u.datePrev)}" data-focus="slm-prev">◀</button><b class="slm-day">${esc(fill(u.dateText, SV().dv(d)))}</b>` +
       `<button type="button" class="slm-next" aria-label="${esc(u.dateNext)}" ${d >= nr ? 'disabled' : ''} data-focus="slm-next">▶</button></span><span class="slm-hint">${esc(SV().spanText(d, 'lm.dateHint'))}</span></div>` +

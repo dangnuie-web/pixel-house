@@ -13,6 +13,8 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const st = { open: false, kind: null, mode: 'add', key: null, d: null, from: null, opened: 0, busy: false, kindTouched: false, log: [], err: '' };
+  // 단축키 글: 맥 ⌘, 윈도우·그 밖 Ctrl+ (C1 2026-10-14. 플랫폼 = electron/preload.js PHPlatform, 브라우저는 navigator)
+  const modKeys = (t) => (root.PHPlatform ? root.PHPlatform.mac : /Mac/.test((root.navigator || {}).platform || '')) ? t : String(t).replace(/⌘/g, 'Ctrl+');
   const LM = { now: () => (root.PHLife && root.PHLife.now ? root.PHLife.now() : Date.now()) };
   let el = null;
   const UI = () => (root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.logs) || {};
@@ -91,7 +93,7 @@
   function paint(focus, line) {
     const d = st.d, T = TITLES[st.kind][st.mode];
     q('.lm-box').dataset.kind = st.kind;
-    q('.lm-box').innerHTML = `<div class="lm-head"><b class="lm-title" id="lm-title">${esc(T)}</b><span class="lm-keys" aria-hidden="true">Esc 닫기 · ⌘Enter 저장</span></div>` +
+    q('.lm-box').innerHTML = `<div class="lm-head"><b class="lm-title" id="lm-title">${esc(T)}</b><span class="lm-keys" aria-hidden="true">${esc(modKeys('Esc 닫기 · ⌘Enter 저장'))}</span></div>` +
       `<p class="lm-say" ${line ? '' : 'hidden'}><b class="lm-name">${esc((root.PH_DIALOG_LINES || {}).name || '두부')}</b><span class="lm-line" aria-live="polite">${esc(line || '')}</span></p>` +
       `<form class="lm-form" novalidate>${st.kind === 'poop' ? poopHtml(d) : mealHtml(d)}<p class="lm-err" role="alert">${esc(st.err)}</p>` +
       `<div class="lm-btns"><button type="button" class="lm-cancel">그만두기</button><button type="submit" class="lm-save">${st.mode === 'edit' ? '고치기' : '저장'}</button></div></form>`;

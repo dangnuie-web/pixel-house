@@ -1,0 +1,27 @@
+{
+"name": "icon_meal",
+"scale_hint": 1,
+"size": [16, 16],
+"palette": {".": null, "I": "#DDCFB4", "K": "#F7F0E1", "X": "#FBFAF6", "j": "#F5F2EA", "k": "#29262F", "n": "#6F8FB5", "u": "#F4F0E6"},
+"ko": "식사 적기",
+"note": "흰 밥 + 크림 사발에 파란 띠(두부 목줄 색 n). 16x16, 화면 1배(16px)",
+"frames": [
+[
+"................",
+"................",
+"................",
+"......kkkk......",
+"....kkXXXXkk....",
+"...kXXXXjXXXk...",
+"..kXXXXXXXXXuk..",
+".kkkkkkkkkkkkkk.",
+".kKKKKKKKKKKKIk.",
+"..knnnnnnnnnnk..",
+"..kKKKKKKKKKIk..",
+"...kKKKKKKKIk...",
+"....kkkkkkkk....",
+".....kIIIIk.....",
+".....kkkkkk.....",
+"................"
+]
+]}

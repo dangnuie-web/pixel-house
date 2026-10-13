@@ -37,6 +37,7 @@
   const house = () => root.PH_ART_SET;
   const brand = () => S().BRAND || 'Pixel House';
   const hidden = () => (S().TABS_HIDDEN || []).slice();
+  const deskPet = () => user().desktopPet === true; // 바탕화면 펫 (2026-10-13, 처음 꺼짐)
 
   // ---- 버튼 ----
   function mount() {
@@ -130,7 +131,7 @@
     if (t === 'pet') {
       const ids = Object.keys(root.PH_PETS || { cat_white: 1 }), kind = PF() ? PF().petKind() : 'cat';
       return `<section class="cfg-sec"><h3 class="cfg-h">${esc(P.pet || '함께 사는 펫')}<small>${esc(fill(P.petCount || '{n}마리 중 하나', { n: ids.length }))}</small></h3>${tiles('pets', ids, pet(), P.pets || {})}
-        ${field('cfg-pet-name', P.petName || '펫 이름', petName(), { tag: true, max: NAME_MAX, holder: PF() ? PF().petDefault(kind) : '두부', note: [fill(P.petNameNote || '', { default: PF() ? PF().petDefault(kind) : '두부' }), P.petNote] })}</section>`; // 부기 4-1 두 줄
+        ${field('cfg-pet-name', P.petName || '펫 이름', petName(), { tag: true, max: NAME_MAX, holder: PF() ? PF().petDefault(kind) : '두부', note: [fill(P.petNameNote || '', { default: PF() ? PF().petDefault(kind) : '두부' }), P.petNote] })}</section>` + deskPetSec(); // 부기 4-1 두 줄
     }
     if (t === 'house') {
       const names = { room1: '원룸', room2: '투룸', room3: '쓰리룸' }; Object.keys(names).forEach((k) => { const a = (S().ART_SETS || {})[k]; if (a && a.label) names[k] = a.label; });
@@ -144,6 +145,12 @@
       const on = k === 'home' || !hid.includes(k), sub = k === 'home' ? `<span class="sub lock">${esc(P.tabAlways || '늘 보여요')}</span>` : k === 'bucket' ? `<span class="sub">${esc(P.tabBucket || '')}</span>` : '';
       return `<li><span class="tx"><span class="nm" id="cfg-sw-${k}">${esc(TN[k] || k)}</span>${sub}</span><button type="button" class="cfg-sw" role="switch" data-side="${k}" aria-checked="${on}" aria-labelledby="cfg-sw-${k}"${k === 'home' ? ' disabled' : ''}></button></li>`;
     }).join('') + `</ul><p class="cfg-note wide">${esc(P.tabsNote || '')}</p></section>`;
+  }
+  // 바탕화면 펫 켜기 (2026-10-13 제작자 결정, 펫 탭 맨 아래). 사이드바 탭 스위치와 같은 줄 모양(cfg-list·cfg-sw, 무늬 확인 2026-10-13), 글 = 부기 1안 (js/data/pet_lines.js deskPet*)
+  function deskPetSec() {
+    const P = PL(), on = deskPet();
+    return `<section class="cfg-sec cfg-deskpet"><ul class="cfg-list"><li><span class="tx"><span class="nm" id="cfg-sw-deskpet">${esc(P.deskPet || '바탕화면 펫')}</span><span class="sub">${esc(P.deskPetSub || '')}</span></span>`
+      + `<button type="button" class="cfg-sw" role="switch" data-deskpet="1" aria-checked="${on}" aria-labelledby="cfg-sw-deskpet"></button></li></ul><p class="cfg-note wide">${esc(P.deskPetNote || '')}</p></section>`;
   }
   // 그림: 펫 = {앞부분}_idle, 내 모습 = avatarN_idle. 정수 배율 (상자 430px 이하면 2배, 아니면 3배 = 무늬 5절 5번). 고른 칸만 2장 움직임
   function paintPics(onlyOn) {
@@ -173,7 +180,9 @@
       textField(br, (v) => { if ((v.trim() || 'Pixel House') === brand()) return; save('brand', v, { say: 'house', input: br }); });
     }
     p.querySelectorAll('.cfg-chip').forEach((c) => c.addEventListener('click', () => { if (c.dataset.house !== house()) save('house', c.dataset.house, { reload: 'house', say: 'plan' }); }));
-    p.querySelectorAll('.cfg-sw:not(:disabled)').forEach((sw) => sw.addEventListener('click', () => {
+    const dp = p.querySelector('.cfg-sw[data-deskpet]');
+    if (dp) dp.addEventListener('click', () => save('desktopPet', !deskPet(), { focus: '.cfg-sw[data-deskpet]' }));
+    p.querySelectorAll('.cfg-sw[data-side]:not(:disabled)').forEach((sw) => sw.addEventListener('click', () => {
       const k = sw.dataset.side, h = hidden(), next = h.includes(k) ? h.filter((x) => x !== k) : h.concat(k);
       save('tabsHidden', next, { say: 'tabs', focus: '.cfg-sw[data-side="' + k + '"]' });
     }));
@@ -195,7 +204,7 @@
     if (!r || !r.ok) { showErr(o && o.input, r); return r; }
     const u = r.user || {};
     // 저장된 값을 이 화면 값에도 (다시 열지 않는 것)
-    PF().user = Object.assign({}, PF().user, { pet: u.pet, cat: u.cat, brand: u.brand, avatar: u.avatar, house: u.house, tabsHidden: u.tabsHidden }); // preload 값은 읽기 전용이라 새 객체로
+    PF().user = Object.assign({}, PF().user, { pet: u.pet, cat: u.cat, brand: u.brand, avatar: u.avatar, house: u.house, tabsHidden: u.tabsHidden, desktopPet: u.desktopPet === true }); // preload 값은 읽기 전용이라 새 객체로
     queueSay(o.say, { house: u.brand });
     if (o.reload) return reopen(key === 'house' ? u.house : root.PH_ART_SET, o.reload === 'house');
     if (key === 'brand') {
@@ -203,6 +212,7 @@
       if (root.PHApp && root.PHApp.setBrand) root.PHApp.setBrand(u.brand);
       if (o.input) { o.input.value = u.brand === 'Pixel House' ? '' : u.brand; okMark(o.input); }
     }
+    if (key === 'desktopPet') { showTab('pet', false); const f = o.focus && U.el.querySelector(o.focus); if (f) f.focus(); } // 펫 창은 메인이 열고 닫음
     if (key === 'tabsHidden') {
       S().TABS_HIDDEN = u.tabsHidden.slice();
       if (root.PHApp && root.PHApp.applyTabs) root.PHApp.applyTabs();
@@ -257,9 +267,12 @@
     return U.said;
   }
 
+  // 펫 메뉴에서 "바탕화면 펫 끄기"를 눌렀을 때 (메인 알림): 이 화면 값도 끔, 펫 탭이 열려 있으면 다시 그림
+  if (OD() && OD().onDeskPet) OD().onDeskPet((d) => { if (!PF()) return; PF().user = Object.assign({}, PF().user, { desktopPet: !!d.on }); if (U.on && U.tab === 'pet') showTab('pet', false); });
+
   function state() {
     return { mounted: !!U.btn, open: U.on, tab: U.tab, last: U.last, said: U.said || null, resumed: !!U.resumed, err: U.errText || '',
-      pet: pet(), petName: petName(), avatar: avatar(), house: house(), brand: brand(), hidden: hidden() };
+      pet: pet(), petName: petName(), avatar: avatar(), house: house(), brand: brand(), hidden: hidden(), desktopPet: deskPet() };
   }
   root.PHSettingsUI = { mount, open, close, isOpen: () => U.on, mounted: () => !!U.btn, state, save, sayQueued, U };
 })(window);

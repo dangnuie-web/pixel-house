@@ -1,0 +1,114 @@
+{
+ "note": "tools/make_sprites.py가 만듦. 손으로 고치지 말 것",
+ "actions": {
+  "stand": {
+   "source": "20261002_dubu-pet_서있기_v01.png",
+   "frames": [
+    "stand_1.png",
+    "stand_2.png"
+   ],
+   "w": 788,
+   "h": 828,
+   "anchor": "foot",
+   "line": 820,
+   "cx": 394,
+   "facing": "right",
+   "top": 8,
+   "bottom": 820,
+   "heights": [
+    812,
+    812
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    141
+   ],
+   "norm": 1.0,
+   "contentW": 772
+  },
+  "walk": {
+   "source": "20261002_dubu-pet_걷기_v01.png",
+   "frames": [
+    "walk_1.png",
+    "walk_2.png",
+    "walk_3.png",
+    "walk_4.png"
+   ],
+   "w": 570,
+   "h": 536,
+   "anchor": "foot",
+   "line": 528,
+   "cx": 285,
+   "facing": "right",
+   "top": 8,
+   "bottom": 528,
+   "heights": [
+    505,
+    520,
+    505,
+    519
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    42,
+    31,
+    36
+   ],
+   "norm": 1.5859,
+   "contentW": 553,
+   "heightRatio": 0.631
+  },
+  "talk": {
+   "source": "20261002_dubu-pet_말하기_v01.png",
+   "frames": [
+    "talk_1.png",
+    "talk_2.png"
+   ],
+   "w": 812,
+   "h": 783,
+   "anchor": "foot",
+   "line": 775,
+   "cx": 406,
+   "facing": "right",
+   "top": 8,
+   "bottom": 775,
+   "heights": [
+    767,
+    767
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    133
+   ],
+   "norm": 1.0,
+   "contentW": 795,
+   "heightRatio": 0.945
+  },
+  "lift": {
+   "source": "20261002_dubu-pet_들어올리기_v01.png",
+   "frames": [
+    "lift_1.png",
+    "lift_2.png"
+   ],
+   "w": 590,
+   "h": 846,
+   "anchor": "top",
+   "line": 8,
+   "cx": 295,
+   "facing": "front",
+   "top": 8,
+   "bottom": 838,
+   "heights": [
+    820,
+    830
+   ],
+   "specksRemoved": 0,
+   "gaps": [
+    243
+   ],
+   "norm": 1.0,
+   "contentW": 573
+  }
+ },
+ "ref": "stand"
+}

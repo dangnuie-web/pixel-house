@@ -1,0 +1,27 @@
+{
+"name": "icon_sleep",
+"scale_hint": 1,
+"size": [16, 16],
+"palette": {".": null, "Y": "#E9C35C", "k": "#29262F", "y": "#C79A3E", "z": "#F7EDB8"},
+"ko": "잠 적기",
+"note": "초승달 + 작은 별 하나. 16x16, 화면 1배(16px)",
+"frames": [
+[
+"................",
+"......kkkk......",
+"....kkYYYk......",
+"...kYYYkk.......",
+"..kYzYk......k..",
+"..kYYk......kzk.",
+".kYzYk.......k..",
+".kYYk...........",
+".kYYk...........",
+".kYYYk.......k..",
+"..kYYYk....kkYk.",
+"..kyYYYkkkkYYyk.",
+"...kyyYYYYYyyk..",
+"....kkyyyyyykk..",
+"......kkkkkk....",
+"................"
+]
+]}

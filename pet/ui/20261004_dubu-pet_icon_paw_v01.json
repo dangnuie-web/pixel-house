@@ -1,0 +1,27 @@
+{
+"name": "icon_paw",
+"scale_hint": 1,
+"size": [16, 16],
+"palette": {".": null, "P": "#CF8E8E", "k": "#29262F", "p": "#EAB8B6"},
+"ko": "그냥 같이 있기",
+"note": "분홍 젤리 발바닥(발가락 넷 + 큰 젤리), 빛 p. 16x16, 화면 1배(16px)",
+"frames": [
+[
+"................",
+"...kkk....kkk...",
+"..kpPPk..kpPPk..",
+"..kPPPk..kPPPk..",
+"...kkk....kkk...",
+"kkk..........kkk",
+"kpPk..kkkk..kpPk",
+"kPPk.kpPPPk.kPPk",
+".kk.kpPPPPPk.kk.",
+"...kPPPPPPPPk...",
+"..kPPPPPPPPPPk..",
+"..kPPPPPPPPPPk..",
+"...kPPPPPPPPk...",
+"....kkkkkkkk....",
+"................",
+"................"
+]
+]}

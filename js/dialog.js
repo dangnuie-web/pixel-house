@@ -11,7 +11,22 @@
   'use strict';
   const S = root.PH_SETTINGS, D = root.PH_DIALOG_LINES, LL = root.PHLifeLog, Flow = root.PHDialogFlow;
   const $ = (id) => document.getElementById(id);
-  const PORTRAIT = 'assets/portraits/20261002_dubu_portrait_v01.png'; // 디자인/20261002_dubu_초상_v01.png 사본: 무늬 메모 4-2 자르기(가운데 600,610 기준 1000px) 후 384px
+  // 초상 (2026-10-13): 고른 펫별 그림 portraits/<PH_PETS[펫].portrait>. 펫을 안 골랐거나 제작자 판이면 흰 고양이 = 두부 초상
+  //   두부 = 디자인/20261002_dubu_초상_v01.png 사본: 무늬 메모 4-2 자르기(가운데 600,610 기준 1000px) 후 384px. 4종도 같은 자르기 (tools/make_pet_sprites.py)
+  //   portraits/ 는 앱에 들어가는 폴더 (package.json build.files·tools/export_public.js). 2026-10-13 전엔 assets/portraits 라 공개판에서 빠졌음
+  const PORTRAIT_DIR = 'portraits/', PORTRAIT_DEFAULT = '20261002_dubu_portrait_v01.png';
+  function portrait() {
+    const pets = root.PH_PETS || {}, P = root.PHProfile;
+    const id = P && P.pet ? P.pet() : 'cat_white';
+    const file = (pets[id] && pets[id].portrait) || PORTRAIT_DEFAULT;
+    const look = (root.PH_SETTINGS_PLAIN && root.PH_SETTINGS_PLAIN.pets && root.PH_SETTINGS_PLAIN.pets[id]) || '흰 고양이';
+    return { id, src: PORTRAIT_DIR + file, alt: (D.name || '두부') + ': 차를 따르는 ' + look };
+  }
+  function setFace() {
+    const f = portrait(), img = q('.dd-face');
+    if (img.getAttribute('src') !== f.src) img.setAttribute('src', f.src);
+    img.alt = f.alt; img.dataset.pet = f.id;
+  }
   const DU_BASE = 432; // du = 화면에 보이는 집 그림 높이 / 432 (무늬 메모 1장). 그림 세트가 바뀌어도 대화창 크기가 같음
 
   const st = { open: false, mode: null, text: '', t0: 0, done: true, choices: [], sel: 0, cols: 2, resolve: null, opt: null, composing: false, row: null, rows: [], timer: 0, log: [], result: null };
@@ -26,7 +41,7 @@
     el.id = 'dd'; el.className = 'dd'; el.hidden = true;
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '두부와 대화');
     el.innerHTML = `<div class="dd-box" tabindex="-1">
-      <img class="dd-face" src="${PORTRAIT}" alt="두부: 차를 따르는 흰 고양이" draggable="false">
+      <img class="dd-face" alt="" draggable="false">
       <div class="dd-main">
         <div class="dd-name"></div>
         <div class="dd-card" hidden><div class="dd-card-title"></div><ul class="dd-card-list"></ul></div>
@@ -42,6 +57,7 @@
       </div></div>`;
     stage.appendChild(el);
     q('.dd-name').textContent = D.name || '두부';
+    setFace();
     q('.dd-submit').textContent = D.ui.submit;
     q('.dd-esc').textContent = D.ui.esc;
     const field = q('.dd-field');
@@ -310,6 +326,7 @@
     const data = await readData();
     fitDu();
     el.classList.remove('top'); // 하단 고정
+    setFace(); // 설정에서 펫을 바꿨을 수 있음
     el.hidden = false; el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
     const api = root.PHDesktop && root.PHDesktop.setSleep ? root.PHDesktop : null;
     const ctx = {
@@ -353,7 +370,7 @@
   }
 
   document.addEventListener('keydown', onKey, true); // 잡기 단계: game.js(document 거품 단계)보다 먼저
-  Object.assign(Dlg, { openDubu, openFlow, isOpen: () => st.open, close, state, build, fitDu });
+  Object.assign(Dlg, { portrait, openDubu, openFlow, isOpen: () => st.open, close, state, build, fitDu });
   root.PHDialog = Dlg;
   if (document.readyState !== 'loading') build(); else document.addEventListener('DOMContentLoaded', build);
 })(window);
