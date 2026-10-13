@@ -40,7 +40,7 @@
 
 > **dmg 파일**이란? 맥에서 앱을 나눠 줄 때 쓰는 "포장 상자" 같은 파일이에요. 열면 안에 앱이 들어 있어요.
 
-1. 【받는 곳 링크 자리: 정해지면 채움】에서 `Pixel House-0.1.0-arm64.dmg` 파일을 받아요.
+1. [Releases 페이지](https://github.com/dangnuie-web/pixel-house-public/releases/latest)에서 `Pixel House-0.1.0-arm64.dmg` 파일을 받아요.
 2. 받은 dmg 파일을 더블클릭해서 열어요.
 3. 창 안에 **Pixel House** 아이콘과 **Applications**(응용 프로그램) 폴더 바로가기가 보여요. Pixel House 아이콘을 Applications 쪽으로 끌어다 놓아요.
 4. 다 옮겼으면 dmg 창은 닫아도 돼요. Finder 왼쪽 목록에서 dmg 이름 옆 **꺼내기(⏏)** 버튼을 눌러 정리해요.
