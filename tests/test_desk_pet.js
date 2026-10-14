@@ -121,7 +121,7 @@ const BANDS = S.TIME_BANDS;
     sent.push([ch, d && d.mode, d && d.text, d && d.choices ? d.choices.map((c) => c.id) : null, d && d.kind, d && d.choices ? d.choices.map((c) => c.icon) : null]);
     if (ch !== 'pet:dlg') return;
     setTimeout(() => {
-      if (d.mode === 'ask') { const w = d.choices.find((c) => c.id === 'water') || d.choices[0]; T.answer({ id: d.id, value: w.id }); }
+      if (d.mode === 'ask') { const w = d.kind === 'water' ? { id: 'close' } : d.choices.find((c) => c.id === 'water') || d.choices[0]; T.answer({ id: d.id, value: w.id }); } // 물 뒤 고르기(D4 ④) = 닫기
       else T.answer({ id: d.id, value: true });
     }, 5);
   };
@@ -132,6 +132,34 @@ const BANDS = S.TIME_BANDS;
   ok('메뉴: 첫 질문 = 잠·식사·물·그냥 같이 있기 (한마디 없음), 주제 아이콘', first && first[3].slice().sort().join() === 'idle,meal,sleep,water' && first[4] === 'menu' && first[5].every((ic) => ic && ui[ic]), first);
   ok('메뉴: 물 한 잔 고르면 기록 +1, 흐름 저장됨', out && out.saved && H.waterOf(fs.readFileSync(file, 'utf8')).n === before + 1, { out, n: H.waterOf(fs.readFileSync(file, 'utf8')).n });
   ok('메뉴: 펫 대사에 "플레이어" 없음', !sent.some((x) => /플레이어/.test(String(x[2]))));
+  // 물 연달아·방금 한 잔 취소 (D4 ④ 2026-10-14): 저장 뒤 [한 잔 더] [방금 한 잔 취소] [닫기]를 묻고, 고른 대로 쓴 뒤 다시 물음
+  {
+    const plan = ['water', 'more', 'more', 'undo', 'close'], seen = [];
+    let T2 = null;
+    const send2 = (ch, d) => {
+      if (ch !== 'pet:dlg') return;
+      seen.push({ mode: d.mode, kind: d.kind, ids: d.choices ? d.choices.map((c) => c.id) : null, cups: d.cups || null, text: d.text });
+      setTimeout(() => { if (d.mode === 'ask') T2.answer({ id: d.id, value: plan.shift() || 'close' }); else T2.answer({ id: d.id, value: true }); }, 5);
+    };
+    T2 = Talk.create({ house: H, send: send2, extra: cat.talk, clickLines: () => cat.clickLines(), tellMs: () => 10 });
+    { const v0 = H.read(); await H.makeApi(() => v0).setWater(1, v0.lastModified); } // 1잔에서 시작
+    const n0 = H.waterOf(fs.readFileSync(file, 'utf8')).n;
+    const o2 = await T2.open({ footer: false });
+    const asks = seen.filter((x) => x.kind === 'water');
+    ok('물 연달아: 한 잔 뒤 메뉴 안 닫힘 = 한 잔 더·방금 한 잔 취소·닫기 + 컵 줄', asks.length === 4 && asks[0].ids.join() === 'more,undo,close' && asks[0].cups && asks[0].cups.n === n0 + 1, asks);
+    ok('물 연달아: 한 잔 더 두 번 -> +3, 취소 -> +2, 닫기 = 말 없이 끝 (tell 없음)', H.waterOf(fs.readFileSync(file, 'utf8')).n === n0 + 2 && asks[2].cups.n === n0 + 3 && asks[3].cups.n === n0 + 2 && /지웠어요/.test(asks[3].text) && !seen.some((x) => x.mode === 'tell') && o2.saved && o2.water === n0 + 2, { n: H.waterOf(fs.readFileSync(file, 'utf8')).n, n0, o2 });
+    // 다 차면 [한 잔 더] 없음, 이번에 적은 잔이 0이면 [방금 한 잔 취소] 없음
+    const v = H.read(); await H.makeApi(() => v).setWater(5, v.lastModified);
+    const plan3 = ['water', 'undo', 'close'], seen3 = []; let T3 = null;
+    T3 = Talk.create({ house: H, send: (ch, d) => { if (ch !== 'pet:dlg') return; seen3.push({ kind: d.kind, ids: d.choices ? d.choices.map((c) => c.id) : null }); setTimeout(() => (d.mode === 'ask' ? T3.answer({ id: d.id, value: plan3.shift() || 'close' }) : T3.answer({ id: d.id, value: true })), 5); }, extra: cat.talk, clickLines: () => cat.clickLines(), tellMs: () => 10 });
+    await T3.open({ footer: false });
+    const a3 = seen3.filter((x) => x.kind === 'water');
+    ok('물 연달아: 6/6 이면 한 잔 더 없음, 취소 뒤(이번에 적은 잔 0) 취소 버튼도 없음', a3.length === 2 && a3[0].ids.join() === 'undo,close' && a3[1].ids.join() === 'more,close' && H.waterOf(fs.readFileSync(file, 'utf8')).n === 5, a3);
+    // 취소가 겹치면(다른 창이 그사이 적음) 새 글의 잔 수에서 -1 (+1 아님)
+    const v4 = H.read(); const stale = v4.lastModified - 5000;
+    const r4 = await H.makeApi(() => v4).setWater(4, stale, { undo: true });
+    ok('물 취소 겹침: 새 글 기준 -1 (5 -> 4)', r4.ok && r4.reapplied && H.waterOf(fs.readFileSync(file, 'utf8')).n === 4, r4);
+  }
 
   // ---- 5. 설정 값 (profile.json desktopPet) ----
   const pud = tmp('profile');

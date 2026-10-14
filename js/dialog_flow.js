@@ -147,7 +147,36 @@
       const n = cur + 1;
       if (!(await save((lm) => ctx.api.setWater(n, lm)))) return out;
       out.water = n;
-      return done(n === row.slots ? 'water.full' : 'water.up', { n, goal: row.slots });
+      if (!ctx.waterMore) return done(n === row.slots ? 'water.full' : 'water.up', { n, goal: row.slots });
+      return waterMore(n, row.slots);
+    }
+    // 물 연달아 (바탕화면 펫만 ctx.waterMore, D4 ④ 2026-10-14): 저장 뒤 닫지 않고 [한 잔 더] [방금 한 잔 취소] [닫기]를 물음
+    //   취소는 이번에 연 메뉴에서 적은 잔 수만큼만. 잔 수는 저장 뒤 받은 새 글에서 다시 셈 (그사이 다른 창이 적은 것 반영). Esc·닫기 = 말 없이 닫음 (이미 저장됨)
+    async function waterMore(n, goal) {
+      out.saved = true; step('saved');
+      const habit = S.WATER_HABIT || '물', B = D.btn || {};
+      const count = () => { const l = Md.latestSlots(Md.parse(ctx.data.text).records, habit, ctx.now(), S.DAY_START_HOUR); return l && l.isToday ? l.value : 0; };
+      let added = 1, key = n >= goal ? 'water.full' : 'water.up';
+      for (;;) {
+        const ch = [];
+        if (n < goal) ch.push({ id: 'more', label: B.waterMore || '한 잔 더' });
+        if (added > 0 && n > 0) ch.push({ id: 'undo', label: B.waterUndo || '방금 한 잔 취소' });
+        ch.push({ id: 'close', label: B.waterClose || '닫기' });
+        const a = await ui.ask(line(key, { n, goal }), ch, { cols: 1, kind: 'water' });
+        if (a == null || a === 'close') { step('water:close'); return out; }
+        if (a === 'more') {
+          const want = count() + 1;
+          if (want > goal) { n = goal; key = 'water.full'; continue; }
+          if (!(await save((lm) => ctx.api.setWater(want, lm)))) return out;
+          n = count(); added++; out.water = n; step('water:more:' + n);
+          key = n >= goal ? 'water.full' : 'water.up';
+        } else if (a === 'undo') {
+          const want = Math.max(0, count() - 1);
+          if (!(await save((lm) => ctx.api.setWater(want, lm, { undo: true })))) return out;
+          n = count(); added--; out.water = n; step('water:undo:' + n);
+          key = 'water.undo';
+        }
+      }
     }
 
     // ---- 그냥 같이 있기: 새 3줄 + lines.js click 12줄 중 무작위 ----

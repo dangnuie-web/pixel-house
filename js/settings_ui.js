@@ -58,7 +58,7 @@
     const el = document.createElement('div'); el.className = 'cfg'; el.id = 'cfg'; el.hidden = true;
     el.innerHTML = `<div class="cfg-box" role="dialog" aria-modal="true" aria-label="${esc(PL().title || '설정')}" tabindex="-1">
       <div class="cfg-tabs" role="tablist" aria-label="${esc(PL().title || '설정')}">${TABS.map((t) => `<button type="button" role="tab" class="cfg-tab" id="cfg-tab-${t}" data-tab="${t}" aria-controls="cfg-panel" aria-selected="false" tabindex="-1">${esc((PL().tabs || {})[t] || t)}</button>`).join('')}
-        <button type="button" class="cfg-x" aria-label="${esc(PL().close || '닫기')}"><canvas width="5" height="5" aria-hidden="true"></canvas></button></div>
+        <span class="cfg-esc" aria-hidden="true">${esc(PL().keys || 'Esc 닫기')}</span><button type="button" class="cfg-x" aria-label="${esc(PL().close || '닫기')}"><canvas width="5" height="5" aria-hidden="true"></canvas></button></div>
       <div class="cfg-panel" id="cfg-panel" role="tabpanel"></div></div>`;
     $('main').appendChild(el);
     el.addEventListener('mousedown', (e) => { if (e.target === el) { e.preventDefault(); close(); } });
@@ -112,7 +112,7 @@
     U.tab = t;
     U.el.querySelectorAll('.cfg-tab').forEach((b) => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
     const p = U.el.querySelector('#cfg-panel'); p.setAttribute('aria-labelledby', 'cfg-tab-' + t);
-    p.innerHTML = panel(t) + `<div class="cfg-foot"><span>${esc(PL().applied || '바꾸면 바로 적용돼요')}</span><span>${esc(PL().keys || 'Esc 닫기')}</span></div>`;
+    p.innerHTML = panel(t) + `<div class="cfg-foot"><span>${esc(PL().applied || '바꾸면 바로 적용돼요')}</span></div>`;
     bind(t, p); paintPics();
     if (focusFirst) { /* 탭 버튼에 포커스 그대로 */ }
   }

@@ -77,7 +77,8 @@
   // 클릭 판정 (캔버스 px). opaque(spot, x, y) = 그 자리에 그림이 칠해져 있는지 (투명한 테두리는 안 누름). 구역은 범위만
   function hitAt(list, x, y, opaque) {
     const c = list.filter((s) => inRect(s.rect, x, y) && (s.kind !== 'obj' || !opaque || opaque(s, x, y)));
-    c.sort((a, b) => rank(a) - rank(b) || (b.rect[1] + b.rect[3]) - (a.rect[1] + a.rect[3]));
+    // 아랫변이 같으면 다른 가구 위·옆에 붙은 것(layout on) 먼저 = 나중에 그려진 것 (D4 ① 원룸 바닥 정수기: 주방장과 아랫변 56 같음, sort_y 57 로 주방장 앞에 그림)
+    c.sort((a, b) => rank(a) - rank(b) || (b.rect[1] + b.rect[3]) - (a.rect[1] + a.rect[3]) || ((a.o && a.o.on) ? 0 : 1) - ((b.o && b.o.on) ? 0 : 1));
     return c[0] || null;
   }
   // 제작자이 마주 본 물건 (Space): 바라보는 칸(16x16)과 겹치는 물건. 그 칸이 벽(못 걷는 칸)이고 겹치는 게 없으면 한 칸 더 (벽에 걸린 액자·시계)

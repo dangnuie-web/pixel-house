@@ -15,7 +15,7 @@ html.night #wm { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25;
   padding: calc(7 * var(--du)) calc(8 * var(--du)) calc(6 * var(--du)); display: flex; flex-direction: column; gap: calc(5 * var(--du));
   background: var(--dlg-bg); border: var(--dlg-line-w) solid var(--dlg-line); border-radius: var(--dlg-r);
   box-shadow: inset 0 calc(-1 * var(--du)) 0 var(--dlg-inner); filter: drop-shadow(0 calc(2 * var(--du)) 0 var(--dlg-shadow)); }
-.wm-head { display: flex; align-items: baseline; justify-content: space-between; }
+.wm-head { display: flex; align-items: baseline; gap: calc(4 * var(--du)); } /* 이름 · 오늘 n/6 ……… 키 안내 (D4 ⑥) */
 .wm-title { font-size: max(13px, calc(8 * var(--du))); }
 .wm-count { font-size: max(12px, calc(7 * var(--du))); color: var(--dlg-sub); font-weight: 700; }
 .wm-cups { display: flex; justify-content: space-between; gap: calc(3 * var(--du)); }
@@ -25,4 +25,4 @@ html.night #wm { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25;
 .wm-cup:hover { border-color: var(--dlg-sub); }
 .wm-say { margin: 0; display: flex; align-items: center; gap: calc(4 * var(--du)); min-height: calc(12 * var(--du)); font-size: max(12px, calc(7 * var(--du))); }
 .wm-name { flex: none; font-size: max(11px, calc(6 * var(--du))); background: var(--dlg-name-bg); color: var(--dlg-name-tx); border-radius: var(--dlg-r-s); padding: 0 calc(3 * var(--du)); }
-.wm-esc { text-align: right; font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); }
+.wm-esc { margin-left: auto; font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); white-space: nowrap; }

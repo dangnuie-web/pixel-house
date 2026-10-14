@@ -23,9 +23,8 @@
     el.id = 'bm'; el.className = 'bm'; el.hidden = true;
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '독서 책꽂이');
     el.innerHTML = `<div class="bm-box" tabindex="-1">
-      <div class="bm-head"><b class="bm-title"></b></div>
-      <div class="bm-body life"></div>
-      <div class="bm-esc" aria-hidden="true"></div></div>`;
+      <div class="bm-head"><b class="bm-title"></b><span class="bm-esc" aria-hidden="true"></span></div>
+      <div class="bm-body life"></div></div>`; // Esc 안내 = 머리 줄 오른쪽 (식사 기록 창과 같은 자리, D4 ⑥)
     stage.appendChild(el);
     q('.bm-title').textContent = PL().title || '독서';
     q('.bm-esc').textContent = PL().keys || 'Esc 닫기';
@@ -50,7 +49,7 @@
     const body = q('.bm-body'), L = Life();
     body.innerHTML = L && L.data ? BS().html(L.data) : `<p class="fmt">${(root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.browserOnly) || '생활 기록을 읽지 못했어요.'}</p>`;
     if (L && L.data) BS().bind(body, paint);
-    if (focus) { const f = [...el.querySelectorAll('[data-focus]')].find((x) => x.dataset.focus === focus); if (f) f.focus({ preventScroll: false }); }
+    if (focus) { const f = [...el.querySelectorAll('[data-focus]')].find((x) => x.dataset.focus === focus); if (f) (root.PHFocusBack ? root.PHFocusBack.back(f, { scroll: true }) : f.focus({ preventScroll: false })); } // D4 ⑤
   }
 
   function blockedNow() {

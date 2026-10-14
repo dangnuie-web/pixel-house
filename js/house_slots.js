@@ -40,7 +40,8 @@
   }
 
   // D = 배치표, A = 그림 묶음, choice = { 자리 id: 그림 이름 } -> { links: { 물건 type: 기능 id }, slots: [{ id, label, type, sprite, candidates }] }
-  function apply(D, A, choice) {
+  //   defaults = { 자리 id: 그림 이름 } (settings.SLOT_DEFAULTS[세트]): 고른 값이 없을 때 후보 첫째 대신 기본 (D4 ① 원룸 정수기)
+  function apply(D, A, choice, defaults) {
     const out = { links: {}, slots: [] };
     if (!D || !Array.isArray(D.slots)) return out;
     const ch = choice && typeof choice === 'object' ? choice : {};
@@ -49,18 +50,24 @@
     D.slots.forEach((sl) => {
       const cands = (sl.candidates || []).filter((c) => !A || A[c.sprite]);
       if (!cands.length) return;
-      const cand = cands.find((c) => c.sprite === ch[sl.id]) || cands[0];
+      const def = defaults && cands.find((c) => c.sprite === defaults[sl.id]);
+      const cand = cands.find((c) => c.sprite === ch[sl.id]) || def || cands[0];
       const o = D.objects.find((q) => q.slot === sl.id);
       if (!o) return;
       const fr = A && A[cand.sprite] && A[cand.sprite].frames[0], w = fr ? fr[0].length : cand.size[0], h = fr ? fr.length : cand.size[1];
       if (o.sprite !== cand.sprite) { const p = place(sl.box, sl.anchor, w, h); o.px = p[0]; o.py = p[1]; o.sprite = cand.sprite; o.file = cand.file; delete o.frame; }
+      // 후보마다 자리 따로 (D4 ① 2026-10-14, 무늬 정수기바닥형 v01 2-2): at = 왼쪽 위, sort_y = 그리는 순서, on = 위에 놓인/붙은 가구(Space 마주 보기에서 먼저)
+      //   바닥에 선 정수기(161,18)와 상판 위 물컵(166,32)은 자리 상자 가운데 맞추기로 둘 다 맞출 수 없어서
+      if (Array.isArray(cand.at)) { o.px = cand.at[0]; o.py = cand.at[1]; }
+      if (cand.sort_y != null) o.sort_y = cand.sort_y;
+      if ('at' in cand || 'on' in cand) { if (cand.on) o.on = cand.on; else delete o.on; }
       o.size = [w, h];
       // 후보 바꿈 (무늬 공용판집다듬기 v01 3절, 2026-10-13): 후보에 swap이 있으면 hide type 물건을 빼고 add 물건을 더함 (낮은 둥근 탁자 = 의자 대신 방석).
       //   배치표는 창을 열 때마다 새로 읽으므로, 다른 후보로 바꾸면(다시 열면) 원래 물건 그대로 = 되돌리기. 저장 값은 자리 id -> 그림 이름 그대로
       if (cand.swap) swapObjects(D, cand.swap);
       const fid = featureOf(sl, cand);
       if (fid) out.links[o.type] = fid;
-      out.slots.push({ id: sl.id, label: sl.label || sl.id, room: sl.room || null, type: o.type, sprite: cand.sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
+      out.slots.push({ id: sl.id, label: sl.label || sl.id, room: sl.room || null, type: o.type, sprite: cand.sprite, def: (def || cands[0]).sprite, featureKo: sl.feature_ko || '', candidates: cands.map((c) => ({ sprite: c.sprite, name: NAMES[c.sprite] || c.name || c.sprite, feature: featureOf(sl, c) })) });
     });
     return out;
   }
@@ -82,7 +89,7 @@
   const D = root.PH_LAYOUT_DATA;
   HS.memo = addMemo(D, root.PH_ASSETS, root.PH_SETTINGS, root.PH_ART_SET);
   if (D && Array.isArray(D.slots)) {
-    const P = root.PHProfile, r = apply(D, root.PH_ASSETS, P && P.user && P.user.furniture);
+    const P = root.PHProfile, S = root.PH_SETTINGS || {}, r = apply(D, root.PH_ASSETS, P && P.user && P.user.furniture, (S.SLOT_DEFAULTS || {})[root.PH_ART_SET]);
     HS.slots = r.slots; HS.links = r.links;
     root.PH_HOUSE_LINKS = r.links; // js/features.js 가 기본 연결표로 씀
     root.PH_HOUSE_NAMES = {}; r.slots.forEach((s) => { root.PH_HOUSE_NAMES[s.type] = NAMES[s.sprite] || s.sprite; });

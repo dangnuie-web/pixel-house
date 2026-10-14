@@ -13,7 +13,8 @@
 
 /* 창 */
 .cfg { --dlg-bg: #F7F0E1; --dlg-inner: #DDCFB4; --dlg-shadow: #5C3E2B; --floor-a: #F1E3C7; --floor-b: #E7D5B2;
-  position: absolute; inset: 0; z-index: 8; background: rgba(41, 38, 47, 0.2); font-family: var(--font); color: var(--A); }
+  position: absolute; inset: 0; z-index: 35; background: rgba(41, 38, 47, 0.2); font-family: var(--font); color: var(--A); }
+/* z 35 (D4 ② 2026-10-14, 전 8): 생활일지 .journal(9, 책 창 열리면 30)이 설정 창 위로 올라와 펫 고르기를 가렸음. 기록 띄움 .rq-host 40·기록 창 #lm·#slm 45·끌기 띠 50 보다는 아래 */
 .cfg[hidden] { display: none; }
 html.night .cfg { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25; }
 .cfg.enter .cfg-box { animation: cfg-pop 80ms steps(2, end); }
@@ -23,7 +24,7 @@ html.night .cfg { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25
 .cfg *, .cfg *::before, .cfg *::after { box-sizing: border-box; }
 
 /* 겹친 폴더 탭 (생활일지 .jn-tabs.folder 결, 조금 작게) */
-.cfg-tabs { position: relative; display: flex; align-items: flex-end; padding: 0 40px 0 6px; flex: none; }
+.cfg-tabs { position: relative; display: flex; align-items: flex-end; padding: 0 114px 0 6px; flex: none; } /* 오른쪽 = Esc 안내 + ✕ (D4 ⑥, 전 40px) */
 .cfg-tab { position: relative; margin-left: -10px; min-width: 72px; padding: 8px 16px 8px; background: var(--I); border: 2px solid var(--A); border-bottom: 0; border-radius: 12px 12px 0 0;
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, .35); font: 600 14px var(--font); color: var(--w); cursor: pointer; transform: translateY(4px); white-space: nowrap; }
 .cfg-tab:first-child { margin-left: 0; }
@@ -33,6 +34,7 @@ html.night .cfg { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25
 .cfg-tab:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }
 .cfg-x { position: absolute; right: 0; top: 2px; width: 30px; height: 30px; border: 2px solid var(--A); border-radius: 8px; background: var(--ui-paper); color: var(--A); cursor: pointer;
   display: grid; place-items: center; padding: 0; }
+.cfg-esc { position: absolute; right: 38px; top: 2px; height: 30px; box-sizing: border-box; padding: 0 9px; border: 0; border-radius: 8px; background: var(--ui-paper); font: 12px/30px var(--font); color: var(--ui-sub); white-space: nowrap; pointer-events: none; } /* Esc 안내 = 오른쪽 위 ✕ 옆 (D4 ⑥, 전엔 맨 아래 줄). 막 위라 종이 바탕, 버튼처럼 안 보이게 테 없음 */
 .cfg-x canvas { width: 10px; height: 10px; image-rendering: pixelated; }
 .cfg-x:hover { background: var(--ui-hover); }
 .cfg-x:focus-visible { outline: 2px solid var(--O); outline-offset: 2px; }

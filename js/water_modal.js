@@ -22,10 +22,9 @@
     el.id = 'wm'; el.className = 'wm'; el.hidden = true;
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '물 기록');
     el.innerHTML = `<div class="wm-box" tabindex="-1">
-      <div class="wm-head"><b class="wm-title"></b><span class="wm-count" aria-live="polite"></span></div>
+      <div class="wm-head"><b class="wm-title"></b><span class="wm-count" aria-live="polite"></span><span class="wm-esc" aria-hidden="true"></span></div>
       <div class="wm-cups" role="group" aria-label="물 칸 (눌러서 체크)"></div>
-      <p class="wm-say"><b class="wm-name"></b><span class="wm-line" aria-live="polite"></span></p>
-      <div class="wm-esc" aria-hidden="true"></div></div>`;
+      <p class="wm-say"><b class="wm-name"></b><span class="wm-line" aria-live="polite"></span></p></div>`; // 키 안내 = 머리 줄 오른쪽 (D4 ⑥), 오늘 n/6 은 이름 옆
     stage.appendChild(el);
     const PL = (root.PH_LINES && root.PH_LINES.uiPlain && root.PH_LINES.uiPlain.waterModal) || {};
     q('.wm-title').textContent = PL.title || '물';
@@ -62,7 +61,7 @@
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', `물 ${k}잔${k === w.n ? ' (다시 누르면 한 잔 빠져요)' : ''}`);
     });
-    q('.wm-count').textContent = `오늘 ${w.n}/${w.of}`;
+    q('.wm-count').textContent = `${w.n}/${w.of}`; // 이름(오늘 물) 바로 옆이라 "오늘" 뺌 (D4 ⑥, 전엔 오른쪽 끝 "오늘 n/6")
     el.dataset.n = w.n;
   }
   function say(text) { if (!text) return; q('.wm-line').textContent = text; st.log.push(text); }

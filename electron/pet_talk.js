@@ -38,9 +38,10 @@ function create(o) {
     ask: (text, choices, opt) => {
       let kind = (opt && opt.kind) || '';
       if (!kind && choices.length && choices.every((c) => TOPICS.includes(String(c.id)))) kind = 'menu'; // 첫 메뉴 (흐름은 kind 없이 부름)
-      return step('ask', text, {
+      const cups = kind === 'water' ? st.cups : null; if (cups) st.cups = null; // 물 연달아 (D4 ④): 고르기에도 컵 줄
+      return step('ask', text, Object.assign({
         choices: choices.map((c) => ({ id: str(c.id), label: str(c.label), desc: c.desc ? str(c.desc) : null, icon: iconOf(kind, String(c.id)) })), cols: (opt && opt.cols) || 2, kind,
-      }, { ids: choices.map((c) => c.id) });
+      }, cups ? { cups } : {}), { ids: choices.map((c) => c.id) });
     },
     time: (text, opt) => step('time', text, {
       row: opt.row, hours: (opt.hours || []).slice(0, 8), picked: opt.picked && opt.picked.bed ? { bed: LL.fmtTime(opt.picked.bed) } : {},
@@ -99,14 +100,14 @@ function create(o) {
     const data = H.read();
     const ctx = {
       lines: D, clickLines: (o.clickLines && o.clickLines()) || [], settings: H.settings, now: H.now || Date.now, lastPick: st.lastPick,
-      data, api: null, off: data ? H.offTopics(data.text) : [], moods: H.moods, more: H.moreLines,
+      data, api: null, off: data ? H.offTopics(data.text) : [], moods: H.moods, more: H.moreLines, waterMore: true, // 물 연달아·방금 한 잔 취소 (D4 ④, 펫만)
       onWrite: (res) => { st.lastWrite = { ok: res.ok, conflict: !!res.conflict, reapplied: !!res.reapplied, date: res.date, extra: res.extra || null }; if (o.onWrite) o.onWrite(res); },
     };
     ctx.api = H.makeApi(() => ctx.data, { mealExtra, log });
     // 물 +1이 저장되면 새 글의 오늘 잔 수를 기억 -> 바로 다음 한 줄(water.up/full)에 컵 줄로. 흐름은 그대로 (저장 결과만 엿봄)
     const setWater = ctx.api.setWater;
-    ctx.api.setWater = async (value, lm) => {
-      const res = await setWater(value, lm);
+    ctx.api.setWater = async (value, lm, opt) => {
+      const res = await setWater(value, lm, opt);
       if (res && res.ok && !res.conflict && !res.off && res.text != null) { const w = H.waterOf(res.text); if (w && w.of > 0) st.cups = { n: Math.min(w.n, w.of), of: Math.min(w.of, 12) }; }
       return res;
     };

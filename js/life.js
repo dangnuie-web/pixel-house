@@ -257,7 +257,7 @@
     el.querySelectorAll('.slot-row.rw').forEach((row) => row.addEventListener('click', (e) => { const b = e.target.closest('.cup'); if (b) onCup(tab, el, row, Number(b.dataset.k)); }));
     bindChecks(tab, el);
     (Life.renderHooks || []).forEach((f) => f(tab, el, Life.data)); // 탭을 그린 뒤 덧붙이는 모듈 (공부 간트 편집 js/study_gantt.js). 체크 뒤 다시 그릴 때도
-    if (focus) { const f = Array.from(el.querySelectorAll('[data-focus]')).find((x) => x.dataset.focus === focus); if (f) f.focus(); }
+    if (focus) { const f = Array.from(el.querySelectorAll('[data-focus]')).find((x) => x.dataset.focus === focus); if (f) (root.PHFocusBack ? root.PHFocusBack.back(f, { scroll: true }) : f.focus()); } // 주황 테는 키보드로 다닐 때만 (D4 ⑤)
   }
 
   // ---- 생활 습관 체크 (주 N회 칸·양 적기·안전장치 확인) ----

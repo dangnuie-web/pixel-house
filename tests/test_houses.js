@@ -63,5 +63,31 @@ for (const h of ['room2', 'room3']) {
   // 걷는 칸: 의자·방석은 둘 다 막지 않아 바꿈 전후 같음 (탁자 크기 차이로 생기는 칸 차이는 전부터 그대로). 다시 식탁 = 처음과 같음
   ok(h + ': 의자 -> 방석 바꿈으로 걷는 칸 수 안 바뀜 (둥근 탁자 ' + small.walk + ' = 바꿈 없던 때 ' + smallOld.walk + ', 식탁 ' + big.walk + ' -> 다시 ' + back.walk + ')', small.walk === smallOld.walk && big.walk === back.walk, { big: big.walk, small: small.walk, smallOld: smallOld.walk, back: back.walk });
 }
+// 원룸 물 자리 (D4 ① 2026-10-14, 무늬 정수기바닥형 v01): 바닥에 선 정수기 v13 17x38 (161,18) sort_y 57 on 주방장 / 물컵 (166,32). 걷는 칸 80 그대로
+{
+  const at1 = (pick) => {
+    const D = JSON.parse(JSON.stringify(SETS.room1.PH_LAYOUT_DATA));
+    HSL.apply(D, ART.room1, pick ? { water: pick } : {}, (S.SLOT_DEFAULTS || {}).room1);
+    globalThis.PH_LAYOUT_DATA = D; delete require.cache[require.resolve(LAYOUT)];
+    const L = require(LAYOUT), blocked = new Set();
+    L.objects.forEach((o) => { const b = o.block; if (!b) return; for (let y = b[1]; y < b[1] + b[3]; y++) for (let x = b[0]; x < b[0] + b[2]; x++) blocked.add(x + ',' + y); });
+    const ok1 = (x, y) => y >= 0 && y < L.h && x >= 0 && x < L.w && L.WALKABLE.includes(L.rows[y][x]) && !blocked.has(x + ',' + y);
+    const g = L.spawn.gate, st = [g.x, g.y - 1], seen = new Set([st.join()]), q = [st]; // 걸을 칸 = 현관에서 닿는 칸 (무늬 문서 "걸을 칸 80")
+    while (q.length) { const [x, y] = q.shift(); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = (x + dx) + ',' + (y + dy); if (!seen.has(k) && ok1(x + dx, y + dy)) { seen.add(k); q.push([x + dx, y + dy]); } }); }
+    const walk = seen.size;
+    const o = L.objects.find((q) => q.slot === 'water');
+    return { walk, sprite: o.sprite, px: o.px, py: o.py, size: o.size.join('x'), sort_y: o.sort_y, on: o.on || null, file: ART.room1[o.sprite].file, stand: L.WALKABLE.includes(L.rows[3][10]) && !blocked.has('10,3') };
+  };
+  const p = at1(null), c = at1('cup_water'), p2 = at1('purifier');
+  ok('room1: 기본 = 바닥에 선 정수기 v13 17x38 (161,18), sort_y 57, on 주방장', p.sprite === 'purifier' && /purifier_v13/.test(p.file) && p.size === '17x38' && p.px === 161 && p.py === 18 && p.sort_y === 57 && p.on === 'kitchen_cabinet', p);
+  ok('room1: 물컵으로 바꾸면 상판 위 (166,32) 6x7, on 없음 / 다시 정수기 = 같은 자리', c.sprite === 'cup_water' && c.px === 166 && c.py === 32 && c.size === '6x7' && !c.on && p2.px === 161 && p2.py === 18 && p2.on === 'kitchen_cabinet', { c, p2 });
+  ok('room1: 걸을 칸(현관에서 닿는 칸) 80 그대로 (정수기·물컵 둘 다), 정수기 앞 (10,3) 걸을 수 있음', p.walk === 80 && c.walk === 80 && p.stand, { p: p.walk, c: c.walk, stand: p.stand });
+  ok('정수기 v13 은 원룸에만: 투룸·쓰리룸 묶음은 v12 그대로', /purifier_v12/.test(ART.room2.purifier.file) && /purifier_v12/.test(ART.room3.purifier.file));
+}
+// 제작자 집 세트(v08~v12 js/assets_data.js)에 v13 이 안 섞임
+{
+  const src = require('fs').readFileSync(path.join(__dirname, '..', 'js', 'assets_data.js'), 'utf8');
+  ok('제작자 집 그림 묶음(assets_data.js)에 정수기 v13 없음 (v12 그대로)', !src.includes('purifier_v13') && src.includes('purifier_v12'));
+}
 console.log(`test_houses: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);

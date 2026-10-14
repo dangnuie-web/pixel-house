@@ -19,6 +19,7 @@ html.night .bm { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25;
 .bm-title { font-size: max(13px, calc(8 * var(--du))); }
 .bm-body { flex: 1; min-height: 0; overflow: auto; max-width: none; }
 .bm-body .bk-case { max-width: none; }
-.bm-esc { text-align: right; font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); }
+.bm-esc { margin-left: auto; font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); } /* 머리 줄 오른쪽 (D4 ⑥, 전엔 창 맨 아래) */
+.bm-head { min-height: max(13px, calc(8 * var(--du))); }
 /* 입력·상세 창: 탭에서는 화면 전체(fixed)지만, 모달 박스(transform)가 기준이 되므로 박스를 덮게 */
 .bm-body .bk-overlay { position: absolute; inset: 0; padding: 12px; border-radius: var(--dlg-r); }

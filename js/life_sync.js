@@ -19,6 +19,7 @@
     if (root.PHFurnishUI && root.PHFurnishUI.on) return 'furnish';
     const he = root.PHHabitEditUI; if (he && he.St && (he.St.form || he.St.busy)) return 'habitEdit';
     const me = root.PHMeetingEditUI; if (me && me.St && (me.St.busy || (me.St.form && shown(d.querySelector('#life-meetings .mte-form'))))) return 'meetingEdit'; // 약속 적기 칸이 보일 때 (2026-10-07, 다른 탭으로 가면 기다리지 않음)
+    const sg = root.PHStudyGantt; if (sg && sg.St && (sg.St.drag || sg.St.pdrag || sg.St.busy)) return 'study'; // 공부 막대를 끄는 중·저장 중 (2026-10-14: 다시 그리면 끌던 막대가 새로 그려져 끌기가 끊겼음)
     const L = root.PHLife; if (L && L.ui && (L.ui.amount || L.ui.ask)) return 'amount';
     const a = d.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return 'typing';
     return null;

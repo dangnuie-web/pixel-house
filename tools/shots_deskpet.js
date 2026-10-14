@@ -111,14 +111,26 @@ module.exports = async function shotsDeskPet(win, ROOT, opts) {
     const before = life();
     const wi = s.choices.findIndex((c) => /물/.test(c));
     await pclickSel('.dc-grid .dc', wi);
-    const tell = await until(async () => { const x = await cur(); return x && x.mode === 'tell' ? x : null; }, 5000);
+    // 물 연달아 (D4 ④ 2026-10-14): 저장 뒤 메뉴가 닫히지 않고 컵 줄 + [한 잔 더] [방금 한 잔 취소] [닫기]
+    const waterNow = () => { const Md = require(path.join(ROOT, 'js', 'life_md.js')), S0 = require(path.join(ROOT, 'js', 'data', 'settings.js')); const l = Md.latestSlots(Md.parse(life()).records, S0.WATER_HABIT || '물', new Date('2026-10-13T12:00:00').getTime(), S0.DAY_START_HOUR); return l && l.isToday ? l.value : 0; };
+    const wAsk = (n) => until(async () => { const x = await cur(); return x && x.mode === 'ask' && x.cups && x.cups.full === n ? x : null; }, 5000);
+    const wa1 = await wAsk(1);
     const after = life();
-    ok('물 한 잔 -> 기록 파일 바뀜(습관 기록 오늘 줄), 컵 줄 보임', after !== before && /2026-10-13/.test(after) && tell && tell.cups && tell.cups.full === 1, { tell });
-    await shotPet('deskpet_03_water');
+    ok('물 한 잔 -> 기록 파일 바뀜(습관 기록 오늘 줄), 메뉴 안 닫히고 컵 줄 1/6 + 한 잔 더·방금 한 잔 취소·닫기', after !== before && /2026-10-13/.test(after) && wa1 && wa1.choices.join('|') === '한 잔 더|방금 한 잔 취소|닫기' && wa1.cups.all === 6, { wa1 });
     ok('쓰기 전 사본 = 하우스와 같은 userData/backup', fs.existsSync(path.join(require('electron').app.getPath('userData'), 'backup')) && fs.readdirSync(path.join(require('electron').app.getPath('userData'), 'backup')).length >= 1);
-    // 집 창도 바뀐 기록을 받음 (1.5초마다 확인하는 다른 앱 알림과 같은 길)
-    await pclick((await pcenter('#bubble')).x, (await pcenter('#bubble')).y); // 한 줄 = 누르면 다음(끝)
-    ok('대화 끝나면 메뉴 닫힘', await until(() => !talk().isOpen(), 6000));
+    await pclickSel('.dc-grid .dc', 0); // 한 잔 더
+    const wa2 = await wAsk(2);
+    await pclickSel('.dc-grid .dc', 0); // 한 잔 더
+    const wa3 = await wAsk(3);
+    ok('한 잔 더 두 번 -> 메뉴 그대로, 컵 3/6, 기록 파일 오늘 물 3', !!wa2 && !!wa3 && talk().isOpen() && waterNow() === 3, { wa2, wa3, n: waterNow() });
+    await shotPet('deskpet_03_water');
+    await pclickSel('.dc-grid .dc', 1); // 방금 한 잔 취소
+    const wu = await until(async () => { const x = await cur(); return x && x.mode === 'ask' && x.cups && x.cups.full === 2 ? x : null; }, 5000);
+    ok('방금 한 잔 취소 -> 컵 2/6, "지웠어요" 한 줄, 메뉴 그대로', wu && /지웠어요/.test(wu.text) && /2\/6/.test(wu.text), wu);
+    await shotPet('deskpet_03b_water_undo');
+    ok('기록 파일 오늘 물 = 2 (취소가 파일에 씀)', waterNow() === 2, waterNow());
+    await pclickSel('.dc-grid .dc', 2); // 닫기
+    ok('닫기 -> 메뉴 닫힘', await until(() => !talk().isOpen(), 6000));
 
     // ---- 4. 오른쪽 클릭 = 메뉴 + 아래 줄 (숨기기 · 바탕화면 펫 끄기) ----
     await sleep(400);
@@ -126,7 +138,16 @@ module.exports = async function shotsDeskPet(win, ROOT, opts) {
     await pclick(p2.x, p2.y, 'right');
     s = await until(async () => { const x = await cur(); return x && x.mode === 'ask' && x.foot.length ? x : null; }, 5000);
     ok('오른쪽 클릭 -> 아래 줄 "잠깐 숨기기 (10분) · 바탕화면 펫 끄기" (종료 아님)', s && s.foot.join('|') === '잠깐 숨기기 (10분)|바탕화면 펫 끄기', s && s.foot);
+    ok('아래 줄 두 버튼 = 한 줄 (높이 18, 칸 밖으로 안 나감)', s && s.footH.every((h) => h <= 19) && s.footOver === 0, s && { h: s.footH, over: s.footOver, w: s.bubbleW });
     await shotPet('deskpet_04_footer');
+    // D4 ③: 윈도우 맑은 고딕처럼 글자가 넓으면 214px 에서 두 줄로 넘쳤음 -> 자간을 넓혀 흉내 내고 다시 엶: 한 줄 그대로, 말주머니가 넓어짐
+    talk().cancel(true); await until(() => !talk().isOpen(), 4000); await sleep(300);
+    await pjs(`(() => { const sh = [...document.styleSheets].find((x) => /pet\\.css/.test(x.href || '')); window.__wideAt = sh.insertRule('.bf { letter-spacing: 2px; }', sh.cssRules.length); return 0; })()`); // CSP 로 <style> 은 막혀 CSSOM 으로
+    await pclick(p2.x, p2.y, 'right');
+    const sw2 = await until(async () => { const x = await cur(); return x && x.mode === 'ask' && x.foot.length ? x : null; }, 5000);
+    ok('넓은 글자(자간 +2px)에서도 아래 줄 한 줄, 말주머니가 214보다 넓어짐 (268 이하)', sw2 && sw2.footH.every((h) => h <= 19) && sw2.footOver === 0 && sw2.bubbleW > s.bubbleW && sw2.bubbleW <= 268, sw2 && { h: sw2.footH, over: sw2.footOver, w: sw2.bubbleW, w0: s.bubbleW });
+    await shotPet('deskpet_04b_footer_wide');
+    await pjs(`(() => { const sh = [...document.styleSheets].find((x) => /pet\\.css/.test(x.href || '')); sh.deleteRule(window.__wideAt); return 0; })()`);
 
     // ---- 5. 설정 화면 스위치 ----
     ok('설정 펫 탭: 바탕화면 펫 스위치 = 켜짐', (await openSettings()) && (await sw()) === 'true', await sw());

@@ -77,7 +77,7 @@
     if (!M || !M.form) { // 저장·그만두기 뒤 = 폼 닫힘 -> 탭 다시 그림 (줄 글이 새 기록으로)
       Q.open = null; h.innerHTML = '';
       Life.paint('habits', Q.el);
-      const b = Q.last && Q.el.querySelector(`.rq-open[data-kind="${CSS.escape(Q.last)}"]`); if (b) b.focus({ preventScroll: true });
+      const b = Q.last && Q.el.querySelector(`.rq-open[data-kind="${CSS.escape(Q.last)}"]`); if (b) (root.PHFocusBack ? root.PHFocusBack.back(b) : b.focus({ preventScroll: true })); // D4 ⑤ js/focus_back.js
       return;
     }
     h.innerHTML = M.html(Life.data);

@@ -183,12 +183,29 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
     ok('집 화면에 개인 이름·이웃·토리 글 없음', !PERSONAL.test(await visibleText()), (await visibleText()).match(PERSONAL));
     await shot('public_08_room');
 
-    // ---- 3. 가구 기능 (무늬 자리 표): 물컵 = 물 +1, 달력 = 약속 탭, TV = 영화 기록, 냉장고 = 메모지 ----
+    // ---- 3. 가구 기능 (무늬 자리 표): 정수기 = 물 기록 창 (D4 ① 2026-10-14 제작자: 원룸 물 자리 기본 = 정수기, 전엔 물컵 = 물 +1), 달력 = 약속 탭, TV = 영화 기록, 냉장고 = 메모지 ----
     const links = await js('PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, {})');
-    ok('기본 연결 = 무늬 자리 표 (침대 마감, 주방 살림, 물컵 물+1, 냉장고 메모, 달력 약속, 책꽂이 독서, TV 기록, 탁자 식사, 러그 요가, 책상 공부, 변기 대변)', links.bed === 'close' && links.kitchen_cabinet === 'inv_kitchen' && links.cup_water === 'water_cup' && links.fridge === 'memo' && links.calendar === 'calendar' && links.bookshelf === 'reading' && links.tv_cabinet === 'record' && links.table_low === 'meal' && links.rug === 'yoga' && links.desk === 'study' && links.toilet === 'poop' && !links['tv_cabinet.part'], links);
-    await js('PHInteract.activateType("cup_water"); 0'); await sleep(900);
+    ok('기본 연결 = 무늬 자리 표 (침대 마감, 주방 살림, 정수기 물 기록 창, 냉장고 메모, 달력 약속, 책꽂이 독서, TV 기록, 탁자 식사, 러그 요가, 책상 공부, 변기 대변)', links.bed === 'close' && links.kitchen_cabinet === 'inv_kitchen' && links.cup_water === 'water' && links.fridge === 'memo' && links.calendar === 'calendar' && links.bookshelf === 'reading' && links.tv_cabinet === 'record' && links.table_low === 'meal' && links.rug === 'yoga' && links.desk === 'study' && links.toilet === 'poop' && !links['tv_cabinet.part'], links);
+    { const o = await js('(() => { const o = PH_LAYOUT.objects.find((x) => x.slot === "water"); return { sprite: o.sprite, name: PHFeatures.nameOf("cup_water") }; })()');
+      ok('원룸 물 자리 기본 = 정수기 그림·이름 (고른 값 없는 새 집)', o.sprite === 'purifier' && o.name === '정수기', o); }
+    // 바닥에 선 정수기 v13 (무늬 정수기바닥형 v01): (10,3)에서 위 보고 Space = 물 창(살림 창 아님), 정수기 그림 클릭 = 물 창
+    { const pl = (x, y, f) => js(`(() => { const m = PHGame.me(); m.x = ${x}; m.y = ${y}; m.px = ${x} * 16; m.py = ${y} * 16; m.path = []; m.step = null; m.face = '${f}'; m.moving = false; PHInteract.tick(); return PHInteract.state().face || null; })()`);
+      const face = await pl(10, 3, 'up');
+      wc.sendInputEvent({ type: 'keyDown', keyCode: 'Space' }); wc.sendInputEvent({ type: 'char', keyCode: ' ' }); await sleep(40); wc.sendInputEvent({ type: 'keyUp', keyCode: 'Space' }); await sleep(800);
+      const sp = { face, water: await js('PHWaterModal.isOpen()'), inv: await js('!!(window.PHInventory && PHInventory.isOpen && PHInventory.isOpen())') };
+      ok('(10,3)에서 위 보고 Space -> 물 기록 창 (주방장 살림 창 아님)', /^cup_water/.test(String(sp.face)) && sp.water && !sp.inv, sp);
+      if (sp.water) await js('PHWaterModal.close(); 0'); await sleep(300);
+      const pt = await js(`(() => { const o = PH_LAYOUT.objects.find((q) => q.slot === 'water'), r = document.getElementById('cv').getBoundingClientRect(), k = r.width / PH_LAYOUT.W; return { x: Math.round(r.left + (o.px + o.size[0] / 2) * k), y: Math.round(r.top + (o.py + o.size[1] * 0.6) * k), sprite: o.sprite, at: [o.px, o.py], size: o.size }; })()`);
+      ok('정수기 = v13 17x38 (161,18)', pt.sprite === 'purifier' && pt.at.join() === '161,18' && pt.size.join() === '17,38', pt);
+      await pl(10, 5, 'down'); await sleep(700);
+      await click(pt.x, pt.y); }
+    for (let i = 0; i < 40 && !(await js('PHWaterModal.isOpen()')); i++) await sleep(100);
+    ok('정수기 그림 클릭 -> (걸어가서) 물 기록 창', await js('PHWaterModal.isOpen()'), await js(`(() => { const o = PH_LAYOUT.objects.find((q) => q.slot === 'water'), r = document.getElementById('cv').getBoundingClientRect(); return { r: [r.left, r.top, r.width], W: PH_LAYOUT.W, k: PHGame.G.scale, inv: !!(window.PHInventory && PHInventory.isOpen && PHInventory.isOpen()), log: PHInteract.state().log.slice(-3), hit: (() => { const h = PHInteractLogic.hitAt(PHInteract.spots(), o.px + 8, o.py + 22); return h && h.type; })() }; })()`));
+    await shot('public_08b_purifier_water');
+    await js('PHWaterModal.press(1); 0'); await sleep(900);
     const rec = Md.parse(fs.readFileSync(LIFE, 'utf8')).records;
-    ok('물컵 누르기 -> 기록 파일 오늘 물 1/6', JSON.stringify(rec).includes('물 1/6'), rec);
+    ok('물 창 첫 컵 -> 기록 파일 오늘 물 1/6', JSON.stringify(rec).includes('물 1/6'), rec);
+    await js('PHWaterModal.close(); 0'); await sleep(300);
     await js('PHInteract.activateType("calendar"); 0'); await sleep(900);
     ok('벽 달력 누르기 -> 약속 탭', (await js('PHApp.tab')) === 'meetings', await js('PHApp.tab'));
     await shot('public_09_calendar_meetings');
@@ -250,6 +267,17 @@ module.exports = async function shotsPublic(win, ROOT, opts) {
       ok('공용 집 가구 대사: 화분 = objRoom.plant_monstera, 현관문 = objRoom.gate(민지님), 스탠드 = objRoom.floorlamp on/off', R.plant_monstera.includes(pl) && R.gate.map((t) => t.replace('{user}', '민지')).includes(gt) && R.floorlamp.on.concat(R.floorlamp.off).includes(lp), [pl, gt, lp]); }
     ok('침대 자리 기능(하루 마감)은 그대로', (await js('PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, {}).bed')) === 'close', null);
     await shot('public_12_sofa');
+    // 물 자리 정수기 -> 물컵 -> 정수기 (후보마다 자리 따로, D4 ①)
+    for (const [spr, at, nm] of [['cup_water', '166,32', '물컵'], ['purifier', '161,18', '정수기']]) {
+      await js('PHFurnishUI.setMode(true); 0'); await sleep(200);
+      await js('PHFurnishUI.openMenu(PHInteract.spots().find((s) => s.key === "cup_water")); 0'); await sleep(200);
+      const rw = new Promise((r) => wc.once('did-finish-load', r));
+      await clickSel(`.fn-swap-b[data-sprite="${spr}"]`);
+      await Promise.race([rw, sleep(6000)]); await sleep(700);
+      const w = await js('(() => { const o = PH_LAYOUT.objects.find((q) => q.slot === "water"); return { sprite: o.sprite, at: o.px + "," + o.py, on: o.on || null, link: PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, {}).cup_water }; })()');
+      ok(`물 자리 -> ${nm}: 저장, 자리 ${at}, 기능 ${spr === 'purifier' ? '물 기록 창' : '물 +1'}`, (store().furniture || {}).water === spr && w.sprite === spr && w.at === at && w.link === (spr === 'purifier' ? 'water' : 'water_cup') && (spr === 'purifier' ? w.on === 'kitchen_cabinet' : !w.on), [store().furniture, w]);
+      if (spr === 'cup_water') await shot('public_12b_water_cup');
+    }
 
     // ---- 5. 다시 켠 것처럼: 온보딩 없이 입장 화면 ----
     const re3 = new Promise((r) => wc.once('did-finish-load', r));

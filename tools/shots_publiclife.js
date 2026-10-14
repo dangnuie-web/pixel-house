@@ -210,6 +210,24 @@ module.exports = async function shotsPublicLife(win, ROOT) {
     await key('Escape'); await sleep(200);
     ok('Esc -> 옷장 창 닫힘', !(await js('PHWardrobe.isOpen()')));
 
+    // ---- 5b. 기록하기 주황 테 (D4 ⑤ 2026-10-14): 마우스로 연 창을 Esc 로 닫으면 [기록하기]에 :focus-visible 주황 테가 남았음 ----
+    //   시험 창은 포커스가 없어 :focus 가 안 맞으므로 DevTools 포커스 흉내를 잠깐 켬
+    {
+      let dbg = false; try { wc.debugger.attach('1.3'); await wc.debugger.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true }); dbg = true; } catch (e) { /* 이미 붙어 있음 */ }
+      const ring = () => js(`(() => { const a = document.activeElement; return { cls: a && a.className, fv: !!(a && a.matches(':focus-visible')) }; })()`);
+      const fkey = async (k) => { wc.sendInputEvent({ type: 'keyDown', keyCode: k }); if (k === 'Return') wc.sendInputEvent({ type: 'char', keyCode: '\r' }); await sleep(40); wc.sendInputEvent({ type: 'keyUp', keyCode: k }); await sleep(300); };
+      const B = '#life-habits li[data-log="meal"] .lg-open';
+      await js(`PHApp.selectTab('habits'); 0`); await sleep(500);
+      await clickSel(B); await sleep(300); await fkey('Escape');
+      const r1 = await ring();
+      ok('마우스로 [기록하기] -> 창 -> Esc: 포커스는 [기록하기]로, 주황 테 없음', /lg-open/.test(r1.cls) && !r1.fv, r1);
+      await js(`(() => { const b = document.querySelector(${JSON.stringify(B)}), all = [...document.querySelectorAll('#life-habits button')]; all[all.indexOf(b) - 1].focus(); return 0; })()`);
+      await fkey('Tab'); await fkey('Return'); await sleep(200); await fkey('Escape');
+      const r2 = await ring();
+      ok('키보드(Tab·Enter)로 열고 Esc: 주황 테 보임 (키보드로 다닐 때는 그대로)', /lg-open/.test(r2.cls) && r2.fv, r2);
+      if (dbg) { try { await wc.debugger.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: false }); wc.debugger.detach(); } catch (e) { /* 그대로 */ } }
+    }
+
     // ---- 6. 개인 이름·오류 ----
     ok('화면에 개인 이름·이웃·토리 글 없음', !PERSONAL.test(await js('document.body.innerText')), (await js('document.body.innerText')).match(PERSONAL));
     ok('기록 파일에 개인 이름 없음', !PERSONAL.test(fileText()), fileText().match(PERSONAL));

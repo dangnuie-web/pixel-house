@@ -78,11 +78,25 @@ const HS = require('../js/house_slots.js');
 require('../js/house_rooms.js'); require('../js/assets_rooms.js');
 const D = JSON.parse(JSON.stringify(globalThis.PH_DATA_SETS.room1.PH_LAYOUT_DATA)), A = globalThis.PH_ASSET_SETS.room1;
 const r0 = HS.apply(JSON.parse(JSON.stringify(D)), A, {});
-ok('원룸 자리 14곳, 기본 연결 = 무늬 자리 표 (TV = 영화 기록, 달력 = 약속 달력, 물컵 = 물 +1)', r0.slots.length === 14 && r0.links.tv_cabinet === 'record' && r0.links.calendar === 'calendar' && r0.links.cup_water === 'water_cup' && r0.links.bed === 'close' && r0.links.rug === 'yoga' && !('washbasin' in r0.links), r0.links);
+ok('원룸 자리 14곳, 기본 연결 = 무늬 자리 표 (TV = 영화 기록, 달력 = 약속 달력, 물 자리 = 정수기 물 기록 창 D4 ①)', r0.slots.length === 14 && r0.links.tv_cabinet === 'record' && r0.links.calendar === 'calendar' && r0.links.cup_water === 'water' && r0.links.bed === 'close' && r0.links.rug === 'yoga' && !('washbasin' in r0.links), r0.links);
 const D1 = JSON.parse(JSON.stringify(D)), r1 = HS.apply(D1, A, { bed: 'sofa', water: 'purifier', table: 'coffeetable_m', rug: 'rug_round', plant: 'nope' });
 const at = (t) => D1.objects.find((q) => q.type === t);
 ok('후보 바꾸기: 기준점대로 자리 (소파 왼쪽 아래 195,72 / 타원 탁자 가운데 아래 129,136 / 둥근 카펫 가운데 129,120), 모르는 후보 = 기본', at('bed').sprite === 'sofa' && at('bed').px === 195 && at('bed').py === 72 && at('table_low').px === 129 && at('table_low').py === 136 && at('rug').px === 129 && at('rug').py === 120 && at('plant').sprite === 'plant_monstera', [at('bed'), at('table_low'), at('rug')].map((x) => [x.sprite, x.px, x.py]));
 ok('물컵 자리에 정수기 = 물 기록 창 (무늬 3절)', r1.links.cup_water === 'water', r1.links);
+// D4 ① (2026-10-14 제작자): 기본 원룸 물 자리 기본 = 정수기 (settings.SLOT_DEFAULTS). 고른 값이 있으면 그대로
+{
+  const SD = require('../js/data/settings.js').SLOT_DEFAULTS;
+  ok('설정: 원룸 물 자리 기본 = 정수기 (SLOT_DEFAULTS.room1.water)', SD && SD.room1 && SD.room1.water === 'purifier', SD);
+  const Dd = JSON.parse(JSON.stringify(D)), rd = HS.apply(Dd, A, {}, SD.room1), od = Dd.objects.find((q) => q.slot === 'water'), sl = D.slots.find((x) => x.id === 'water');
+  const [bx, by, bw, bh] = sl.box;
+  ok('새 집(고른 값 없음) = 정수기, 물 기록 창 연결, 자리 상자 안·바닥 맞춤 (가운데 아래)', od.sprite === 'purifier' && rd.links.cup_water === 'water' && od.px >= bx && od.px + od.size[0] <= bx + bw && od.py + od.size[1] === by + bh && rd.slots.find((x) => x.id === 'water').def === 'purifier', [od.sprite, od.px, od.py, od.size, sl.box]);
+  const rows = D.rows, T = D.tile, tile = (x, y) => rows[Math.floor(y / T)][Math.floor(x / T)];
+  ok('정수기 자리 = 원룸 안(벽 칸 아래쪽 줄이 바닥과 이어짐) 그리고 길을 막지 않음 (block false)', od.block === false && tile(od.px + 4, od.py + od.size[1] + 2) === '.', [tile(od.px + 4, od.py + od.size[1] + 2), od.block]);
+  const Dc = JSON.parse(JSON.stringify(D)), rc = HS.apply(Dc, A, { water: 'cup_water' }, SD.room1);
+  ok('이미 물컵을 고른 사용자(furniture.water = cup_water) = 물컵 그대로, 물 +1', Dc.objects.find((q) => q.slot === 'water').sprite === 'cup_water' && rc.links.cup_water === 'water_cup', rc.links.cup_water);
+  const r2 = HS.apply(JSON.parse(JSON.stringify(D)), A, {}, null);
+  ok('기본값 표가 없어도 정수기 (자리 덮기 LAYOUT_PATCH 에서 후보 첫째 = 정수기)', r2.links.cup_water === 'water' && D.slots.find((x) => x.id === 'water').candidates[0].sprite === 'purifier');
+}
 ok('벽 메모지 = 배치표 물건 그대로 (2026-10-08 메모지를 가구처럼), 기본 기능 = 버킷리스트', D1.objects.filter((q) => q.type === 'memo_bucket').length === 1 && r1.links.memo_bucket === 'bucket', r1.links);
 ok('아바타 3명 x 5동작 그림 (32x36, 발바닥 줄 35), 밤 팔레트 없음(캐릭터 규칙)', [1, 2, 3].every((n) => ['idle', 'walk_down', 'walk_up', 'walk_left', 'walk_right'].every((k) => { const a = A['avatar' + n + '_' + k]; return a && a.frames[0].length === 36 && a.frames[0][0].length === 32 && a.foot_row === 35 && !a.palette_night; })));
 // 입장 그림은 공용 집 것(entrance_roomN, 무늬 2026-10-08)만 들어감. 제작자 집 입장·이웃(entrance_guest)는 없음

@@ -107,4 +107,4 @@ html.night #inv { --dlg-bg: #EFE3CB; --dlg-inner: #D2C2A3; --dlg-shadow: #1E1B25
 #inv button:focus-visible, #inv input:focus-visible, #inv select:focus-visible { outline: max(2px, var(--du)) solid var(--dlg-sel); outline-offset: max(1px, calc(0.5 * var(--du))); }
 .inv-say { margin: 0; display: flex; align-items: center; gap: calc(4 * var(--du)); min-height: calc(12 * var(--du)); }
 .inv-who { flex: none; font-size: max(11px, calc(6 * var(--du))); background: var(--dlg-name-bg); color: var(--dlg-name-tx); border-radius: var(--dlg-r-s); padding: 0 calc(3 * var(--du)); }
-.inv-keys { text-align: right; font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); }
+.inv-keys { margin-left: auto; margin-right: calc(4 * var(--du)); font-size: max(10px, calc(5.5 * var(--du))); color: var(--dlg-sub); white-space: nowrap; } /* 머리 줄 오른쪽 (D4 ⑥) */

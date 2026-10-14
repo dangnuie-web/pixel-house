@@ -261,11 +261,25 @@
         b.type = 'button'; b.dataset.id = c.id; g.appendChild(b); items.push(b);
       });
     }
+    function cupRow(c) { // 오늘 물 컵 줄 (n 채움 / of)
+      const cups = mk('div', 'cups'); cups.setAttribute('aria-label', '물 ' + c.n + '/' + c.of);
+      for (let i = 0; i < c.of; i++) cups.appendChild(pic('water', 1, i < c.n ? 'full' : 'empty'));
+      return cups;
+    }
+    // 아래 줄(숨기기·끄기)이 한 줄에 안 들어가면 말주머니를 그만큼 넓힘 (D4 ③: 윈도우 맑은 고딕은 글자가 넓어 214px 칸에서 두 줄로 넘쳤음). 최대 = #bwrap.dlg #bubble max-width
+    function fitFoot() {
+      const f = menu.querySelector('.bfoot'); if (!f) return;
+      const bub = document.getElementById('bubble');
+      const need = Array.from(f.children).reduce((s, c) => { const cs = getComputedStyle(c); return s + c.getBoundingClientRect().width + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight); }, 0);
+      const over = Math.ceil(need - f.clientWidth);
+      if (over > 0) { bub.classList.add('fixw'); bub.style.setProperty('--bw', (bub.offsetWidth + over) + 'px'); }
+    }
     function show(q) {
       cur = q; composing = false; items = []; at = -1; hov = -1; paint = null;
       btext.textContent = glue(q.text || '');
       menu.textContent = ''; menu.hidden = false; menu.dataset.mode = q.mode; menu.dataset.kind = q.kind || '';
       if (q.mode === 'ask') {
+        if (q.cups && q.cups.of > 0) menu.appendChild(cupRow(q.cups)); // 물 연달아 (D4 ④): 컵 줄 + [한 잔 더] [방금 한 잔 취소] [닫기]
         const g = mk('div', 'dc-grid'); g.dataset.kind = q.kind || '';
         if (q.kind === 'rating') askHearts(q, g); else if (q.kind === 'amount') askAmounts(q, g); else askList(q, g);
         items.forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); answer(b.dataset.id); }));
@@ -289,18 +303,14 @@
         setWidth(268);
       } else { // tell: (물이면 컵 줄) + 오른쪽 아래 다음 표시
         const row = mk('div', 'dmore-row');
-        if (q.cups && q.cups.of > 0) {
-          const cups = mk('div', 'cups'); cups.setAttribute('aria-label', '물 ' + q.cups.n + '/' + q.cups.of);
-          for (let i = 0; i < q.cups.of; i++) cups.appendChild(pic('water', 1, i < q.cups.n ? 'full' : 'empty'));
-          row.appendChild(cups);
-        }
+        if (q.cups && q.cups.of > 0) row.appendChild(cupRow(q.cups));
         row.appendChild(window.Pix ? Object.assign(window.Pix.canvas(MORE, 0, 1), { className: 'px dmore' }) : mk('div', 'dmore'));
         menu.appendChild(row);
         setWidth(0);
       }
       footer();
       wrap.hidden = false; wrap.classList.remove('pop'); void wrap.offsetWidth; wrap.classList.add('pop');
-      placeBubble(); fit(); focusField(); poke();
+      fitFoot(); placeBubble(); fit(); focusField(); poke();
     }
     function focusField() { const f = menu.querySelector('.dfi'); if (f && document.activeElement !== f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }
     function fit() { // 말주머니가 창보다 크면 main에 자리 늘려 달라고
@@ -310,7 +320,7 @@
     window.DP.on('pet:dlgOpen', (o) => { clearTimeout(bubbleTimer); d = { footer: !!o.footer }; cur = null; wrap.classList.add('dlg'); });
     window.DP.on('pet:dlg', (q) => { if (!d) { d = { footer: false }; wrap.classList.add('dlg'); } show(q); });
     window.DP.on('pet:dlgError', (q) => { if (!cur || q.id !== cur.id) return; btext.textContent = glue(q.text); placeBubble(); fit(); focusField(); });
-    window.DP.on('pet:dlgFooter', () => { if (d) { d.footer = true; footer(); placeBubble(); fit(); } });
+    window.DP.on('pet:dlgFooter', () => { if (d) { d.footer = true; footer(); fitFoot(); placeBubble(); fit(); } });
     function end(hide) { d = null; cur = null; items = []; at = -1; paint = null; clearTimeout(idleT); menu.textContent = ''; menu.hidden = true; setWidth(0); wrap.classList.remove('dlg'); if (hide) wrap.hidden = true; }
     window.DP.on('pet:dlgEnd', () => { if (d) end(true); });
     window.addEventListener('focus', focusField); // main이 창에 키보드를 준 뒤
@@ -335,7 +345,7 @@
         hearts: menu.querySelectorAll('.hearts .dh.fill').length, cups: menu.querySelector('.cups') ? { full: menu.querySelectorAll('.cups canvas.full').length, all: menu.querySelectorAll('.cups canvas').length } : null,
         bubbleW: document.getElementById('bubble').offsetWidth,
         chips: Array.from(menu.querySelectorAll('.chip')).map((x) => x.textContent), field: menu.querySelector('.dfi') ? { value: menu.querySelector('.dfi').value, focused: document.activeElement === menu.querySelector('.dfi') } : null,
-        foot: Array.from(menu.querySelectorAll('.bf')).map((x) => x.textContent), wrapH: wrap.offsetHeight, winH: window.innerHeight, top: wrap.style.top }) };
+        foot: Array.from(menu.querySelectorAll('.bf')).map((x) => x.textContent), footH: Array.from(menu.querySelectorAll('.bf')).map((x) => x.offsetHeight), footOver: (() => { const f = menu.querySelector('.bfoot'); if (!f) return 0; const r = f.getBoundingClientRect(); return Array.from(f.children).some((c) => { const q = c.getBoundingClientRect(); return q.left < r.left - 0.5 || q.right > r.right + 0.5; }) ? 1 : 0; })(), wrapH: wrap.offsetHeight, winH: window.innerHeight, top: wrap.style.top }) };
   })();
   window.__petDlg = Dlg;
 

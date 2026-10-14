@@ -236,7 +236,7 @@
     if (!st.open || st.busy) return;
     st.open = false; el.hidden = true; q('.lm-box').innerHTML = '';
     const back = st.from === 'habits' ? $('life-habits') : st.from === 'journal' ? $('life-archive') : null, stage = $('stage');
-    if (back) { const b = back.querySelector('.sl-row.sel') || back.querySelector('.lg-open[data-kind="sleep"]') || back.querySelector('.sl-add'); if (b) b.focus({ preventScroll: true }); }
+    if (back) { const b = back.querySelector('.sl-row.sel') || back.querySelector('.lg-open[data-kind="sleep"]') || back.querySelector('.sl-add'); if (b) (root.PHFocusBack ? root.PHFocusBack.back(b) : b.focus({ preventScroll: true })); } // D4 ⑤ js/focus_back.js
     else if (stage && !stage.closest('.screen').hidden) stage.focus({ preventScroll: true });
   }
   function onKey(e) { // 창 밖에 포커스가 있을 때 오는 키

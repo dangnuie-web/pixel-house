@@ -116,11 +116,13 @@ span.chip { display: inline-block; padding: 0 8px; cursor: default; }
 .cups { display: flex; margin-left: -2px; }
 .cups canvas { width: 16px; height: 16px; margin-right: -1px; }
 .cups canvas.empty { opacity: .28; }
+#bmenu[data-kind="water"] > .cups { margin: 0 0 5px; } /* 물 연달아 (D4 ④): 컵 줄 아래 고르기 */
 .dmore { width: 5px; height: 3px; margin: 0 5px 3px auto; }
 
 /* 오른쪽 클릭 아래 줄: 점선(2px 선 + 2px 틈) -> "잠깐 숨기기 (10분) ┆ 종료" */
 .bfoot { display: flex; justify-content: flex-end; align-items: center; margin-top: 6px; padding-top: 4px; height: 26px; box-sizing: border-box;
   background: linear-gradient(to right, var(--pb-chip-line) 50%, transparent 50%) 0 3px / 4px 1px repeat-x; }
 .bfoot .sep { width: 1px; height: 9px; background: var(--pb-chip-line); margin: 0 7px; }
-.bf { font: 500 11px/18px var(--font); color: var(--pb-sub); background: none; border: none; padding: 0 2px 0 0; margin: 0; cursor: pointer; }
+.bf { font: 500 11px/18px var(--font); color: var(--pb-sub); background: none; border: none; padding: 0 2px 0 0; margin: 0; cursor: pointer; white-space: nowrap; flex: none; } /* 한 줄 (D4 ③). 칸이 모자라면 pet.js fitFoot 이 말주머니를 넓힘 */
+.bfoot .sep { flex: none; }
 .bf:hover, .bf.cur { color: var(--pb-text); text-decoration: underline; text-underline-offset: 3px; }

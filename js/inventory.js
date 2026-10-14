@@ -34,7 +34,7 @@
     el.id = 'inv'; el.className = 'inv'; el.hidden = true;
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '살림 물건');
     el.innerHTML = `<div class="inv-box" tabindex="-1">
-      <div class="inv-head"><b class="inv-title"></b><button type="button" class="inv-close" aria-label="닫기">✕</button></div>
+      <div class="inv-head"><b class="inv-title"></b><span class="inv-keys" aria-hidden="true"></span><button type="button" class="inv-close" aria-label="닫기">✕</button></div>
       <div class="inv-tabs" role="tablist" aria-label="물건 분류"></div>
       <div class="inv-pillrow"><div class="inv-pills" role="group" aria-label="안쪽 분류"></div>
         <span class="inv-view" role="group"><button type="button" class="inv-view-b" data-view="list" data-focus="view:list"></button><button type="button" class="inv-view-b" data-view="grid" data-focus="view:grid"></button></span></div>
@@ -43,8 +43,7 @@
       <div class="inv-edit" hidden></div>
       <div class="inv-undo" hidden><span class="inv-undo-t"></span><button type="button" class="inv-undo-b"></button></div>
       <div class="inv-add"></div>
-      <p class="inv-say"><b class="inv-who"></b><span class="inv-line" aria-live="polite"></span></p>
-      <div class="inv-keys" aria-hidden="true"></div></div>`;
+      <p class="inv-say"><b class="inv-who"></b><span class="inv-line" aria-live="polite"></span></p></div>`; // 키 안내 = 머리 줄 오른쪽 ✕ 옆 (D4 ⑥, 전엔 창 맨 아래)
     stage.appendChild(el);
     q('.inv-title').textContent = P().invTitle || '살림';
     q('.inv-who').textContent = ((root.PH_DIALOG_LINES || {}).name) || '두부';

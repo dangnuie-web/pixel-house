@@ -67,7 +67,15 @@ module.exports = async function shotsSettings(win, ROOT, opts) {
     s = await st();
     const tiles = await js(`[...document.querySelectorAll('#cfg .cfg-pick.pets .cfg-tile')].map((b) => b.dataset.id + (b.getAttribute('aria-checked') === 'true' ? '*' : '') + '=' + b.textContent.trim() + ':' + b.querySelector('canvas').width + 'x' + b.querySelector('canvas').height + '@' + b.querySelector('canvas').style.width)`);
     ok('설정 버튼 -> 설정 창 = 펫 탭, 펫 다섯 칸(흰 고양이 고름), 그림 20x22 3배', s.open && s.tab === 'pet' && tiles.length === 5 && tiles[0].startsWith('cat_white*=흰 고양이:20x22@60px') && tiles[3].startsWith('dog_white=흰 강아지:20x22'), tiles);
-    ok('버튼 aria-expanded, 폴더 탭 4개 (펫·집·내 모습·사이드바), 아래 줄 "Esc 닫기"', (await js(`document.getElementById('cfg-open').getAttribute('aria-expanded')`)) === 'true' && (await js(`[...document.querySelectorAll('#cfg .cfg-tab')].map((t) => t.textContent).join()`)) === '펫,집,내 모습,사이드바' && /Esc 닫기/.test(await js(`document.querySelector('#cfg .cfg-foot').textContent`)));
+    ok('버튼 aria-expanded, 폴더 탭 4개 (펫·집·내 모습·사이드바), 오른쪽 위 "Esc 닫기" (D4 ⑥: 전엔 아래 줄)', (await js(`document.getElementById('cfg-open').getAttribute('aria-expanded')`)) === 'true' && (await js(`[...document.querySelectorAll('#cfg .cfg-tab')].map((t) => t.textContent).join()`)) === '펫,집,내 모습,사이드바' && !/Esc/.test(await js(`document.querySelector('#cfg .cfg-foot').textContent`)));
+    for (const t of ['pet', 'house', 'avatar', 'side']) { // 탭마다 같은 자리 (전엔 내용 길이 따라 아래 줄이 오르내림)
+      await js(`document.querySelector('#cfg .cfg-tab[data-tab="${t}"]').click(); 0`); await sleep(120);
+      const e = await js(`(() => { const b = document.querySelector('#cfg .cfg-box'), h = document.querySelector('#cfg .cfg-esc'); if (!b || !h) return { none: true }; const B = b.getBoundingClientRect(), H = h.getBoundingClientRect(); return { text: h.textContent, top: Math.round(H.top - B.top), right: Math.round(B.right - H.right), h: Math.round(B.height), ok: H.width > 0 && H.top - B.top < Math.max(40, B.height * 0.15) && B.right - H.right < 70 }; })()`);
+      const lastTab = await js(`(() => { const a = [...document.querySelectorAll('#cfg .cfg-tab')].pop().getBoundingClientRect(), h = document.querySelector('#cfg .cfg-esc').getBoundingClientRect(), x = document.querySelector('#cfg .cfg-x').getBoundingClientRect(); return a.right <= h.left && h.right <= x.left; })()`);
+      if (!e.ok || !lastTab || e.text !== 'Esc 닫기') { ok('설정 ' + t + ' 탭: Esc 안내 = 오른쪽 위 탭 줄(✕ 옆), 탭·✕ 와 안 겹침', false, { e, lastTab }); break; }
+      if (t === 'side') ok('설정 네 탭 모두: Esc 안내 = 오른쪽 위 같은 자리 (탭 줄 ✕ 옆), 탭·✕ 와 안 겹침', true);
+    }
+    await js(`document.querySelector('#cfg .cfg-tab[data-tab="pet"]').click(); 0`); await sleep(120);
     ok('펫 이름 칸 = 콩이 (이름표 모양)', (await js(`document.getElementById('cfg-pet-name').value`)) === '콩이' && (await js(`!!document.querySelector('#cfg .cfg-input.nametag #cfg-pet-name')`)));
     await shot('set_01_pet');
     // 이름 오류 (다시 열지 않음)
@@ -164,6 +172,7 @@ module.exports = async function shotsSettings(win, ROOT, opts) {
     await clickSel('#cfg-open'); await sleep(400);
     s = await js(`({ w: document.querySelector('#cfg .cfg-box').clientWidth, pic: document.querySelector('#cfg .cfg-pick.pets canvas').style.width })`);
     ok('작은 창 (상자 430px 이하) -> 펫 그림 2배', s.w <= 430 && s.pic === '40px', s);
+    ok('작은 창에서도 Esc 안내가 탭·✕ 와 안 겹침', await js(`(() => { const a = [...document.querySelectorAll('#cfg .cfg-tab')].pop().getBoundingClientRect(), h = document.querySelector('#cfg .cfg-esc').getBoundingClientRect(), x = document.querySelector('#cfg .cfg-x').getBoundingClientRect(); return a.right <= h.left && h.right <= x.left; })()`));
     await shot('set_11_narrow');
     await key('Escape'); await sleep(200);
     win.setContentSize(sz[0], sz[1]); await sleep(400);
@@ -182,5 +191,17 @@ module.exports = async function shotsSettings(win, ROOT, opts) {
     ok('막 누르기 -> 닫힘', !(await js('PHSettingsUI.isOpen()')));
     { const sd = (await js('PHSettingsUI.state()')).said, PL = await js('PH_SETTINGS_LINES.plan');
       ok('집 도면 바꾼 뒤 닫기 -> 한마디 = plan 줄 (부기 공용판3 3절)', sd && sd.kind === 'plan' && PL.some((t) => t.replace(/냥~$/, '') === sd.text.replace(/(냥|멍)~$/, '')), { sd, PL }); }
+
+    // ---- 9. 생활일지 위에 설정 (D4 ② 2026-10-14): 생활일지 탭 줄·내용 칸(.journal z 9)이 설정 창(8) 위로 올라와 펫 고르기를 가렸음 ----
+    await js(`PHApp.selectTab('archive'); 0`); await waitFor(`!!document.querySelector('#screen-archive .journal .jn-tab')`, 8000); await sleep(300);
+    await clickSel('#cfg-open'); await sleep(300);
+    await js(`document.querySelector('#cfg .cfg-tab[data-tab="pet"]').click(); 0`); await sleep(200);
+    s = await js(`(() => { const box = document.querySelector('#cfg .cfg-box').getBoundingClientRect(), bad = [];
+      for (let fy = 0.02; fy < 1; fy += 0.08) for (let fx = 0.04; fx < 1; fx += 0.08) { const x = box.left + box.width * fx, y = box.top + box.height * fy, e = document.elementFromPoint(x, y); if (!e || !e.closest('#cfg')) bad.push([Math.round(x), Math.round(y), e && (e.id || e.className)]); }
+      const t = document.querySelector('#cfg .cfg-pick.pets .cfg-tile').getBoundingClientRect(), top = document.elementFromPoint(t.left + t.width / 2, t.top + 10);
+      return { bad: bad.slice(0, 6), n: bad.length, tile: !!(top && top.closest('.cfg-tile')), journal: !!document.querySelector('#screen-archive:not([hidden]) .journal') }; })()`);
+    ok('생활일지 화면에서 설정 열기 -> 설정 창 어디를 찍어도 설정 창 (생활일지 탭 줄·내용 칸이 안 덮음), 펫 첫 칸 위쪽도 보임', s.journal && s.n === 0 && s.tile, s);
+    await shot('set_13_archive_settings');
+    await key('Escape'); await sleep(200);
   }
 };

@@ -23,9 +23,8 @@
     el.id = 'rm'; el.className = 'bm rm'; el.hidden = true;
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '영화 기록');
     el.innerHTML = `<div class="bm-box" tabindex="-1">
-      <div class="bm-head"><b class="bm-title"></b></div>
-      <div class="bm-body life"></div>
-      <div class="bm-esc" aria-hidden="true"></div></div>`;
+      <div class="bm-head"><b class="bm-title"></b><span class="bm-esc" aria-hidden="true"></span></div>
+      <div class="bm-body life"></div></div>`; // Esc 안내 = 머리 줄 오른쪽 (식사 기록 창과 같은 자리, D4 ⑥)
     stage.appendChild(el);
     q('.bm-title').textContent = PL().windowTitle || '영화·연극';
     q('.bm-esc').textContent = PL().keys || 'Esc 닫기';
@@ -50,7 +49,7 @@
     const body = q('.bm-body'), L = Life();
     body.innerHTML = L && L.data ? BS().html(L.data, { inline: true }) : `<p class="fmt">${(root.PH_LINES && root.PH_LINES.ui && root.PH_LINES.ui.browserOnly) || '생활 기록을 읽지 못했어요.'}</p>`;
     if (L && L.data) BS().bind(body, paint);
-    if (focus) { const f = [...el.querySelectorAll('[data-focus]')].find((x) => x.dataset.focus === focus); if (f) f.focus({ preventScroll: false }); }
+    if (focus) { const f = [...el.querySelectorAll('[data-focus]')].find((x) => x.dataset.focus === focus); if (f) (root.PHFocusBack ? root.PHFocusBack.back(f, { scroll: true }) : f.focus({ preventScroll: false })); } // D4 ⑤
   }
 
   function blockedNow() {
@@ -72,8 +71,9 @@
     BS().set(grp, kind || BS().kind || grp[0]); BS().reset();
     const title = grp.join('·'); // 영화·연극 = 그대로, 칸 하나 = 그 이름
     q('.bm-title').textContent = grp.join() === '영화,연극' ? (PL().windowTitle || '영화·연극') : title; el.setAttribute('aria-label', title + ' 기록');
-    // 칸 하나뿐이면 창 머리 숨김: 목록 제목 "공연 0"과 같은 말을 두 번 안 함 (무늬 확인모음 v01 ①). 창 aria-label은 그대로. 0개일 때 창 높이 = 내용만큼 (.rm.one)
-    q('.bm-head').hidden = grp.length < 2; el.classList.toggle('one', grp.length < 2);
+    // 칸 하나뿐이면 창 이름 숨김: 목록 제목 "공연 0"과 같은 말을 두 번 안 함 (무늬 확인모음 v01 ①). 창 aria-label은 그대로. 0개일 때 창 높이 = 내용만큼 (.rm.one)
+    //   D4 ⑥ (2026-10-14): 머리 줄은 남기고 이름만 숨김 -> 오른쪽 위 Esc 안내가 다른 창과 같은 자리에
+    q('.bm-title').hidden = grp.length < 2; el.classList.toggle('one', grp.length < 2);
     el.hidden = false; fit(); paint(BS().canWrite() ? 'rc-add' : null);
     el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
     if (!el.contains(document.activeElement)) q('.bm-box').focus({ preventScroll: true });

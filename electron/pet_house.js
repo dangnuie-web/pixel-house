@@ -85,11 +85,13 @@ function create(o) {
     return {
       setSleep: (bed, wake, memo, lastModified) => once('sleep', 'ph:setSleep', { bed, wake, memo, lastModified }),
       setNote: async () => ({ ok: false, off: true }), // 2026-10-13 오늘 한마디 뺌 (흐름이 부르지 않음)
-      setWater: async (value, lastModified) => {
+      setWater: async (value, lastModified, opt) => {
+        const undo = !!(opt && opt.undo); // 방금 한 잔 취소 (D4 ④): 겹치면 새 글의 잔 수에서 -1
         let res = await invoke('ph:setWater', { value, lastModified });
-        if (res && res.conflict) { // 새 글의 오늘 잔 수에 +1 (이미 다 찼으면 그대로)
-          const w = waterOf(res.text); log('reapply:water');
-          if (w && w.n < w.of) res = Object.assign({ reapplied: true }, await invoke('ph:setWater', { value: w.n + 1, lastModified: res.lastModified }));
+        if (res && res.conflict) { // 새 글의 오늘 잔 수에 +1 (이미 다 찼으면 그대로). 취소면 -1 (0이면 그대로)
+          const w = waterOf(res.text); log('reapply:water' + (undo ? ':undo' : ''));
+          if (undo && w && w.n > 0) res = Object.assign({ reapplied: true }, await invoke('ph:setWater', { value: w.n - 1, lastModified: res.lastModified }));
+          else if (!undo && w && w.n < w.of) res = Object.assign({ reapplied: true }, await invoke('ph:setWater', { value: w.n + 1, lastModified: res.lastModified }));
           else res = { ok: true, unchanged: true, reapplied: true, text: res.text, lastModified: res.lastModified };
         }
         return res;
