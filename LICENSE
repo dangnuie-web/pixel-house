@@ -26,7 +26,7 @@ Exception: pixel art and characters (그림·캐릭터 예외)
 The MIT License above covers the source code only. It does NOT cover the
 pixel art and characters (house backgrounds, furniture, the cat "Dubu",
 avatars, outfits, app icon), the desktop pet sprites and portraits, or the
-pet dialogue contained in the following files and folders:
+dialogue and on-screen text contained in the following files and folders:
 
   - js/assets_rooms.js   (pixel art data for the houses and furniture)
   - js/house_rooms.js    (house layouts and palettes)
@@ -43,6 +43,14 @@ pet dialogue contained in the following files and folders:
     js/data/interactions.js, js/data/interact_lines.js
                          (pet dialogue: the lines the cat/dog says in the
                           house and on the desktop)
+  - js/data/onboard_lines.js, js/data/study_lines.js,
+    js/data/record_lines.js, js/data/sleep_lines.js,
+    js/data/journal_lines.js, js/data/logs_lines.js,
+    js/data/household_lines.js, js/data/habit_edit_lines.js,
+    js/data/furnish_lines.js
+                         (on-screen text and guide lines: onboarding, study,
+                          records, sleep, journal, logs, household, habit
+                          editing, furniture linking)
 
 Copyright (c) 2026 Dangnee. All rights reserved.
 You may use these files only to run this app as distributed or as modified
@@ -52,14 +60,20 @@ without written permission from Dangnee.
 The sprites and portraits made with ChatGPT are outputs assigned to Dangnee
 under the OpenAI Terms of Use, to the extent permitted by law. These terms
 do not apply to similar images that someone else generates independently.
+The house pixel art, app icon and pet speech-bubble icons were drawn in code
+by an AI assistant (Claude), then edited. The dialogue and on-screen text
+were written with an AI assistant (Claude), then edited. None of these were
+created from scratch by a human.
 
 위 MIT 라이선스는 코드에만 적용됩니다. 위 목록의 파일과 폴더에 든 픽셀 그림과
 캐릭터(집 바탕, 가구, 고양이 두부, 아바타, 옷, 앱 아이콘)는 Dangnee에게 저작권이 있으며,
-바탕화면 펫 그림과 초상, 펫 대사도 같은 조건입니다. 이 앱을 실행하는 용도로만 쓸 수 있습니다.
+바탕화면 펫 그림과 초상, 펫 대사와 화면 글·안내 문구도 같은 조건입니다. 이 앱을 실행하는 용도로만 쓸 수 있습니다.
 허락 없이 따로 떼어 복제·수정·배포·판매하거나 다른 작업에 다시 쓸 수 없습니다.
 바탕화면 펫 그림(pet/png/)과 초상(portraits/)은 ChatGPT 이미지 생성으로 만든 뒤 다듬은
 그림으로, OpenAI 이용약관에 따라 법이 허락하는 한도에서 Dangnee에게 권리가 넘겨진
 출력물입니다. 다른 사람이 따로 만든 비슷한 그림에는 이 조건이 적용되지 않습니다.
+집 화면 픽셀 그림·앱 아이콘·펫 말풍선 아이콘은 AI(Claude)가 코드로 찍은 뒤 다듬은 그림이고,
+대사와 화면 글·안내 문구는 AI(Claude)로 쓴 뒤 다듬은 글입니다. 사람이 처음부터 만든 것이 아닙니다.
 
 This app uses Electron and electron-builder (MIT License) as development tools.
 They are not included in this repository (installed with npm install).
