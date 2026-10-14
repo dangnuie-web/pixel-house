@@ -85,8 +85,10 @@ for (const h of ['room2', 'room3']) {
   ok('정수기 v13 은 원룸에만: 투룸·쓰리룸 묶음은 v12 그대로', /purifier_v12/.test(ART.room2.purifier.file) && /purifier_v12/.test(ART.room3.purifier.file));
 }
 // 제작자 집 세트(v08~v12 js/assets_data.js)에 v13 이 안 섞임
-{
-  const src = require('fs').readFileSync(path.join(__dirname, '..', 'js', 'assets_data.js'), 'utf8');
+// 공개 사본엔 이 파일이 없음(내보내기에서 빠짐) → 있을 때만 확인 (2026-10-14 Actions 38555612254 에서 ENOENT)
+const ASSETS_DATA = path.join(__dirname, '..', 'js', 'assets_data.js');
+if (require('fs').existsSync(ASSETS_DATA)) {
+  const src = require('fs').readFileSync(ASSETS_DATA, 'utf8');
   ok('제작자 집 그림 묶음(assets_data.js)에 정수기 v13 없음 (v12 그대로)', !src.includes('purifier_v13') && src.includes('purifier_v12'));
 }
 console.log(`test_houses: ${pass} 통과, ${fail} 실패`);
