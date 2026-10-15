@@ -1,7 +1,7 @@
 {
   "name": "pixel-house",
   "productName": "Pixel House",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "고양이 집사 두부와 사는 픽셀 집. 물·잠·식사·약속·독서 같은 생활 기록을 내 컴퓨터 파일 하나에 남기는 데스크톱 앱 (macOS·Windows)",
   "main": "electron/main.js",

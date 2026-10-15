@@ -78,7 +78,7 @@ const HS = require('../js/house_slots.js');
 require('../js/house_rooms.js'); require('../js/assets_rooms.js');
 const D = JSON.parse(JSON.stringify(globalThis.PH_DATA_SETS.room1.PH_LAYOUT_DATA)), A = globalThis.PH_ASSET_SETS.room1;
 const r0 = HS.apply(JSON.parse(JSON.stringify(D)), A, {});
-ok('원룸 자리 14곳, 기본 연결 = 무늬 자리 표 (TV = 영화 기록, 달력 = 약속 달력, 물 자리 = 정수기 물 기록 창 D4 ①)', r0.slots.length === 14 && r0.links.tv_cabinet === 'record' && r0.links.calendar === 'calendar' && r0.links.cup_water === 'water' && r0.links.bed === 'close' && r0.links.rug === 'yoga' && !('washbasin' in r0.links), r0.links);
+ok('원룸 자리 15곳 (G1 현관 거울 더함), 기본 연결 = 무늬 자리 표 (TV = 영화 기록, 달력 = 약속 달력, 물 자리 = 정수기 물 기록 창 D4 ①, 현관 거울 = 옷 갈아입기 G1)', r0.slots.length === 15 && r0.links.mirror === 'wardrobe' && r0.links.tv_cabinet === 'record' && r0.links.calendar === 'calendar' && r0.links.cup_water === 'water' && r0.links.bed === 'close' && r0.links.rug === 'yoga' && !('washbasin' in r0.links), r0.links);
 const D1 = JSON.parse(JSON.stringify(D)), r1 = HS.apply(D1, A, { bed: 'sofa', water: 'purifier', table: 'coffeetable_m', rug: 'rug_round', plant: 'nope' });
 const at = (t) => D1.objects.find((q) => q.type === t);
 ok('후보 바꾸기: 기준점대로 자리 (소파 왼쪽 아래 195,72 / 타원 탁자 가운데 아래 129,136 / 둥근 카펫 가운데 129,120), 모르는 후보 = 기본', at('bed').sprite === 'sofa' && at('bed').px === 195 && at('bed').py === 72 && at('table_low').px === 129 && at('table_low').py === 136 && at('rug').px === 129 && at('rug').py === 120 && at('plant').sprite === 'plant_monstera', [at('bed'), at('table_low'), at('rug')].map((x) => [x.sprite, x.px, x.py]));
@@ -96,6 +96,17 @@ ok('물컵 자리에 정수기 = 물 기록 창 (무늬 3절)', r1.links.cup_wat
   ok('이미 물컵을 고른 사용자(furniture.water = cup_water) = 물컵 그대로, 물 +1', Dc.objects.find((q) => q.slot === 'water').sprite === 'cup_water' && rc.links.cup_water === 'water_cup', rc.links.cup_water);
   const r2 = HS.apply(JSON.parse(JSON.stringify(D)), A, {}, null);
   ok('기본값 표가 없어도 정수기 (자리 덮기 LAYOUT_PATCH 에서 후보 첫째 = 정수기)', r2.links.cup_water === 'water' && D.slots.find((x) => x.id === 'water').candidates[0].sprite === 'purifier');
+}
+// G1 (2026-10-15 제작자 "옷장 원룸 기본"): 원룸 현관 전신 거울 = 옷 갈아입기 (scripts/sync_assets.py LAYOUT_ADD, 배치표 원본은 그대로)
+{
+  const mo = D.objects.filter((q) => q.type === 'mirror'), sl = D.slots.find((x) => x.id === 'mirror');
+  ok('원룸 배치표 묶음: 현관 전신 거울 물건 하나 (31,86) 14x34, 자리 mirror 후보 = 전신 거울, 기능 = 옷 갈아입기, 그림 묶음에 mirror_stand', mo.length === 1 && mo[0].sprite === 'mirror_stand' && mo[0].px === 31 && mo[0].py === 86 && mo[0].size.join() === '14,34' && mo[0].room === 'genkan' && sl && sl.feature === 'wardrobe' && sl.candidates.map((c) => c.sprite).join() === 'mirror_stand' && !!A.mirror_stand, [mo, sl && sl.candidates]);
+  const rows = D.rows, T = D.tile, o = mo[0];
+  ok('거울 바닥 = 현관 벽 칸 아래 줄 (2,6 벽 / 2,7 바닥), 그림 아랫변 120 = 2,7 칸 가운데(120) 위라 바닥 칸 안 막음', rows[6][2] === '#' && rows[7][2] === '.' && o.py + o.size[1] <= 7 * T + T / 2, [rows[6][2], rows[7][2], o.py + o.size[1]]);
+  ok('기본 연결: 옷 갈아입기 = 거울 하나', Object.keys(r0.links).filter((k) => r0.links[k] === 'wardrobe').join() === 'mirror', r0.links);
+  const r9 = HS.apply(JSON.parse(JSON.stringify(D)), A, { mirror: 'nope' });
+  ok('거울 자리에 모르는 값이 저장돼 있어도 전신 거울 그대로', r9.links.mirror === 'wardrobe' && r9.slots.find((x) => x.id === 'mirror').sprite === 'mirror_stand');
+  ok('투룸·쓰리룸 배치표는 그대로 (현관 거울 안 더함)', ['room2', 'room3'].every((h) => !globalThis.PH_DATA_SETS[h].PH_LAYOUT_DATA.objects.some((q) => q.type === 'mirror' && q.room === 'genkan')));
 }
 ok('벽 메모지 = 배치표 물건 그대로 (2026-10-08 메모지를 가구처럼), 기본 기능 = 버킷리스트', D1.objects.filter((q) => q.type === 'memo_bucket').length === 1 && r1.links.memo_bucket === 'bucket', r1.links);
 ok('아바타 3명 x 5동작 그림 (32x36, 발바닥 줄 35), 밤 팔레트 없음(캐릭터 규칙)', [1, 2, 3].every((n) => ['idle', 'walk_down', 'walk_up', 'walk_left', 'walk_right'].every((k) => { const a = A['avatar' + n + '_' + k]; return a && a.frames[0].length === 36 && a.frames[0][0].length === 32 && a.foot_row === 35 && !a.palette_night; })));

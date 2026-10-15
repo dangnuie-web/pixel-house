@@ -14,6 +14,7 @@
     plant_snake: '산세베리아', plant_monstera: '몬스테라', plant_cactus: '선인장', plant_fern: '고사리',
     memo_bucket_wall: '벽 메모지',
     kitchen_wood: '원목 주방장', fridge_retro: '분홍 냉장고', bookshelf_open: '낮은 책장', // 2026-10-08 무늬 공용판후속 v01 1-1 (배치표 v02 name과 같음)
+    mirror_stand: '전신 거울', // G1 2026-10-15: 원룸 현관 거울 = 옷 갈아입기 (scripts/sync_assets.py LAYOUT_ADD)
   };
   // 배치표 기능 이름 -> js/features.js 기능 id (무늬 제안 이름 * 표시). TV = 영화 기록(record)
   const FEATURE_ID = { 'screen*': 'record', screen: 'record', 'calendar*': 'calendar', calendar: 'calendar' };

@@ -181,6 +181,23 @@ module.exports = async function shotsPublicLife(win, ROOT) {
     await clickSel('#tabs [data-tab="home"]'); await sleep(300);
     const w0 = await js(`({ en: PHOutfit.enabled(), av: PHOutfit.avatar(), st: Object.assign({}, PHOutfit.state), own: !!PHOutfit.data().own, playerBundle: !!window.PH_OUTFITS && !!window.PH_OUTFITS.base, layers: PHOutfit.plan().layers })`);
     ok('옷 갈아입기 켜짐 (보리 avatar1), 처음 차림 = 처음 옷(한벌 0) = 원래 그림 그대로', w0.en && w0.av === 'avatar1' && w0.st.onepiece === 0 && w0.own && w0.layers === null, w0);
+    // G1 (2026-10-15 제작자 "옷장 원룸 기본"): 원룸 현관 전신 거울 = 옷 갈아입기 기본 (scripts/sync_assets.py LAYOUT_ADD). 기능을 직접 붙이지 않아도 열림
+    { const m = await js(`(() => { const o = PH_LAYOUT.objects.find((q) => q.type === 'mirror'), L = PHFeatures.resolve(PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, PHFurnish.links); return o && { sprite: o.sprite, at: [o.px, o.py].join(), size: o.size.join(), block: o.block, room: o.room, link: L.mirror, others: Object.keys(L).filter((k) => L[k] === 'wardrobe'), name: PHFeatures.nameOf('mirror') }; })()`);
+      ok('원룸 현관 전신 거울 (31,86) 14x34, 기본 기능 = 옷 갈아입기 (다른 가구엔 없음), 이름 "전신 거울", 막는 칸 = 벽 칸 (2,6)뿐', m && m.sprite === 'mirror_stand' && m.at === '31,86' && m.size === '14,34' && m.link === 'wardrobe' && m.others.join() === 'mirror' && m.name === '전신 거울' && Array.isArray(m.block) && m.block.join() === '2,6,1,1', m);
+      const pl = (x, y, f) => js(`(() => { const m = PHGame.me(); m.x = ${x}; m.y = ${y}; m.px = ${x} * 16; m.py = ${y} * 16; m.path = []; m.step = null; m.face = '${f}'; m.moving = false; PHInteract.tick(); return PHInteract.state().face || null; })()`);
+      const face = await pl(2, 7, 'up'); await sleep(200);
+      await shot('publife_07b_mirror_genkan');
+      wc.sendInputEvent({ type: 'keyDown', keyCode: 'Space' }); wc.sendInputEvent({ type: 'char', keyCode: ' ' }); await sleep(40); wc.sendInputEvent({ type: 'keyUp', keyCode: 'Space' }); await sleep(600);
+      const sp = await js('({ open: PHWardrobe.isOpen(), from: PHWardrobe.state().from })');
+      ok('현관 (2,7)에서 위 보고 Space -> 거울 = 옷 갈아입기 창', /^mirror/.test(String(face)) && sp.open && sp.from === 'mirror', [face, sp]);
+      if (sp.open) { await key('Escape'); await sleep(250); }
+      // 아바타가 옷을 못 바꾸는 경우 (PHOutfit.enabled() false: 공용 옷 묶음이 없거나 아바타 그림이 덜 됐을 때) = 창 대신 두부 말풍선 한 줄, 오류 없음
+      const off = await js(`(() => { const en = PHOutfit.enabled; PHOutfit.enabled = () => false; try { const before = (PHWardrobe.state().lastCannot || {}).at || 0; Object.keys(PHInteract.cool).forEach((k) => { delete PHInteract.cool[k]; }); PHGame.hideBubble && PHGame.hideBubble(); const blk = PHInteract.blocked(); PHInteract.activateType('mirror'); const st = PHWardrobe.state(); return { open: PHWardrobe.isOpen(), cannot: st.lastCannot, fresh: !!st.lastCannot && st.lastCannot.at !== before, blk, last: PHInteract.state().last || null }; } finally { PHOutfit.enabled = en; } })()`);
+      ok('옷을 못 바꿀 때 거울 누르기 -> 창 안 열림, 두부 말풍선 cannot 한 줄', !off.open && off.fresh && off.cannot.type === 'mirror' && /옷을 바꿀 수 없어요/.test(off.cannot.text), off);
+      await sleep(300); await js('PHGame.hideBubble && PHGame.hideBubble(); 0');
+      // 사용자가 옷 갈아입기를 다른 가구에 붙였으면 그대로 (거울은 일반 반응), 거울 기능을 뺐으면 그대로
+      const u = await js(`(() => { const K = PHInteractLogic.linkKeys(PH_LAYOUT, PH_INTERACTIONS).all, a = PHFeatures.resolve(K, { bookshelf: 'wardrobe' }), b = PHFeatures.resolve(K, { mirror: 'none' }); return { a: [a.bookshelf, a.mirror || null], b: b.mirror || null }; })()`);
+      ok('사용자 설정 그대로: 옷 갈아입기를 책꽂이에 붙인 사람 = 책꽂이만, 거울 기능을 뺀 사람 = 거울 없음', u.a.join() === 'wardrobe,' && u.b === null, u); }
     await js('PHWardrobe.open("test"); 0'); await sleep(300);
     const tabCells = async (slot) => { await js(`(() => { const b = document.querySelector('.wd-tab[data-slot="${slot}"]'); b.click(); return 0; })()`); await sleep(120); return (await js('PHWardrobe.state()')).cells; };
     let cs = await tabCells('onepiece');
