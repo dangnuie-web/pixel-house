@@ -48,7 +48,7 @@
     G.actors = root.PH_ACTORS.map((d) => {
       const c = CH[d.id] || {}, sp = SP[d.id === 'dubu' ? 'dubu_walk_start' : d.id], home = sp && sp.x != null ? { x: sp.x, y: sp.y } : d.home;
       return {
-        id: d.id, name: d.name, sprite: c.sprite || d.sprite, brain: d.brain, talk: d.talk, home, scale: c.scale || 1, foot: c.foot || 0,
+        id: d.id, name: (d.id === 'dubu' && (root.PH_DIALOG_LINES || {}).name) || d.name, sprite: c.sprite || d.sprite, brain: d.brain, talk: d.talk, home, scale: c.scale || 1, foot: c.foot || 0, // dubu 이름표 = 사용자가 지은 펫 이름 (다른 창과 같게 PH_DIALOG_LINES.name)
         x: home.x, y: home.y, px: home.x * T, py: home.y * T, zone: World.roomAt(L, home.x, home.y),
         face: 'down', pose: null, moving: false, perch: null, hop: null, glide: null, wd: null, path: [], step: null, lift: 0, visible: !d.startHidden, arrive: null,
       };
